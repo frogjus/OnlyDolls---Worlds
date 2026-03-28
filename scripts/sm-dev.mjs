@@ -20,7 +20,7 @@ async function addMemory(content, metadata = {}) {
 }
 
 async function search(query) {
-  const result = await client.search.execute({
+  const result = await client.search.memories({
     q: query,
     containerTag: CONTAINER,
     limit: 10,
@@ -97,7 +97,17 @@ switch (command) {
   case 'search':
     if (!arg) { console.error('Usage: sm-dev.mjs search "<query>"'); process.exit(1); }
     const results = await search(arg);
-    console.log(JSON.stringify(results, null, 2));
+    if (results.results?.length === 0) {
+      console.log('No results found.');
+    } else {
+      console.log(`Found ${results.results.length} results:\n`);
+      for (const r of results.results) {
+        const meta = r.metadata || {};
+        const label = meta.filename || meta.type || 'memory';
+        console.log(`  [${label}] (score: ${r.similarity?.toFixed(3)})`);
+        console.log(`  ${r.memory}\n`);
+      }
+    }
     break;
   case 'status':
     if (!arg) { console.error('Usage: sm-dev.mjs status "<status text>"'); process.exit(1); }
