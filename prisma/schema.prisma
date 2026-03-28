@@ -1,0 +1,1916 @@
+// =============================================================================
+// StoryForge — Comprehensive Narrative Ontology Schema
+// =============================================================================
+// This schema represents the complete data model for StoryForge, a story world
+// architecture platform. It covers ~45 entity types across five domains:
+//   1. Core Entities (story world building blocks)
+//   2. Structural Layers (narrative framework overlays)
+//   3. Analytical Annotations (deep narrative analysis)
+//   4. World Systems (custom world rules and calendars)
+//   5. Meta-structural (narration, genre, pattern)
+//
+// Design principles:
+//   - Every entity belongs to a StoryWorld (world-scoped isolation)
+//   - Every entity has createdAt / updatedAt timestamps
+//   - Relationships are temporal (optional validFrom/validTo scene range)
+//   - pgvector extension enabled for semantic / creative intent search
+//   - tsvector columns for full-text search on key text fields
+//   - Composite indexes for the most common query patterns
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), pg_trgm]
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum EventType {
+  ACTION
+  DIALOGUE
+  DISCOVERY
+  TRANSFORMATION
+  REVELATION
+  DECISION
+  INTERNAL
+  ENVIRONMENTAL
+}
+
+enum RelationshipType {
+  FAMILY
+  ROMANTIC
+  FRIENDSHIP
+  RIVALRY
+  MENTORSHIP
+  ALLIANCE
+  ENMITY
+  PROFESSIONAL
+  POLITICAL
+  WORSHIP
+  CUSTOM
+}
+
+enum CausalityType {
+  PHYSICAL
+  MOTIVATIONAL
+  PSYCHOLOGICAL
+  ENABLING
+}
+
+enum NarrativeCodeType {
+  HERMENEUTIC
+  PROAIRETIC
+  SEMIC
+  SYMBOLIC
+  CULTURAL
+}
+
+enum ArcType {
+  CHARACTER
+  PLOT
+  THEMATIC
+  RELATIONSHIP
+  SUBPLOT
+}
+
+enum ArcPhaseType {
+  SETUP
+  RISING
+  MIDPOINT
+  CLIMAX
+  FALLING
+  RESOLUTION
+  CUSTOM
+}
+
+enum NarratorType {
+  FIRST_PERSON
+  SECOND_PERSON
+  THIRD_LIMITED
+  THIRD_OMNISCIENT
+  UNRELIABLE
+  MULTIPLE
+}
+
+enum FocalizationType {
+  INTERNAL
+  EXTERNAL
+  ZERO
+}
+
+enum SourceMaterialType {
+  TEXT
+  AUDIO
+  VIDEO
+  IMAGE
+  SCREENPLAY
+  PDF
+  EPUB
+}
+
+enum IngestionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EntityConfirmationStatus {
+  PROPOSED
+  CONFIRMED
+  REJECTED
+}
+
+enum CanonStatus {
+  CANON
+  DRAFT
+  SPECULATIVE
+  DEPRECATED
+}
+
+enum WritingMode {
+  PROSE
+  SCREENPLAY
+}
+
+enum ScreenplayElementType {
+  SLUGLINE
+  ACTION
+  DIALOGUE
+  PARENTHETICAL
+  TRANSITION
+  CHARACTER_CUE
+}
+
+enum StoryPatternType {
+  HEROIC_ARROW
+  CARRIER_BAG
+  CYCLICAL
+  NETWORK
+  ENSEMBLE
+  FRAME_STORY
+}
+
+enum GenreClassification {
+  MONSTER_IN_THE_HOUSE
+  GOLDEN_FLEECE
+  OUT_OF_THE_BOTTLE
+  DUDE_WITH_A_PROBLEM
+  RITES_OF_PASSAGE
+  BUDDY_LOVE
+  WHYDUNIT
+  FOOL_TRIUMPHANT
+  INSTITUTIONALIZED
+  SUPERHERO
+}
+
+enum RoleFramework {
+  VOGLER_ARCHETYPE
+  GREIMAS_ACTANT
+  PROPP_ROLE
+  DRAMATICA_ELEMENT
+  CUSTOM
+}
+
+enum CollaboratorRole {
+  OWNER
+  SHOWRUNNER
+  WRITER
+  RESEARCHER
+  VIEWER
+}
+
+enum EnigmaStatus {
+  POSED
+  SUSTAINED
+  ANSWERED
+  ABANDONED
+}
+
+enum BranchStatus {
+  ACTIVE
+  MERGED
+  ABANDONED
+}
+
+enum MediaFormat {
+  NOVEL
+  SHORT_STORY
+  SCREENPLAY_FILM
+  SCREENPLAY_TV
+  GAME
+  COMIC
+  PODCAST
+}
+
+// =============================================================================
+// AUTH & USER
+// =============================================================================
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  avatarUrl      String?
+  passwordHash   String?
+  emailVerified  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Owned worlds
+  ownedWorlds    StoryWorld[]
+
+  // Collaboration memberships
+  collaborations WorldCollaborator[]
+
+  // Session & auth
+  sessions       Session[]
+  accounts       Account[]
+
+  // Activity
+  comments       Comment[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+// =============================================================================
+// CORE ENTITY: StoryWorld (top-level container)
+// =============================================================================
+
+model StoryWorld {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  synopsis      String?      // Required before AI wand activates
+  logline       String?
+  coverImageUrl String?
+  mediaFormat   MediaFormat  @default(NOVEL)
+  canonStatus   CanonStatus  @default(DRAFT)
+  settings      Json?        // Flexible world-level settings
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Full-text search
+  searchVector Unsupported("tsvector")?
+
+  // Collaborators
+  collaborators WorldCollaborator[]
+
+  // --- Core Entities ---
+  characters      Character[]
+  narrativeRoles  NarrativeRole[]
+  events          Event[]
+  scenes          Scene[]
+  beats           Beat[]
+  sequences       Sequence[]
+  acts            Act[]
+  locations       Location[]
+  objects         StoryObject[]
+  themes          Theme[]
+  motifs          Motif[]
+  factions        Faction[]
+  relationships   Relationship[]
+  sourceMaterials SourceMaterial[]
+
+  // --- Structural Layers ---
+  fabulaTimeline    FabulaTimeline?
+  sjuzhetTimeline   SjuzhetTimeline?
+  structureTemplates StructureTemplate[]  // Templates applied to this world
+  structureMappings StructureMapping[]
+  arcs              Arc[]
+  canonSnapshots    CanonSnapshot[]
+  branches          Branch[]
+
+  // --- Analytical Annotations ---
+  valueChanges        ValueChange[]
+  narrativeCodes      NarrativeCode[]
+  enigmas             Enigma[]
+  setupPayoffs        SetupPayoff[]
+  thematicOppositions ThematicOpposition[]
+  pacingMetrics       PacingMetric[]
+  emotionalStates     EmotionalState[]
+  causalRelations     CausalRelation[]
+  voiceProfiles       VoiceProfile[]
+  audienceKnowledge   AudienceKnowledge[]
+
+  // --- World Systems ---
+  calendarSystems CalendarSystem[]
+  magicSystems    MagicSystem[]
+  worldRules      WorldRule[]
+
+  // --- Meta-structural ---
+  narrators       Narrator[]
+  focalizations   Focalization[]
+  narrativeLevels NarrativeLevel[]
+  genreTypes      GenreType[]
+  storyPatterns   StoryPattern[]
+
+  // --- Writing & Treatment ---
+  manuscripts Manuscript[]
+  treatments  Treatment[]
+
+  // --- Wiki ---
+  wikiArticles WikiArticle[]
+
+  // --- Comments ---
+  comments Comment[]
+
+  @@index([ownerId])
+  @@index([title])
+}
+
+model WorldCollaborator {
+  id      String           @id @default(cuid())
+  role    CollaboratorRole @default(VIEWER)
+
+  userId  String
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  // Fog-of-war: JSON array of entity IDs this collaborator can see.
+  // Null means full access for the given role.
+  visibleEntityIds Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, worldId])
+  @@index([worldId])
+  @@index([userId])
+}
+
+// =============================================================================
+// CORE ENTITIES
+// =============================================================================
+
+model Character {
+  id          String  @id @default(cuid())
+  name        String
+  aliases     String[] // Array of alternate names / nicknames
+  biography   String?
+  description String?
+
+  // Physical traits (structured JSON for 100+ configurable attributes)
+  physicalTraits    Json?
+  // Psychological profile
+  psychologicalProfile Json?
+  // Backstory
+  backstory         String?
+  // Goals & motivations
+  goals             String?
+  motivations       String?
+  // Arc summary
+  arcSummary        String?
+
+  // Visual reference
+  portraitUrl       String?
+
+  // AI-extracted confidence
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+  isAlive            Boolean                  @default(true)
+
+  // Importance / screen time metric (0.0 - 1.0)
+  importance Float @default(0.5)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Embedding for semantic search
+  embedding Unsupported("vector(1536)")?
+
+  // Full-text search
+  searchVector Unsupported("tsvector")?
+
+  // Relations
+  narrativeRoles NarrativeRole[]
+  scenesPresent  SceneCharacter[]
+  beatAssignments BeatCharacter[]
+  emotionalStates EmotionalState[]
+  voiceProfile    VoiceProfile?
+  focalizations   Focalization[]
+
+  // Relationships where this character is source or target
+  relationshipsAsSource Relationship[] @relation("RelationshipSource")
+  relationshipsAsTarget Relationship[] @relation("RelationshipTarget")
+
+  // Faction memberships
+  factionMemberships FactionMember[]
+
+  // Audience knowledge entries about this character
+  audienceKnowledgeEntries AudienceKnowledge[]
+
+  // Source material entity annotations
+  entityAnnotations EntityAnnotation[]
+
+  @@index([worldId])
+  @@index([worldId, name])
+  @@index([confirmationStatus])
+}
+
+model NarrativeRole {
+  id          String        @id @default(cuid())
+  framework   RoleFramework
+  roleName    String        // e.g., "Herald", "Subject", "Donor", "Protagonist"
+  description String?
+
+  // The character wearing this role mask
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  // Temporal scope: which scene range does this role apply?
+  validFromSceneId String?
+  validFromScene   Scene?  @relation("RoleValidFrom", fields: [validFromSceneId], references: [id])
+  validToSceneId   String?
+  validToScene     Scene?  @relation("RoleValidTo", fields: [validToSceneId], references: [id])
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([characterId])
+  @@index([framework])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  eventType   EventType
+
+  // Dual timeline positions
+  fabulaOrder   Int?    // Chronological position
+  sjuzhetOrder  Int?    // Narrative presentation position
+  fabulaDate    String? // In-world date (supports custom calendars as string)
+  duration      String? // How long the event takes in story time
+
+  // Significance
+  significance Float @default(0.5) // 0.0 - 1.0
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  // Location where event occurs
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  // Scene this event belongs to
+  sceneId String?
+  scene   Scene?  @relation(fields: [sceneId], references: [id])
+
+  // Branch (if this is a what-if event)
+  branchId String?
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Embedding for semantic search
+  embedding Unsupported("vector(1536)")?
+  searchVector Unsupported("tsvector")?
+
+  // Fabula/Sjuzhet timeline entries
+  fabulaEntries  FabulaEntry[]
+  sjuzhetEntries SjuzhetEntry[]
+
+  // Causal relations
+  causedBy  CausalRelation[] @relation("CausalEffect")
+  causes    CausalRelation[] @relation("CausalCause")
+
+  // Foreshadowing
+  setupsFor  SetupPayoff[] @relation("SetupEvent")
+  paysOffFor SetupPayoff[] @relation("PayoffEvent")
+
+  // Audience knowledge reveals
+  audienceReveals AudienceKnowledge[]
+
+  // Source annotations
+  entityAnnotations EntityAnnotation[]
+
+  @@index([worldId])
+  @@index([worldId, fabulaOrder])
+  @@index([worldId, sjuzhetOrder])
+  @@index([eventType])
+  @@index([sceneId])
+  @@index([branchId])
+}
+
+model Scene {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  // yWriter-style scene tracking
+  goal     String?
+  conflict String?
+  outcome  String?
+
+  // Ordering
+  sortOrder Int @default(0)
+
+  // Parent structural containers
+  sequenceId String?
+  sequence   Sequence? @relation(fields: [sequenceId], references: [id])
+
+  // Location
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  // Writing content (JSON from TipTap editor)
+  content     Json?
+  writingMode WritingMode @default(PROSE)
+  wordCount   Int         @default(0)
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Characters in this scene
+  characters SceneCharacter[]
+
+  // Events within this scene
+  events Event[]
+
+  // Beats within this scene
+  beats Beat[]
+
+  // Analytical annotations for this scene
+  valueChanges  ValueChange[]
+  pacingMetrics PacingMetric[]
+  emotionalStates EmotionalState[]
+
+  // Themes present in this scene
+  sceneThemes SceneTheme[]
+
+  // Narrative codes applied to this scene
+  narrativeCodes NarrativeCode[]
+
+  // Focalization
+  focalizations Focalization[]
+
+  // NarrativeRole temporal scopes referencing this scene
+  roleValidFroms NarrativeRole[] @relation("RoleValidFrom")
+  roleValidTos   NarrativeRole[] @relation("RoleValidTo")
+
+  // Relationship temporal scopes
+  relationshipValidFroms Relationship[] @relation("RelValidFrom")
+  relationshipValidTos   Relationship[] @relation("RelValidTo")
+
+  // Structure mappings
+  structureMappings StructureMapping[]
+
+  // Arc phases referencing this scene
+  arcPhaseStarts ArcPhase[] @relation("ArcPhaseStart")
+  arcPhaseEnds   ArcPhase[] @relation("ArcPhaseEnd")
+
+  @@index([worldId])
+  @@index([worldId, sortOrder])
+  @@index([sequenceId])
+  @@index([locationId])
+}
+
+// Junction: characters present in a scene
+model SceneCharacter {
+  id          String @id @default(cuid())
+  sceneId     String
+  scene       Scene     @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  // Role in this scene (optional quick label)
+  sceneRole String?
+
+  @@unique([sceneId, characterId])
+  @@index([sceneId])
+  @@index([characterId])
+}
+
+model Beat {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  notes       String?
+
+  // Beat sheet card fields (Othelia parity)
+  colorCode  String? // Hex color
+  tags       String[] // Tag array
+  starRating Int?     // 1-5
+
+  // Ordering within scene or standalone beat sheet
+  sortOrder Int @default(0)
+
+  // Parent scene (optional; beats can exist at world level for beat sheets)
+  sceneId String?
+  scene   Scene?  @relation(fields: [sceneId], references: [id])
+
+  // Character assignments
+  characters BeatCharacter[]
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Structure mappings
+  structureMappings StructureMapping[]
+
+  @@index([worldId])
+  @@index([worldId, sortOrder])
+  @@index([sceneId])
+}
+
+// Junction: characters assigned to a beat card
+model BeatCharacter {
+  id          String @id @default(cuid())
+  beatId      String
+  beat        Beat      @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([beatId, characterId])
+  @@index([beatId])
+  @@index([characterId])
+}
+
+model Sequence {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  sortOrder   Int     @default(0)
+
+  // Parent act
+  actId String?
+  act   Act?    @relation(fields: [actId], references: [id])
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Child scenes
+  scenes Scene[]
+
+  @@index([worldId])
+  @@index([worldId, sortOrder])
+  @@index([actId])
+}
+
+model Act {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  actNumber   Int
+  sortOrder   Int     @default(0)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Child sequences
+  sequences Sequence[]
+
+  @@index([worldId])
+  @@index([worldId, sortOrder])
+}
+
+model Location {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  history     String?
+  significance String?
+
+  // Map coordinates (optional)
+  latitude  Float?
+  longitude Float?
+  mapX      Float? // For custom/fantasy maps
+  mapY      Float?
+
+  // Parent location (hierarchical: country > city > building > room)
+  parentLocationId String?
+  parentLocation   Location?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
+  childLocations   Location[] @relation("LocationHierarchy")
+
+  // Visual reference
+  imageUrl String?
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  embedding    Unsupported("vector(1536)")?
+  searchVector Unsupported("tsvector")?
+
+  // Events at this location
+  events Event[]
+  // Scenes at this location
+  scenes Scene[]
+
+  // Source annotations
+  entityAnnotations EntityAnnotation[]
+
+  @@index([worldId])
+  @@index([worldId, name])
+  @@index([parentLocationId])
+}
+
+model StoryObject {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  significance String? // Why this object matters (Chekhov's gun, magical agent, etc.)
+
+  // Type tag for quick filtering
+  objectType  String? // weapon, artifact, document, vehicle, etc.
+  imageUrl    String?
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Foreshadowing: this object as setup or payoff
+  setupPayoffsAsSetup  SetupPayoff[] @relation("ObjectSetup")
+  setupPayoffsAsPayoff SetupPayoff[] @relation("ObjectPayoff")
+
+  // Source annotations
+  entityAnnotations EntityAnnotation[]
+
+  @@index([worldId])
+  @@index([worldId, name])
+}
+
+model Theme {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Scenes where this theme appears
+  sceneThemes SceneTheme[]
+
+  // Motifs expressing this theme
+  motifs Motif[]
+
+  // Thematic oppositions
+  thematicOppositions ThematicOpposition[]
+
+  @@index([worldId])
+  @@index([worldId, name])
+}
+
+// Junction: themes present in a scene
+model SceneTheme {
+  id      String @id @default(cuid())
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  themeId String
+  theme   Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  // How strongly is this theme present? (0.0 - 1.0)
+  intensity Float @default(0.5)
+
+  @@unique([sceneId, themeId])
+  @@index([sceneId])
+  @@index([themeId])
+}
+
+model Motif {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  symbolism   String? // What this motif represents
+
+  // Parent theme
+  themeId String?
+  theme   Theme?  @relation(fields: [themeId], references: [id])
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Occurrences tracked as JSON array of {sceneId, description} entries
+  occurrences Json?
+
+  @@index([worldId])
+  @@index([themeId])
+}
+
+model Faction {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  hierarchy   String? // Description of internal power structure
+  powerLevel  Float   @default(0.5) // 0.0 - 1.0 relative power
+
+  imageUrl String?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Members
+  members FactionMember[]
+
+  // Alliances and conflicts (as source or target)
+  alliancesAsSource FactionRelation[] @relation("FactionRelSource")
+  alliancesAsTarget FactionRelation[] @relation("FactionRelTarget")
+
+  @@index([worldId])
+  @@index([worldId, name])
+}
+
+model FactionMember {
+  id        String @id @default(cuid())
+  role      String? // Role within the faction (leader, soldier, spy, etc.)
+  rank      Int?
+
+  factionId   String
+  faction     Faction   @relation(fields: [factionId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  // Temporal: when did they join / leave?
+  joinedAtSceneId String?
+  leftAtSceneId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([factionId, characterId])
+  @@index([factionId])
+  @@index([characterId])
+}
+
+model FactionRelation {
+  id             String  @id @default(cuid())
+  relationType   String  // alliance, conflict, vassalage, trade, rivalry, etc.
+  strength       Float   @default(0.5) // 0.0 (weak) - 1.0 (strong)
+  description    String?
+
+  sourceFactionId String
+  sourceFaction   Faction @relation("FactionRelSource", fields: [sourceFactionId], references: [id], onDelete: Cascade)
+  targetFactionId String
+  targetFaction   Faction @relation("FactionRelTarget", fields: [targetFactionId], references: [id], onDelete: Cascade)
+
+  // Temporal scope
+  validFromSceneId String?
+  validToSceneId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceFactionId])
+  @@index([targetFactionId])
+}
+
+model Relationship {
+  id               String           @id @default(cuid())
+  relationshipType RelationshipType
+  customTypeName   String?          // When type is CUSTOM
+  description      String?
+  weight           Float            @default(0.5) // Strength 0.0 - 1.0
+  isBidirectional  Boolean          @default(true)
+
+  // Source and target characters
+  sourceCharacterId String
+  sourceCharacter   Character @relation("RelationshipSource", fields: [sourceCharacterId], references: [id], onDelete: Cascade)
+  targetCharacterId String
+  targetCharacter   Character @relation("RelationshipTarget", fields: [targetCharacterId], references: [id], onDelete: Cascade)
+
+  // Temporal scope: valid during which scene range
+  validFromSceneId String?
+  validFromScene   Scene?  @relation("RelValidFrom", fields: [validFromSceneId], references: [id])
+  validToSceneId   String?
+  validToScene     Scene?  @relation("RelValidTo", fields: [validToSceneId], references: [id])
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([sourceCharacterId])
+  @@index([targetCharacterId])
+  @@index([worldId, relationshipType])
+  @@index([validFromSceneId])
+  @@index([validToSceneId])
+}
+
+model SourceMaterial {
+  id           String             @id @default(cuid())
+  title        String
+  fileName     String
+  fileUrl      String             // Path to stored file
+  fileSize     Int?               // Bytes
+  mimeType     String?
+  materialType SourceMaterialType
+
+  // Parsed content
+  parsedText   String?            // Full extracted text / transcript
+  transcript   Json?              // Time-coded transcript segments [{start, end, text, speaker}]
+
+  // Processing state
+  ingestionStatus IngestionStatus @default(PENDING)
+  ingestionError  String?
+  ingestionJobId  String?         // BullMQ job reference
+
+  // Structural markers extracted during parsing
+  structuralMarkers Json?         // [{type: "chapter"|"scene"|"act", position, title}]
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Entity annotations linking source text to extracted entities
+  entityAnnotations EntityAnnotation[]
+
+  @@index([worldId])
+  @@index([ingestionStatus])
+}
+
+// Links a span of source material to an extracted entity
+model EntityAnnotation {
+  id String @id @default(cuid())
+
+  sourceMaterialId String
+  sourceMaterial   SourceMaterial @relation(fields: [sourceMaterialId], references: [id], onDelete: Cascade)
+
+  // Position in source (text offset or time code)
+  startOffset Int?    // Character offset in parsedText
+  endOffset   Int?
+  startTime   Float?  // Seconds (for audio/video)
+  endTime     Float?
+
+  // The entity this annotation refers to (polymorphic via optional FKs)
+  characterId   String?
+  character     Character?   @relation(fields: [characterId], references: [id])
+  locationId    String?
+  location      Location?    @relation(fields: [locationId], references: [id])
+  eventId       String?
+  event         Event?       @relation(fields: [eventId], references: [id])
+  storyObjectId String?
+  storyObject   StoryObject? @relation(fields: [storyObjectId], references: [id])
+
+  // Extracted text snippet
+  snippet String?
+
+  confirmationStatus EntityConfirmationStatus @default(PROPOSED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceMaterialId])
+  @@index([characterId])
+  @@index([locationId])
+  @@index([eventId])
+}
+
+// =============================================================================
+// STRUCTURAL LAYERS
+// =============================================================================
+
+model FabulaTimeline {
+  id          String  @id @default(cuid())
+  title       String  @default("Fabula Timeline")
+  description String?
+
+  worldId String     @unique
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries FabulaEntry[]
+
+  @@index([worldId])
+}
+
+model FabulaEntry {
+  id            String @id @default(cuid())
+  sortOrder     Int    @default(0)
+  fabulaDate    String? // In-world date string (supports custom calendars)
+  calendarDate  DateTime? // Real datetime if applicable
+  description   String?
+
+  timelineId String
+  timeline   FabulaTimeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([timelineId, sortOrder])
+  @@index([eventId])
+}
+
+model SjuzhetTimeline {
+  id          String  @id @default(cuid())
+  title       String  @default("Sjuzhet Timeline")
+  description String?
+
+  worldId String     @unique
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries SjuzhetEntry[]
+
+  @@index([worldId])
+}
+
+model SjuzhetEntry {
+  id          String  @id @default(cuid())
+  sortOrder   Int     @default(0)
+  description String?
+
+  // Genette narrative time categories
+  orderType     String? // analepsis, prolepsis, simultaneous
+  durationNote  String? // summary, scene, stretch, ellipsis, pause
+  frequencyNote String? // singulative, repetitive, iterative
+
+  timelineId String
+  timeline   SjuzhetTimeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([timelineId, sortOrder])
+  @@index([eventId])
+}
+
+model StructureTemplate {
+  id          String @id @default(cuid())
+  name        String // "Hero's Journey", "Save the Cat", "Kishotenketsu", etc.
+  description String?
+  framework   String // Category: "campbell", "snyder", "harmon", "dramatica", etc.
+
+  // Template definition: ordered array of structure beats
+  // Stored as JSON for flexibility. Each entry:
+  // { name, description, expectedPercentage, phase, isRequired }
+  definition Json
+
+  // Is this a built-in template or user-created?
+  isBuiltIn Boolean @default(false)
+
+  // Optional: world-specific (null = global template available to all)
+  worldId String?
+  world   StoryWorld? @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Structure beats (detailed breakdown)
+  structureBeats StructureBeat[]
+
+  // Mappings of story content to this template
+  structureMappings StructureMapping[]
+
+  @@index([worldId])
+  @@index([name])
+  @@index([framework])
+}
+
+model StructureBeat {
+  id                   String  @id @default(cuid())
+  name                 String  // "Call to Adventure", "Opening Image", "Ki (Introduction)"
+  description          String?
+  expectedPercentage   Float?  // 0.0 - 1.0 expected position in narrative
+  phase                String? // Which phase/act this beat belongs to
+  sortOrder            Int     @default(0)
+  isRequired           Boolean @default(true)
+
+  templateId String
+  template   StructureTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Mappings
+  structureMappings StructureMapping[]
+
+  @@index([templateId])
+  @@index([templateId, sortOrder])
+}
+
+model StructureMapping {
+  id    String @id @default(cuid())
+  notes String?
+
+  // Which template beat is being mapped
+  structureBeatId String
+  structureBeat   StructureBeat @relation(fields: [structureBeatId], references: [id], onDelete: Cascade)
+
+  // What story content maps to this beat (polymorphic: scene or beat)
+  sceneId String?
+  scene   Scene?  @relation(fields: [sceneId], references: [id])
+  beatId  String?
+  beat    Beat?   @relation(fields: [beatId], references: [id])
+
+  // Actual position vs. expected (for deviation analysis)
+  actualPercentage Float?
+
+  // Which template is this mapping part of
+  templateId String
+  template   StructureTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([structureBeatId])
+  @@index([templateId])
+  @@index([sceneId])
+  @@index([beatId])
+}
+
+model Arc {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  arcType     ArcType
+
+  // For character arcs, link to the character
+  characterId String?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Phases / stages of this arc
+  phases ArcPhase[]
+
+  @@index([worldId])
+  @@index([worldId, arcType])
+  @@index([characterId])
+}
+
+model ArcPhase {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  phaseType   ArcPhaseType
+  sortOrder   Int          @default(0)
+
+  // Value at this phase (e.g., hope level, power level)
+  value Float?
+
+  // Scene range for this phase
+  startSceneId String?
+  startScene   Scene?  @relation("ArcPhaseStart", fields: [startSceneId], references: [id])
+  endSceneId   String?
+  endScene     Scene?  @relation("ArcPhaseEnd", fields: [endSceneId], references: [id])
+
+  arcId String
+  arc   Arc @relation(fields: [arcId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([arcId])
+  @@index([arcId, sortOrder])
+}
+
+model CanonSnapshot {
+  id          String   @id @default(cuid())
+  name        String   // "v1.0", "Pre-Season-3", "After beta feedback"
+  description String?
+  snapshotData Json    // Full serialized world state
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Branches forked from this snapshot
+  branches Branch[]
+
+  @@index([worldId])
+  @@index([worldId, createdAt])
+}
+
+model Branch {
+  id          String       @id @default(cuid())
+  name        String       // "What if character X survived?"
+  description String?
+  status      BranchStatus @default(ACTIVE)
+
+  // Forked from which snapshot
+  canonSnapshotId String?
+  canonSnapshot   CanonSnapshot? @relation(fields: [canonSnapshotId], references: [id])
+
+  // The divergence point
+  forkPointEventId String?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Events belonging to this branch
+  events Event[]
+
+  @@index([worldId])
+  @@index([canonSnapshotId])
+  @@index([status])
+}
+
+// =============================================================================
+// ANALYTICAL ANNOTATIONS
+// =============================================================================
+
+model ValueChange {
+  id        String @id @default(cuid())
+  valueName String // e.g., "hope", "justice", "freedom", "love"
+
+  // Direction and magnitude of change
+  fromValue Float  // Starting position (e.g., -1.0 to 1.0)
+  toValue   Float  // Ending position
+  magnitude Float? // Computed |toValue - fromValue|
+
+  description String?
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([sceneId])
+  @@index([valueName])
+}
+
+model NarrativeCode {
+  id       String            @id @default(cuid())
+  codeType NarrativeCodeType
+  label    String?           // Short label for this annotation
+  description String?
+
+  // Text span this code applies to
+  textStart Int?   // Character offset in scene content
+  textEnd   Int?
+  snippet   String? // The tagged text segment
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([sceneId])
+  @@index([codeType])
+}
+
+model Enigma {
+  id          String       @id @default(cuid())
+  question    String       // The mystery / question
+  status      EnigmaStatus
+  description String?
+
+  // When posed
+  posedAtSceneId String?
+  // When answered (if answered)
+  answeredAtSceneId String?
+  answer            String?
+
+  // Clue entries (sustained phase)
+  clues Json? // [{sceneId, description, significance}]
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([status])
+}
+
+model SetupPayoff {
+  id          String  @id @default(cuid())
+  description String?
+
+  // The setup event/object
+  setupEventId    String?
+  setupEvent      Event?       @relation("SetupEvent", fields: [setupEventId], references: [id])
+  setupObjectId   String?
+  setupObject     StoryObject? @relation("ObjectSetup", fields: [setupObjectId], references: [id])
+
+  // The payoff event/object
+  payoffEventId   String?
+  payoffEvent     Event?       @relation("PayoffEvent", fields: [payoffEventId], references: [id])
+  payoffObjectId  String?
+  payoffObject    StoryObject? @relation("ObjectPayoff", fields: [payoffObjectId], references: [id])
+
+  // Is this orphaned (setup without payoff) or deus ex machina (payoff without setup)?
+  isOrphanSetup      Boolean @default(false)
+  isDeusExMachina    Boolean @default(false)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([setupEventId])
+  @@index([payoffEventId])
+  @@index([isOrphanSetup])
+  @@index([isDeusExMachina])
+}
+
+model ThematicOpposition {
+  id        String @id @default(cuid())
+  poleA     String // e.g., "life"
+  poleB     String // e.g., "death"
+  description String?
+
+  // Semiotic square extensions (optional)
+  notPoleA String? // e.g., "not-life" (undeath?)
+  notPoleB String? // e.g., "not-death" (immortality?)
+
+  themeId String
+  theme   Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([themeId])
+}
+
+model PacingMetric {
+  id               String @id @default(cuid())
+  actionDensity    Float? // 0.0 - 1.0
+  dialogueRatio    Float? // 0.0 - 1.0
+  descriptionDensity Float? // 0.0 - 1.0
+  tensionLevel     Float? // 0.0 - 1.0
+  sceneLength      Int?   // Word count
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sceneId]) // One pacing metric per scene
+  @@index([worldId])
+}
+
+model EmotionalState {
+  id      String @id @default(cuid())
+  // Emotional dimensions (each 0.0 - 1.0)
+  joy     Float  @default(0)
+  grief   Float  @default(0)
+  anger   Float  @default(0)
+  fear    Float  @default(0)
+  hope    Float  @default(0)
+  surprise Float @default(0)
+
+  // Optional: dominant emotion label
+  dominantEmotion String?
+
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, sceneId])
+  @@index([worldId])
+  @@index([characterId])
+  @@index([sceneId])
+}
+
+model CausalRelation {
+  id            String        @id @default(cuid())
+  causalityType CausalityType
+  description   String?
+  strength      Float         @default(0.5) // How strong is this causal link
+
+  // Cause event
+  causeEventId String
+  causeEvent   Event @relation("CausalCause", fields: [causeEventId], references: [id], onDelete: Cascade)
+
+  // Effect event
+  effectEventId String
+  effectEvent   Event @relation("CausalEffect", fields: [effectEventId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([causeEventId])
+  @@index([effectEventId])
+  @@index([causalityType])
+}
+
+model VoiceProfile {
+  id String @id @default(cuid())
+
+  // Dialogue analysis metrics
+  averageSentenceLength Float?
+  vocabularyRichness    Float?  // Type-token ratio
+  formalityLevel        Float?  // 0.0 (casual) - 1.0 (formal)
+  readingLevel          Float?  // Grade level
+
+  // Speech patterns (stored as JSON for flexibility)
+  speechTics       String[] // Recurring verbal habits
+  favoriteWords    String[] // Most-used distinctive words
+  dialectFeatures  Json?    // Dialect/accent markers
+  sentencePatterns Json?    // Common syntactic structures
+
+  characterId String    @unique
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+}
+
+model AudienceKnowledge {
+  id          String  @id @default(cuid())
+  information String  // What piece of information
+  description String?
+
+  // Does the audience know this?
+  audienceKnows Boolean @default(false)
+
+  // Which characters know this?
+  // Stored as JSON: [{characterId, knowsSince: sceneId}]
+  characterKnowledge Json?
+
+  // When was this revealed to the audience?
+  revealedAtEventId String?
+  revealedAtEvent   Event? @relation(fields: [revealedAtEventId], references: [id])
+
+  // Is this creating dramatic irony?
+  isDramaticIrony Boolean @default(false)
+
+  // Relevant character (optional; for character-specific knowledge)
+  aboutCharacterId String?
+  aboutCharacter   Character? @relation(fields: [aboutCharacterId], references: [id])
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([revealedAtEventId])
+  @@index([isDramaticIrony])
+  @@index([aboutCharacterId])
+}
+
+// =============================================================================
+// WORLD SYSTEMS
+// =============================================================================
+
+model CalendarSystem {
+  id          String @id @default(cuid())
+  name        String // "Westeros Calendar", "Shire Reckoning"
+  description String?
+
+  // Calendar definition (JSON for flexibility)
+  // { daysInWeek, monthNames[], daysPerMonth[], eras[], epochName, ... }
+  definition Json
+
+  // Is this the active calendar for the world?
+  isDefault Boolean @default(false)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+}
+
+model MagicSystem {
+  id          String  @id @default(cuid())
+  name        String  // "The One Power", "Allomancy"
+  description String?
+
+  // Rules and mechanics (structured JSON)
+  // { rules[], costs[], limitations[], sources[], practitioners[] }
+  rules       Json?
+  costs       Json?   // What it costs to use
+  limitations Json?   // What it cannot do
+  sources     Json?   // Where the power comes from
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  @@index([worldId])
+}
+
+model WorldRule {
+  id          String  @id @default(cuid())
+  name        String  // "Dragons cannot cross the Wall"
+  description String?
+  category    String? // "physics", "magic", "social", "political", etc.
+
+  // Is this a hard rule (enforced by consistency checker) or a soft guideline?
+  isHardRule Boolean @default(true)
+
+  // Severity if violated
+  severity String @default("WARNING") // "ERROR", "WARNING", "INFO"
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([category])
+  @@index([isHardRule])
+}
+
+// =============================================================================
+// META-STRUCTURAL
+// =============================================================================
+
+model Narrator {
+  id            String       @id @default(cuid())
+  name          String?      // Named narrator (if applicable)
+  narratorType  NarratorType
+  description   String?
+  isReliable    Boolean      @default(true)
+
+  // Scope: entire world or specific range
+  scopeNote String? // "Chapters 1-10", "Season 1", etc.
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([narratorType])
+}
+
+model Focalization {
+  id               String           @id @default(cuid())
+  focalizationType FocalizationType
+  description      String?
+
+  // Whose perspective
+  characterId String?
+  character   Character? @relation(fields: [characterId], references: [id])
+
+  // Which scene
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([sceneId])
+  @@index([characterId])
+}
+
+model NarrativeLevel {
+  id          String  @id @default(cuid())
+  name        String  // "Frame story", "Inner tale", "Dream sequence"
+  description String?
+  depth       Int     @default(0) // 0 = outermost, 1 = first embedded, etc.
+
+  // Parent level (for nesting: story within story)
+  parentLevelId String?
+  parentLevel   NarrativeLevel?  @relation("NarrativeLevelNesting", fields: [parentLevelId], references: [id])
+  childLevels   NarrativeLevel[] @relation("NarrativeLevelNesting")
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([parentLevelId])
+  @@index([depth])
+}
+
+model GenreType {
+  id              String              @id @default(cuid())
+  classification  GenreClassification
+  description     String?
+
+  // Required story components for this genre (Blake Snyder)
+  // JSON: { requiredBeats[], monsterType?, fleeceGoal?, ... }
+  requiredComponents Json?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([classification])
+}
+
+model StoryPattern {
+  id          String           @id @default(cuid())
+  patternType StoryPatternType
+  description String?
+
+  // Pattern-specific metadata
+  // For CYCLICAL: { cycleCount, cycleUnit }
+  // For ENSEMBLE: { ensembleSize, convergencePoints }
+  metadata Json?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([patternType])
+}
+
+// =============================================================================
+// WRITING SURFACE & TREATMENT
+// =============================================================================
+
+model Manuscript {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  writingMode WritingMode @default(PROSE)
+
+  // TipTap document content (JSON)
+  content Json?
+
+  // Writing targets
+  wordCountTarget Int?
+  wordCountCurrent Int @default(0)
+
+  // Ordering (for multi-part manuscripts)
+  sortOrder Int @default(0)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  // Chapters
+  chapters Chapter[]
+
+  @@index([worldId])
+  @@index([worldId, sortOrder])
+}
+
+model Chapter {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  sortOrder   Int     @default(0)
+
+  // TipTap content (JSON)
+  content Json?
+  wordCount Int @default(0)
+
+  manuscriptId String
+  manuscript   Manuscript @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([manuscriptId])
+  @@index([manuscriptId, sortOrder])
+}
+
+model Treatment {
+  id          String  @id @default(cuid())
+  title       String  @default("Treatment")
+  description String?
+
+  // Auto-generated treatment content assembled from beats
+  generatedContent String?
+  // User overrides (manual edits that persist until beat changes)
+  userOverrides    Json?   // { [beatId]: overrideText }
+  // Final merged content
+  finalContent     String?
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+}
+
+// =============================================================================
+// WIKI (Auto-linking encyclopedia)
+// =============================================================================
+
+model WikiArticle {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String
+  content     Json?   // TipTap content
+
+  // Auto-linking metadata: which entities are referenced in this article
+  // Computed on save; used for cross-referencing
+  linkedEntityIds String[]
+
+  // Tags for categorization
+  tags String[]
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+  embedding    Unsupported("vector(1536)")?
+
+  @@unique([worldId, slug])
+  @@index([worldId])
+  @@index([worldId, title])
+}
+
+// =============================================================================
+// COLLABORATION (Comments, @mentions)
+// =============================================================================
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  // What entity is this comment on (polymorphic via entityType + entityId)
+  entityType String // "Character", "Scene", "Beat", "Event", etc.
+  entityId   String
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  worldId String
+  world   StoryWorld @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  // Thread support
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentThread", fields: [parentCommentId], references: [id])
+  replies         Comment[] @relation("CommentThread")
+
+  // Mentions (user IDs mentioned in this comment)
+  mentionedUserIds String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([worldId])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([parentCommentId])
+}
