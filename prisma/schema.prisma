@@ -19,24 +19,59 @@ datasource db {
 // ============================================================================
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  avatarUrl String?
-  bio       String?
-  metadata  Json     @default("{}")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String?
+  emailVerified DateTime?
+  avatarUrl     String?
+  bio           String?
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   ownedWorlds      StoryWorld[]
   memberships      WorldMembership[]
   comments         Comment[]
   annotations      Annotation[]
   manuscripts      Manuscript[]
+  accounts         Account[]
+  sessions         Session[]
 
   @@index([email])
   @@index([deletedAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model WorldMembership {
@@ -260,6 +295,8 @@ model Character {
   eventParticipants EventParticipant[]
   // Scene participation
   sceneCharacters   SceneCharacter[]
+  // Assigned beats
+  beats             Beat[]
 
   @@index([storyWorldId])
   @@index([name])
@@ -433,6 +470,10 @@ model Beat {
   name            String
   description     String?
   position        Float    @default(0)
+  color           String?
+  starRating      Int?     // 1-5 star rating (Othelia parity)
+  notes           String?
+  status          String   @default("todo") // todo, in_progress, done — kanban column
   metadata        Json     @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -444,10 +485,14 @@ model Beat {
   sequenceId String?
   sequence   Sequence? @relation(fields: [sequenceId], references: [id])
 
+  characterId String?
+  character   Character? @relation(fields: [characterId], references: [id])
+
   scenes Scene[]
 
   @@index([storyWorldId])
   @@index([sequenceId])
+  @@index([characterId])
   @@index([position])
   @@index([deletedAt])
 }
