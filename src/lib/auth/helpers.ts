@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
+import { verifyWorldOwnership } from '@/lib/db/queries'
 import type { SessionUser } from '@/types'
 
 /**
@@ -32,6 +33,31 @@ export async function requireAuth(): Promise<
       NextResponse.json(
         { error: 'Not authenticated', code: 'UNAUTHORIZED' },
         { status: 401 }
+      ),
+    ]
+  }
+  return [user, null]
+}
+
+/**
+ * Require auth + world ownership in one call. Combines requireAuth + verifyWorldOwnership.
+ * Usage in world-scoped API routes:
+ *   const { id } = await params
+ *   const [user, errorResponse] = await requireWorldAuth(id)
+ *   if (errorResponse) return errorResponse
+ */
+export async function requireWorldAuth(
+  worldId: string
+): Promise<[SessionUser, null] | [null, NextResponse]> {
+  const [user, authError] = await requireAuth()
+  if (authError) return [null, authError]
+  const isOwner = await verifyWorldOwnership(worldId, user.id)
+  if (!isOwner) {
+    return [
+      null,
+      NextResponse.json(
+        { error: 'World not found', code: 'NOT_FOUND' },
+        { status: 404 }
       ),
     ]
   }
