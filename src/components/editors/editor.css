@@ -1,0 +1,77 @@
+.storyforge-editor {
+  outline: none;
+  min-height: 500px;
+  padding: 2rem;
+}
+
+.storyforge-editor:focus {
+  outline: none;
+}
+
+/* Prose mode */
+.prose-mode {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.prose-mode p {
+  margin-bottom: 1em;
+}
+
+.prose-mode h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.prose-mode h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.prose-mode h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  line-height: 1.4;
+}
+
+.prose-mode blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1rem;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+.prose-mode ul {
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.prose-mode ol {
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+
+/* ProseMirror focus */
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Placeholder */
+.ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
