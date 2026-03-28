@@ -27,7 +27,7 @@ import { VizShell } from '@/components/visualizations/viz-shell'
 // Data types
 // ---------------------------------------------------------------------------
 
-interface FactionNode {
+export interface FactionNode {
   id: string
   name: string
   color: string
@@ -38,7 +38,7 @@ interface FactionNode {
   childFactionIds: string[]
 }
 
-interface FactionAlliance {
+export interface FactionAlliance {
   id: string
   factionAId: string
   factionBId: string
@@ -46,7 +46,7 @@ interface FactionAlliance {
   strength: number
 }
 
-interface FactionMapData {
+export interface FactionMapData {
   factions: FactionNode[]
   alliances: FactionAlliance[]
 }

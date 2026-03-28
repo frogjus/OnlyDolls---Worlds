@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import {
   Plus,
@@ -8,9 +9,12 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  LayoutGrid,
+  GitFork,
 } from 'lucide-react'
 
 import type { Faction, CreateFactionPayload, UpdateFactionPayload } from '@/types'
+import type { FactionMapData } from '@/components/visualizations/faction-map'
 import {
   useFactions,
   useCreateFaction,
@@ -39,6 +43,57 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+
+const FactionMap = dynamic(
+  () => import('@/components/visualizations/faction-map'),
+  { ssr: false },
+)
+
+// ---------------------------------------------------------------------------
+// Color palette by faction type
+// ---------------------------------------------------------------------------
+
+const FACTION_TYPE_COLORS: Record<string, string> = {
+  political: '#3b82f6',
+  religious: '#a855f7',
+  criminal: '#ef4444',
+  military: '#f97316',
+  merchant: '#eab308',
+  academic: '#14b8a6',
+  noble: '#ec4899',
+}
+const DEFAULT_FACTION_COLOR = '#6b7280'
+
+function factionColor(type: string | null | undefined): string {
+  if (!type) return DEFAULT_FACTION_COLOR
+  return FACTION_TYPE_COLORS[type.toLowerCase()] ?? DEFAULT_FACTION_COLOR
+}
+
+// ---------------------------------------------------------------------------
+// Transform DB factions → FactionMapData
+// ---------------------------------------------------------------------------
+
+function buildFactionMapData(factions: Faction[]): FactionMapData {
+  const nodes = factions.map((f) => {
+    const meta = (f.metadata && typeof f.metadata === 'object' && !Array.isArray(f.metadata))
+      ? (f.metadata as Record<string, unknown>)
+      : {}
+    const rawPower = typeof meta.powerLevel === 'number' ? meta.powerLevel : 3
+    // Normalize: if stored as 1-5 scale, convert to 0-1; if already 0-1, keep as-is
+    const powerLevel = rawPower > 1 ? rawPower / 5 : rawPower
+
+    return {
+      id: f.id,
+      name: f.name,
+      color: factionColor(f.type),
+      powerLevel,
+      memberCount: typeof meta.memberCount === 'number' ? meta.memberCount : 0,
+      childFactionIds: [] as string[],
+    }
+  })
+
+  return { factions: nodes, alliances: [] }
+}
 
 // ---------------------------------------------------------------------------
 // Create Dialog
@@ -437,9 +492,15 @@ export default function FactionsPage() {
     editingFactionId,
     setCreateDialogOpen,
   } = useFactionStore()
+  const [view, setView] = useState<'list' | 'map'>('list')
 
   const factions = data?.data ?? []
   const editingFaction = factions.find((f) => f.id === editingFactionId)
+
+  const mapData = useMemo(
+    () => (factions.length > 0 ? buildFactionMapData(factions) : undefined),
+    [factions],
+  )
 
   return (
     <div className="p-6 space-y-6">
@@ -452,10 +513,32 @@ export default function FactionsPage() {
               : 'Factions, organizations, and power dynamics.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Faction
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-md border">
+            <Button
+              variant={view === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setView('list')}
+              className="rounded-r-none"
+            >
+              <LayoutGrid className="mr-1 h-4 w-4" />
+              Cards
+            </Button>
+            <Button
+              variant={view === 'map' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setView('map')}
+              className="rounded-l-none"
+            >
+              <GitFork className="mr-1 h-4 w-4" />
+              Map
+            </Button>
+          </div>
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Faction
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -466,7 +549,7 @@ export default function FactionsPage() {
         </div>
       ) : factions.length === 0 ? (
         <EmptyState />
-      ) : (
+      ) : view === 'list' ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {factions.map((faction) => (
             <FactionCard
@@ -475,6 +558,10 @@ export default function FactionsPage() {
               worldId={worldId}
             />
           ))}
+        </div>
+      ) : (
+        <div className="h-[600px]">
+          <FactionMap data={mapData} />
         </div>
       )}
 
