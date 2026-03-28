@@ -1,0 +1,1455 @@
+// ============================================================================
+// StoryForge — Story World Architecture Platform
+// Prisma Schema (PostgreSQL + pgvector)
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), pg_trgm]
+}
+
+// ============================================================================
+// 1. COLLABORATION — Users, Membership, Comments, Annotations
+// ============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  bio       String?
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  ownedWorlds      StoryWorld[]
+  memberships      WorldMembership[]
+  comments         Comment[]
+  annotations      Annotation[]
+  manuscripts      Manuscript[]
+
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model WorldMembership {
+  id        String   @id @default(cuid())
+  role      WorldRole @default(VIEWER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@unique([userId, storyWorldId])
+  @@index([storyWorldId])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+enum WorldRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+/// Polymorphic comment — attaches to any entity via targetType + targetId
+model Comment {
+  id         String   @id @default(cuid())
+  body       String
+  targetType String
+  targetId   String
+  resolved   Boolean  @default(false)
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  parentId String?
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentThread")
+
+  @@index([targetType, targetId])
+  @@index([storyWorldId])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+/// Polymorphic annotation — highlight / pin on any entity
+model Annotation {
+  id         String   @id @default(cuid())
+  label      String
+  body       String?
+  targetType String
+  targetId   String
+  anchor     Json?    // positional data (text range, coordinates, etc.)
+  color      String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Polymorphic tag
+model Tag {
+  id         String   @id @default(cuid())
+  name       String
+  color      String?
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+  deletedAt  DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([storyWorldId, name])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 2. CORE WORLD — StoryWorld and its primary entities
+// ============================================================================
+
+model StoryWorld {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  genre       String?
+  logline     String?
+  coverUrl    String?
+  settings    Json     @default("{}")  // world-level preferences
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(1536)")?
+  searchBody  Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  // Core entities
+  memberships       WorldMembership[]
+  characters        Character[]
+  events            Event[]
+  scenes            Scene[]
+  beats             Beat[]
+  sequences         Sequence[]
+  acts              Act[]
+  locations         Location[]
+  objects           StoryObject[]
+  themes            Theme[]
+  motifs            Motif[]
+  factions          Faction[]
+  relationships     Relationship[]
+  sourceMaterials   SourceMaterial[]
+
+  // Structural layers
+  fabulaTimelines   FabulaTimeline[]
+  sjuzhetTimelines  SjuzhetTimeline[]
+  structureTemplates StructureTemplate[]
+  structureMappings StructureMapping[]
+  arcs              Arc[]
+  canonSnapshots    CanonSnapshot[]
+  branches          Branch[]
+
+  // Analytical annotations
+  valueChanges         ValueChange[]
+  narrativeCodes       NarrativeCode[]
+  enigmas              Enigma[]
+  setupPayoffs         SetupPayoff[]
+  thematicOppositions  ThematicOpposition[]
+  pacingMetrics        PacingMetric[]
+  emotionalStates      EmotionalState[]
+  causalRelations      CausalRelation[]
+  voiceProfiles        VoiceProfile[]
+  audienceKnowledge    AudienceKnowledge[]
+
+  // World systems
+  calendarSystems CalendarSystem[]
+  magicSystems    MagicSystem[]
+  worldRules      WorldRule[]
+
+  // Meta-structural
+  narrators        Narrator[]
+  focalizations    Focalization[]
+  narrativeLevels  NarrativeLevel[]
+  genreTypes       GenreType[]
+  storyPatterns    StoryPattern[]
+
+  // Writing surface
+  manuscripts Manuscript[]
+  treatments  Treatment[]
+
+  // Collaboration
+  comments    Comment[]
+  annotations Annotation[]
+  tags        Tag[]
+
+  @@index([ownerId])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 3. CHARACTERS
+// ============================================================================
+
+model Character {
+  id            String   @id @default(cuid())
+  name          String
+  aliases       String[] @default([])
+  description   String?
+  backstory     String?
+  physicalDesc  String?
+  psychProfile  String?
+  archetype     String?  // default archetype, overridden per scene
+  goals         Json     @default("[]")
+  traits        Json     @default("[]")
+  metadata      Json     @default("{}")
+  embedding     Unsupported("vector(1536)")?
+  searchBody    Unsupported("tsvector")?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  // Junction: per-scene roles
+  sceneRoles       CharacterSceneRole[]
+  // Relationships where this character is either side
+  relationshipsAs1 Relationship[] @relation("RelationshipChar1")
+  relationshipsAs2 Relationship[] @relation("RelationshipChar2")
+  // Faction membership
+  factionMembers   FactionMember[]
+  // Emotional states
+  emotionalStates  EmotionalState[]
+  // Voice
+  voiceProfiles    VoiceProfile[]
+  // Audience knowledge
+  audienceKnowledge AudienceKnowledge[]
+  // Arcs
+  arcs             Arc[]
+  // Events participated in
+  eventParticipants EventParticipant[]
+  // Scene participation
+  sceneCharacters   SceneCharacter[]
+
+  @@index([storyWorldId])
+  @@index([name])
+  @@index([deletedAt])
+}
+
+/// Junction: Character × Scene × RoleType — archetype/actant role per scene
+model CharacterSceneRole {
+  id        String   @id @default(cuid())
+  roleType  String   // e.g. "protagonist", "antagonist", "mentor", "herald", "trickster"
+  actant    String?  // Greimas actant: subject, object, sender, receiver, helper, opponent
+  notes     String?
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+  sceneId     String
+  scene       Scene     @relation(fields: [sceneId], references: [id])
+
+  @@unique([characterId, sceneId])
+  @@index([sceneId])
+  @@index([characterId])
+}
+
+// ============================================================================
+// 4. EVENTS — exist on both fabula and sjuzhet timelines
+// ============================================================================
+
+model Event {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  fabulaPosition   Float?   // chronological order (sortable)
+  fabulaDate       String?  // in-world date (free text — uses CalendarSystem)
+  isKeyEvent       Boolean  @default(false)
+  causalPreconditions Json  @default("[]")
+  consequences     Json     @default("[]")
+  metadata         Json     @default("{}")
+  embedding        Unsupported("vector(1536)")?
+  searchBody       Unsupported("tsvector")?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  // Dual-timeline placement via junction tables
+  fabulaPlacements  FabulaTimelineEvent[]
+  sjuzhetPlacements SjuzhetTimelineEvent[]
+
+  // Participants
+  participants EventParticipant[]
+
+  // Scenes that dramatize this event
+  scenes Scene[]
+
+  // Causal relations
+  causalCauses  CausalRelation[] @relation("CausalCause")
+  causalEffects CausalRelation[] @relation("CausalEffect")
+
+  // Relationships scoped to events
+  relationshipsFrom Relationship[] @relation("RelValidFrom")
+  relationshipsTo   Relationship[] @relation("RelValidTo")
+
+  // Value changes
+  valueChanges ValueChange[]
+
+  @@index([storyWorldId])
+  @@index([fabulaPosition])
+  @@index([deletedAt])
+}
+
+model EventParticipant {
+  id   String @id @default(cuid())
+  role String @default("participant") // participant, instigator, witness, victim, etc.
+
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@unique([eventId, characterId])
+  @@index([characterId])
+}
+
+// ============================================================================
+// 5. NARRATIVE STRUCTURE — Scene, Beat, Sequence, Act
+// ============================================================================
+
+model Scene {
+  id              String   @id @default(cuid())
+  name            String
+  summary         String?
+  content         String?  // full scene prose (optional)
+  sjuzhetPosition Float?   // narrative presentation order
+  purpose         String?  // e.g. "exposition", "climax", "resolution"
+  tone            String?
+  polarity        String?  // +/-/neutral value shift
+  wordCountTarget Int?
+  metadata        Json     @default("{}")
+  embedding       Unsupported("vector(1536)")?
+  searchBody      Unsupported("tsvector")?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  eventId String?
+  event   Event? @relation(fields: [eventId], references: [id])
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  beatId String?
+  beat   Beat? @relation(fields: [beatId], references: [id])
+
+  sequenceId String?
+  sequence   Sequence? @relation(fields: [sequenceId], references: [id])
+
+  actId String?
+  act   Act? @relation(fields: [actId], references: [id])
+
+  // Per-scene character roles
+  characterRoles  CharacterSceneRole[]
+  // Characters present
+  sceneCharacters SceneCharacter[]
+  // Pacing
+  pacingMetrics   PacingMetric[]
+  // Focalization
+  focalizations   Focalization[]
+  // Narrative codes
+  narrativeCodes  NarrativeCode[]
+  // Manuscript sections
+  manuscriptSections ManuscriptSection[]
+  // Setup/Payoff anchors
+  setups  SetupPayoff[] @relation("SetupScene")
+  payoffs SetupPayoff[] @relation("PayoffScene")
+
+  @@index([storyWorldId])
+  @@index([sjuzhetPosition])
+  @@index([eventId])
+  @@index([beatId])
+  @@index([sequenceId])
+  @@index([actId])
+  @@index([deletedAt])
+}
+
+/// Simple presence junction — which characters are in a scene
+model SceneCharacter {
+  id String @id @default(cuid())
+
+  sceneId     String
+  scene       Scene     @relation(fields: [sceneId], references: [id])
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@unique([sceneId, characterId])
+  @@index([characterId])
+}
+
+model Beat {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  position        Float    @default(0)
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  sequenceId String?
+  sequence   Sequence? @relation(fields: [sequenceId], references: [id])
+
+  scenes Scene[]
+
+  @@index([storyWorldId])
+  @@index([sequenceId])
+  @@index([position])
+  @@index([deletedAt])
+}
+
+model Sequence {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  position    Float    @default(0)
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  actId String?
+  act   Act? @relation(fields: [actId], references: [id])
+
+  beats  Beat[]
+  scenes Scene[]
+
+  @@index([storyWorldId])
+  @@index([actId])
+  @@index([position])
+  @@index([deletedAt])
+}
+
+model Act {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  position    Float    @default(0)
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  sequences Sequence[]
+  scenes    Scene[]
+
+  @@index([storyWorldId])
+  @@index([position])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 6. WORLD ENTITIES — Location, Object, Theme, Motif, Faction
+// ============================================================================
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String?  // city, room, planet, abstract, etc.
+  parentId    String?
+  parent      Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children    Location[] @relation("LocationHierarchy")
+  coordinates Json?    // lat/lng or abstract positional data
+  properties  Json     @default("{}")
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  events Event[]
+  scenes Scene[]
+
+  @@index([storyWorldId])
+  @@index([parentId])
+  @@index([deletedAt])
+}
+
+model StoryObject {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  type         String?  // weapon, artifact, document, macguffin, etc.
+  significance String?  // narrative significance
+  properties   Json     @default("{}")
+  metadata     Json     @default("{}")
+  embedding    Unsupported("vector(1536)")?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+  @@map("story_object")
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  thesis      String?  // thematic argument
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  motifs                Theme_Motif[]
+  thematicOppositionsA  ThematicOpposition[] @relation("OppositionThemeA")
+  thematicOppositionsB  ThematicOpposition[] @relation("OppositionThemeB")
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+model Motif {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String?  // symbol, image, phrase, sound, color, etc.
+  occurrences Json     @default("[]") // references to where it appears
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  themes Theme_Motif[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Junction: Theme × Motif
+model Theme_Motif {
+  id String @id @default(cuid())
+
+  themeId String
+  theme   Theme @relation(fields: [themeId], references: [id])
+  motifId String
+  motif   Motif @relation(fields: [motifId], references: [id])
+
+  @@unique([themeId, motifId])
+  @@index([motifId])
+  @@map("theme_motif")
+}
+
+model Faction {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String?  // political, religious, criminal, etc.
+  goals       Json     @default("[]")
+  resources   Json     @default("[]")
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  members FactionMember[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+model FactionMember {
+  id       String  @id @default(cuid())
+  role     String? // leader, lieutenant, footsoldier, spy, etc.
+  joinedAt String? // in-world date
+  leftAt   String? // in-world date
+  status   String  @default("active") // active, former, expelled, deceased
+
+  factionId   String
+  faction     Faction   @relation(fields: [factionId], references: [id])
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@unique([factionId, characterId])
+  @@index([characterId])
+}
+
+// ============================================================================
+// 7. RELATIONSHIPS — Temporal, scoped to events/scenes
+// ============================================================================
+
+/// Relationships are TEMPORAL: valid_from / valid_to reference Events.
+/// A character can shift from ally → enemy across the story.
+model Relationship {
+  id          String   @id @default(cuid())
+  type        String   // ally, enemy, lover, mentor, rival, servant, etc.
+  subtype     String?  // more specific qualifier
+  intensity   Float?   // 0..1 strength
+  description String?
+  bidirectional Boolean @default(true)
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  character1Id String
+  character1   Character @relation("RelationshipChar1", fields: [character1Id], references: [id])
+  character2Id String
+  character2   Character @relation("RelationshipChar2", fields: [character2Id], references: [id])
+
+  // Temporal scope: when does this relationship state apply?
+  validFromEventId String?
+  validFromEvent   Event? @relation("RelValidFrom", fields: [validFromEventId], references: [id])
+  validToEventId   String?
+  validToEvent     Event? @relation("RelValidTo", fields: [validToEventId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([character1Id])
+  @@index([character2Id])
+  @@index([validFromEventId])
+  @@index([validToEventId])
+  @@index([type])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 8. SOURCE MATERIAL
+// ============================================================================
+
+model SourceMaterial {
+  id          String   @id @default(cuid())
+  title       String
+  type        String?  // novel, screenplay, mythology, research, interview, etc.
+  author      String?
+  url         String?
+  content     String?
+  notes       String?
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(1536)")?
+  searchBody  Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 9. DUAL TIMELINES — Fabula (chronological) & Sjuzhet (narrative)
+// ============================================================================
+
+model FabulaTimeline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  events FabulaTimelineEvent[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Junction: places an Event at a position on a FabulaTimeline
+model FabulaTimelineEvent {
+  id       String @id @default(cuid())
+  position Float  // sort order within this timeline
+
+  fabulaTimelineId String
+  fabulaTimeline   FabulaTimeline @relation(fields: [fabulaTimelineId], references: [id])
+  eventId          String
+  event            Event          @relation(fields: [eventId], references: [id])
+
+  @@unique([fabulaTimelineId, eventId])
+  @@index([eventId])
+  @@index([fabulaTimelineId, position])
+}
+
+model SjuzhetTimeline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  events SjuzhetTimelineEvent[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Junction: places an Event at a position on a SjuzhetTimeline
+model SjuzhetTimelineEvent {
+  id       String @id @default(cuid())
+  position Float  // sort order within this timeline
+
+  sjuzhetTimelineId String
+  sjuzhetTimeline   SjuzhetTimeline @relation(fields: [sjuzhetTimelineId], references: [id])
+  eventId           String
+  event             Event           @relation(fields: [eventId], references: [id])
+
+  @@unique([sjuzhetTimelineId, eventId])
+  @@index([eventId])
+  @@index([sjuzhetTimelineId, position])
+}
+
+// ============================================================================
+// 10. STRUCTURE TEMPLATES — Data-driven (Save the Cat, Hero's Journey, etc.)
+// ============================================================================
+
+model StructureTemplate {
+  id          String   @id @default(cuid())
+  name        String   // "Save the Cat", "Hero's Journey", "Three-Act", "Kishotenketsu"
+  description String?
+  source      String?  // attribution
+  isBuiltIn   Boolean  @default(false)
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String?
+  storyWorld   StoryWorld? @relation(fields: [storyWorldId], references: [id])
+
+  beats    StructureBeat[]
+  mappings StructureMapping[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// A single beat within a structure template (e.g. "Opening Image", "Catalyst")
+model StructureBeat {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  position            Float    @default(0)
+  percentStart        Float?   // expected position as % of story (0.0-1.0)
+  percentEnd          Float?
+  parentBeatId        String?
+  parentBeat          StructureBeat?  @relation("StructureBeatHierarchy", fields: [parentBeatId], references: [id])
+  childBeats          StructureBeat[] @relation("StructureBeatHierarchy")
+  metadata            Json     @default("{}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  structureTemplateId String
+  structureTemplate   StructureTemplate @relation(fields: [structureTemplateId], references: [id])
+
+  mappings StructureMapping[]
+
+  @@index([structureTemplateId])
+  @@index([parentBeatId])
+  @@index([position])
+}
+
+/// Maps a StructureBeat to an actual Scene/Beat/Event in the story
+model StructureMapping {
+  id         String   @id @default(cuid())
+  targetType String   // "Scene", "Beat", "Event", "Sequence"
+  targetId   String
+  notes      String?
+  confidence Float?   // 0..1 how well it fits
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  structureTemplateId String
+  structureTemplate   StructureTemplate @relation(fields: [structureTemplateId], references: [id])
+  structureBeatId     String
+  structureBeat       StructureBeat @relation(fields: [structureBeatId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([targetType, targetId])
+  @@index([structureTemplateId])
+  @@index([structureBeatId])
+}
+
+// ============================================================================
+// 11. ARCS — Character or thematic arcs with phases
+// ============================================================================
+
+model Arc {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @default("character") // character, thematic, relational, faction
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  characterId String?
+  character   Character? @relation(fields: [characterId], references: [id])
+
+  phases ArcPhase[]
+
+  @@index([storyWorldId])
+  @@index([characterId])
+  @@index([deletedAt])
+}
+
+model ArcPhase {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  position    Float    @default(0)
+  state       String?  // the character's internal state at this phase
+  targetType  String?  // "Scene", "Event", "Beat" — what this phase maps to
+  targetId    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  arcId String
+  arc   Arc @relation(fields: [arcId], references: [id])
+
+  @@index([arcId])
+  @@index([position])
+  @@index([targetType, targetId])
+}
+
+// ============================================================================
+// 12. CANON SNAPSHOTS & BRANCHES
+// ============================================================================
+
+/// Snapshot of world state at a point in the narrative.
+/// Uses JSONB blob approach: captures the diff or full state as JSON.
+model CanonSnapshot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  snapshotAt  String?  // in-world date or event reference
+  state       Json     // JSONB blob of world state (characters, relationships, factions, etc.)
+  scope       String   @default("full") // "full", "characters", "relationships", "factions"
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  eventId String?
+
+  branches Branch[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// A what-if branch from a canon snapshot
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  divergence  String?  // what changed
+  state       Json     @default("{}") // diff from parent snapshot
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  canonSnapshotId String
+  canonSnapshot   CanonSnapshot @relation(fields: [canonSnapshotId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([canonSnapshotId])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 13. ANALYTICAL ANNOTATIONS
+// ============================================================================
+
+/// Value change (Robert McKee's story values) — tracks value shift at an event
+model ValueChange {
+  id          String   @id @default(cuid())
+  valueName   String   // e.g. "justice", "love", "freedom"
+  fromState   String   // e.g. "injustice"
+  toState     String   // e.g. "justice"
+  magnitude   Float?   // -1.0 to 1.0
+  notes       String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  eventId String
+  event   Event @relation(fields: [eventId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([eventId])
+  @@index([valueName])
+}
+
+/// Barthes's narrative codes (hermeneutic, proairetic, semic, symbolic, cultural)
+model NarrativeCode {
+  id          String   @id @default(cuid())
+  codeType    String   // hermeneutic, proairetic, semic, symbolic, cultural
+  label       String
+  description String?
+  targetType  String   // "Scene", "Beat", "Event"
+  targetId    String
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  sceneId String?
+  scene   Scene? @relation(fields: [sceneId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([codeType])
+  @@index([targetType, targetId])
+  @@index([sceneId])
+}
+
+/// Enigma — a mystery/question posed to the audience
+model Enigma {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String?
+  status       String   @default("open") // open, partially_revealed, resolved
+  posedAt      String?  // polymorphic ref
+  posedAtType  String?
+  resolvedAt   String?  // polymorphic ref
+  resolvedAtType String?
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([status])
+}
+
+/// Setup → Payoff link between scenes
+model SetupPayoff {
+  id          String   @id @default(cuid())
+  description String?
+  setupType   String?  // foreshadowing, chekhov's gun, plant, motif, etc.
+  status      String   @default("planted") // planted, reinforced, paid_off
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  setupSceneId  String
+  setupScene    Scene @relation("SetupScene", fields: [setupSceneId], references: [id])
+  payoffSceneId String?
+  payoffScene   Scene? @relation("PayoffScene", fields: [payoffSceneId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([setupSceneId])
+  @@index([payoffSceneId])
+  @@index([status])
+}
+
+/// Binary thematic opposition (e.g. freedom vs. security)
+model ThematicOpposition {
+  id          String   @id @default(cuid())
+  label       String   // e.g. "freedom vs. security"
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  themeAId String
+  themeA   Theme @relation("OppositionThemeA", fields: [themeAId], references: [id])
+  themeBId String
+  themeB   Theme @relation("OppositionThemeB", fields: [themeBId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([themeAId])
+  @@index([themeBId])
+}
+
+/// Pacing metric for a scene
+model PacingMetric {
+  id             String   @id @default(cuid())
+  tension        Float?   // 0..1
+  informationRate Float?  // 0..1
+  dialogueDensity Float?  // 0..1
+  actionDensity  Float?   // 0..1
+  wordCount      Int?
+  estimatedDuration Float? // minutes
+  notes          String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([sceneId])
+}
+
+/// Emotional state of a character at a point in the narrative
+model EmotionalState {
+  id          String   @id @default(cuid())
+  emotion     String   // e.g. "fear", "hope", "rage"
+  intensity   Float?   // 0..1
+  valence     Float?   // -1..1 (negative to positive)
+  arousal     Float?   // 0..1 (calm to excited)
+  trigger     String?
+  targetType  String?  // "Scene", "Event", "Beat"
+  targetId    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([characterId])
+  @@index([targetType, targetId])
+}
+
+/// Causal relation between events
+model CausalRelation {
+  id          String   @id @default(cuid())
+  type        String   @default("causes") // causes, enables, prevents, motivates
+  strength    Float?   // 0..1
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  causeEventId  String
+  causeEvent    Event @relation("CausalCause", fields: [causeEventId], references: [id])
+  effectEventId String
+  effectEvent   Event @relation("CausalEffect", fields: [effectEventId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([causeEventId])
+  @@index([effectEventId])
+}
+
+/// Voice profile for a character's speech patterns
+model VoiceProfile {
+  id             String   @id @default(cuid())
+  register       String?  // formal, colloquial, archaic, technical, etc.
+  vocabulary     Json     @default("{}") // characteristic words, phrases, tics
+  sentenceStyle  String?  // terse, flowing, fragmented, etc.
+  dialect        String?
+  speechExamples Json     @default("[]")
+  notes          String?
+  metadata       Json     @default("{}")
+  embedding      Unsupported("vector(1536)")?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([characterId])
+}
+
+/// What the audience knows vs. what characters know (dramatic irony tracking)
+model AudienceKnowledge {
+  id              String   @id @default(cuid())
+  fact            String   // what piece of information
+  audienceKnows   Boolean  @default(false)
+  characterKnows  Boolean  @default(false)
+  revealedAtType  String?  // "Scene", "Event"
+  revealedAtId    String?
+  dramaticIrony   Boolean  @default(false) // true when audience knows but character doesn't
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([characterId])
+  @@index([revealedAtType, revealedAtId])
+}
+
+// ============================================================================
+// 14. WORLD SYSTEMS
+// ============================================================================
+
+model CalendarSystem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  epochName   String?  // e.g. "Third Age", "Year of the Dragon"
+  daysInYear  Int?
+  monthNames  Json     @default("[]")
+  rules       Json     @default("{}") // leap years, seasons, etc.
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+model MagicSystem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  type         String?  // hard, soft, hybrid
+  source       String?  // where magic comes from
+  limitations  Json     @default("[]")
+  costs        Json     @default("[]")
+  rules        Json     @default("[]")
+  practitioners Json    @default("[]") // types of magic users
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+model WorldRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?  // physics, society, magic, biology, economy, etc.
+  scope       String?  // universal, regional, conditional
+  exceptions  Json     @default("[]")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([category])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 15. META-STRUCTURAL — Narrator, Focalization, Narrative Level, Genre, Pattern
+// ============================================================================
+
+model Narrator {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // first_person, third_limited, third_omniscient, second_person, unreliable
+  reliability   Float?   // 0..1 (how reliable is this narrator?)
+  description   String?
+  voiceNotes    String?
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  focalizations Focalization[]
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Who perceives? Tracks POV per scene.
+model Focalization {
+  id          String   @id @default(cuid())
+  type        String   // zero (omniscient), internal, external
+  notes       String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  narratorId String
+  narrator   Narrator @relation(fields: [narratorId], references: [id])
+
+  sceneId String
+  scene   Scene @relation(fields: [sceneId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([narratorId])
+  @@index([sceneId])
+}
+
+/// Narrative embedding levels (story within a story)
+model NarrativeLevel {
+  id          String   @id @default(cuid())
+  name        String
+  depth       Int      @default(0) // 0 = extradiegetic, 1 = diegetic, 2 = metadiegetic
+  description String?
+  parentId    String?
+  parent      NarrativeLevel?  @relation("NarrativeLevelHierarchy", fields: [parentId], references: [id])
+  children    NarrativeLevel[] @relation("NarrativeLevelHierarchy")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([parentId])
+  @@index([deletedAt])
+}
+
+model GenreType {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "noir", "space opera", "gothic"
+  category    String?  // primary genre, subgenre, genre blend
+  conventions Json     @default("[]") // expected tropes, structures, elements
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([deletedAt])
+}
+
+/// Recognized story patterns (in medias res, frame narrative, etc.)
+model StoryPattern {
+  id          String   @id @default(cuid())
+  name        String
+  type        String?  // temporal, structural, thematic
+  description String?
+  examples    Json     @default("[]")
+  targetType  String?  // what it applies to
+  targetId    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([targetType, targetId])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// 16. WRITING SURFACE — Manuscript, Sections, Treatment
+// ============================================================================
+
+model Manuscript {
+  id          String   @id @default(cuid())
+  title       String
+  format      String   @default("novel") // novel, screenplay, teleplay, short_story, etc.
+  status      String   @default("draft") // draft, revision, final
+  targetWordCount Int?
+  metadata    Json     @default("{}")
+  searchBody  Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id])
+
+  sections ManuscriptSection[]
+
+  @@index([storyWorldId])
+  @@index([authorId])
+  @@index([deletedAt])
+}
+
+/// Chapter, scene, episode, sequence — hierarchical sections of a manuscript
+model ManuscriptSection {
+  id          String   @id @default(cuid())
+  title       String?
+  type        String   @default("chapter") // chapter, scene, episode, part, prologue, epilogue, interlude
+  position    Float    @default(0)
+  content     String?  // the actual prose
+  wordCount   Int?
+  status      String   @default("draft") // draft, revised, polished, final
+  notes       String?
+  metadata    Json     @default("{}")
+  searchBody  Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  manuscriptId String
+  manuscript   Manuscript @relation(fields: [manuscriptId], references: [id])
+
+  // Link to narrative structure
+  sceneId String?
+  scene   Scene? @relation(fields: [sceneId], references: [id])
+
+  // Hierarchical: a chapter contains scenes
+  parentId String?
+  parent   ManuscriptSection?  @relation("SectionHierarchy", fields: [parentId], references: [id])
+  children ManuscriptSection[] @relation("SectionHierarchy")
+
+  @@index([manuscriptId])
+  @@index([parentId])
+  @@index([sceneId])
+  @@index([position])
+  @@index([deletedAt])
+}
+
+/// Treatment — prose summary of story at various levels of detail
+model Treatment {
+  id          String   @id @default(cuid())
+  title       String
+  level       String   @default("synopsis") // logline, synopsis, treatment, step_outline, scene_breakdown
+  content     String
+  version     Int      @default(1)
+  metadata    Json     @default("{}")
+  searchBody  Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  storyWorldId String
+  storyWorld   StoryWorld @relation(fields: [storyWorldId], references: [id])
+
+  @@index([storyWorldId])
+  @@index([level])
+  @@index([deletedAt])
+}
