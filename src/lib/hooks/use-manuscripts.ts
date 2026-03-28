@@ -80,7 +80,7 @@ export function useSaveContent(worldId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, content }: { id: string; content: JSONContent }) => {
-      const res = await fetch(`/api/worlds/${worldId}/manuscripts/${id}/content`, {
+      const res = await fetch(`/api/worlds/${worldId}/manuscripts/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
@@ -89,8 +89,8 @@ export function useSaveContent(worldId: string) {
       const json: ApiResponse<ManuscriptWithContent> = await res.json()
       return json.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['manuscripts', worldId] })
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['manuscripts', worldId, id] })
     },
   })
 }

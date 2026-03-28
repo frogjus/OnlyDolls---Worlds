@@ -12,11 +12,11 @@ export interface TreatmentSection {
 
 interface ApiBeat {
   id: string
-  title: string
+  name: string
   description: string | null
   position: number
   actId: string | null
-  actTitle: string | null
+  actName: string | null
   treatmentOverride: string | null
 }
 
@@ -48,14 +48,14 @@ export function generateTreatment(beats: ApiBeat[]): TreatmentSection[] {
       currentActId = beat.actId
       sections.push({
         type: 'act-header',
-        heading: beat.actTitle ?? 'Act',
+        heading: beat.actName ?? 'Act',
         content: '',
       })
     }
 
     sections.push({
       type: 'beat',
-      heading: beat.title,
+      heading: beat.name,
       content: beat.treatmentOverride ?? beat.description ?? '',
       beatId: beat.id,
       isOverridden: !!beat.treatmentOverride,
