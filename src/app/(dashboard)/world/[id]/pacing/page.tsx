@@ -1,8 +1,12 @@
+'use client'
+
+import { PacingHeatmap, MOCK_DATA } from '@/components/visualizations/pacing-heatmap'
+import { VizShell } from '@/components/visualizations/viz-shell'
+
 export default function PacingPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Pacing</h1>
-      <p className="mt-2 text-muted-foreground">Pacing heatmap and tension analysis.</p>
-    </div>
+    <VizShell title="Pacing Analysis">
+      <PacingHeatmap data={MOCK_DATA} />
+    </VizShell>
   )
 }
