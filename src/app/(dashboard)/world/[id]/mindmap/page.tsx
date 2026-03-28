@@ -1,8 +1,12 @@
+'use client'
+
+import { MindMap, MOCK_DATA } from '@/components/visualizations/mind-map'
+import { VizShell } from '@/components/visualizations/viz-shell'
+
 export default function MindMapPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Mind Map</h1>
-      <p className="mt-2 text-muted-foreground">Interactive mind map of story elements and connections.</p>
-    </div>
+    <VizShell title="Mind Map">
+      <MindMap data={MOCK_DATA} />
+    </VizShell>
   )
 }
