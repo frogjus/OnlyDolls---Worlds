@@ -29,6 +29,7 @@
     "cmdk": "^1.1.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
+    "fountain-js": "^1.2.4",
     "ioredis": "^5.10.1",
     "lucide-react": "^1.7.0",
     "nanoid": "^5.1.7",
