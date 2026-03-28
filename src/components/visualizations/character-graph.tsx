@@ -661,8 +661,8 @@ function CharacterGraphInner({
     setHoveredEdgeId(null)
   }, [])
 
-  const handleFilterChange = useCallback((key: string, value: FilterValue) => {
-    setActiveFilters((prev) => ({ ...prev, [key]: value }))
+  const handleFilterChange = useCallback((filters: Record<string, FilterValue>) => {
+    setActiveFilters(filters)
   }, [])
 
   // Legend
@@ -690,10 +690,10 @@ function CharacterGraphInner({
   return (
     <VizShell
       title="Character Relationship Map"
-      filters={filterDimensions}
+      filterDimensions={filterDimensions}
       activeFilters={activeFilters}
       onFilterChange={handleFilterChange}
-      toolbar={legendToolbar}
+      extraControls={legendToolbar}
     >
       <div
         ref={containerRef}

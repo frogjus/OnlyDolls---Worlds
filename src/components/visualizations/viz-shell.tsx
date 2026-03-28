@@ -4,6 +4,7 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { VizToolbar } from './viz-toolbar'
 import { VizFilterPanel, type FilterDimension, type FilterValue } from './viz-filter-panel'
+export type { FilterDimension, FilterValue }
 import { VizSkeleton, type VizSkeletonProps } from './viz-skeleton'
 import { VizEmptyState, type VizEmptyStateProps } from './viz-empty-state'
 import { exportToSvg, exportToPng, downloadSvg, downloadBlob } from '@/lib/viz-export'
