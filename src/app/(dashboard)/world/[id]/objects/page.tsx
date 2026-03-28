@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
-  Shield,
+  Gem,
   MoreVertical,
   Pencil,
   Trash2,
 } from 'lucide-react'
 
-import type { Faction, CreateFactionPayload, UpdateFactionPayload } from '@/types'
+import type { StoryObject, CreateObjectPayload, UpdateObjectPayload } from '@/types'
 import {
-  useFactions,
-  useCreateFaction,
-  useUpdateFaction,
-  useDeleteFaction,
-} from '@/lib/hooks/use-factions'
-import { useFactionStore } from '@/stores/faction-store'
+  useObjects,
+  useCreateObject,
+  useUpdateObject,
+  useDeleteObject,
+} from '@/lib/hooks/use-objects'
+import { useObjectStore } from '@/stores/object-store'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,24 +44,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateFactionDialog({ worldId }: { worldId: string }) {
-  const { createDialogOpen, setCreateDialogOpen } = useFactionStore()
-  const create = useCreateFaction(worldId)
-  const [form, setForm] = useState<CreateFactionPayload>({ name: '' })
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
+function CreateObjectDialog({ worldId }: { worldId: string }) {
+  const { createDialogOpen, setCreateDialogOpen } = useObjectStore()
+  const create = useCreateObject(worldId)
+  const [form, setForm] = useState<CreateObjectPayload>({ name: '' })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,7 +56,6 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
-        setGoalInput('')
       },
     })
   }
@@ -79,7 +64,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Faction</DialogTitle>
+          <DialogTitle>New Object</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -88,7 +73,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. The Silver Order"
+              placeholder="e.g. The Obsidian Blade"
               autoFocus
             />
           </div>
@@ -96,45 +81,19 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
             <Label htmlFor="create-type">Type</Label>
             <Input
               id="create-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              value={form.objectType ?? ''}
+              onChange={(e) => setForm({ ...form, objectType: e.target.value })}
+              placeholder="e.g. weapon, artifact, document, macguffin"
             />
           </div>
           <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Label htmlFor="create-significance">Significance</Label>
+            <Input
+              id="create-significance"
+              value={form.significance ?? ''}
+              onChange={(e) => setForm({ ...form, significance: e.target.value })}
+              placeholder="Narrative significance of this object"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-desc">Description</Label>
@@ -142,7 +101,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-desc"
               value={form.description ?? ''}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe this faction..."
+              placeholder="Describe this object..."
               rows={3}
             />
           </div>
@@ -168,51 +127,34 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
 // Edit Dialog
 // ---------------------------------------------------------------------------
 
-function EditFactionDialog({
+function EditObjectDialog({
   worldId,
-  faction,
+  object,
 }: {
   worldId: string
-  faction: Faction
+  object: StoryObject
 }) {
-  const { setEditingFactionId } = useFactionStore()
-  const update = useUpdateFaction(worldId)
+  const { setEditingObjectId } = useObjectStore()
+  const update = useUpdateObject(worldId)
 
-  const initialGoals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
-
-  const [form, setForm] = useState<UpdateFactionPayload & { id: string }>({
-    id: faction.id,
-    name: faction.name,
-    factionType: faction.type ?? '',
-    description: faction.description ?? '',
-    goals: initialGoals,
+  const [form, setForm] = useState<UpdateObjectPayload & { id: string }>({
+    id: object.id,
+    name: object.name,
+    objectType: object.type ?? '',
+    significance: object.significance ?? '',
+    description: object.description ?? '',
   })
-
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingFactionId(null) })
+    update.mutate(form, { onSuccess: () => setEditingObjectId(null) })
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && setEditingFactionId(null)}>
+    <Dialog open onOpenChange={(open) => !open && setEditingObjectId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Faction</DialogTitle>
+          <DialogTitle>Edit Object</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -227,45 +169,18 @@ function EditFactionDialog({
             <Label htmlFor="edit-type">Type</Label>
             <Input
               id="edit-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              value={form.objectType ?? ''}
+              onChange={(e) => setForm({ ...form, objectType: e.target.value })}
+              placeholder="e.g. weapon, artifact, document, macguffin"
             />
           </div>
           <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Label htmlFor="edit-significance">Significance</Label>
+            <Input
+              id="edit-significance"
+              value={form.significance ?? ''}
+              onChange={(e) => setForm({ ...form, significance: e.target.value })}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-desc">Description</Label>
@@ -280,7 +195,7 @@ function EditFactionDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setEditingFactionId(null)}
+              onClick={() => setEditingObjectId(null)}
             >
               Cancel
             </Button>
@@ -295,35 +210,33 @@ function EditFactionDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Faction Card
+// Object Card
 // ---------------------------------------------------------------------------
 
-function FactionCard({
-  faction,
+function ObjectCard({
+  object,
   worldId,
 }: {
-  faction: Faction
+  object: StoryObject
   worldId: string
 }) {
-  const { setEditingFactionId, setSelectedFactionId } = useFactionStore()
-  const deleteFaction = useDeleteFaction(worldId)
-
-  const goals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
+  const { setEditingObjectId, setSelectedObjectId } = useObjectStore()
+  const deleteObject = useDeleteObject(worldId)
 
   return (
     <Card
       className="group cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => setSelectedFactionId(faction.id)}
+      onClick={() => setSelectedObjectId(object.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Shield className="h-5 w-5 text-muted-foreground" />
+          <Gem className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{faction.name}</CardTitle>
-          {faction.type && (
+          <CardTitle className="text-base truncate">{object.name}</CardTitle>
+          {object.type && (
             <Badge variant="secondary" className="mt-1 text-xs">
-              {faction.type}
+              {object.type}
             </Badge>
           )}
         </div>
@@ -338,7 +251,7 @@ function FactionCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                setEditingFactionId(faction.id)
+                setEditingObjectId(object.id)
               }}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -348,7 +261,7 @@ function FactionCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteFaction.mutate(faction.id)
+                deleteObject.mutate(object.id)
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -358,21 +271,17 @@ function FactionCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        {faction.description ? (
+        {object.description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {faction.description}
+            {object.description}
           </p>
         ) : (
           <p className="text-sm text-muted-foreground italic">No description</p>
         )}
-        {goals.length > 0 && (
-          <ul className="mt-2 space-y-0.5">
-            {goals.map((goal, i) => (
-              <li key={i} className="text-xs text-muted-foreground">
-                - {goal}
-              </li>
-            ))}
-          </ul>
+        {object.significance && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {object.significance}
+          </p>
         )}
       </CardContent>
     </Card>
@@ -383,7 +292,7 @@ function FactionCard({
 // Loading Skeletons
 // ---------------------------------------------------------------------------
 
-function FactionSkeletons() {
+function ObjectSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -410,17 +319,17 @@ function FactionSkeletons() {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
-  const { setCreateDialogOpen } = useFactionStore()
+  const { setCreateDialogOpen } = useObjectStore()
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Shield className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No factions yet</h3>
+      <Gem className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-lg font-semibold">No objects yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Create your first faction to map power dynamics in your story world.
+        Create your first story object to track significant items in your world.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Faction
+        New Object
       </Button>
     </div>
   )
@@ -430,57 +339,57 @@ function EmptyState() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function FactionsPage() {
+export default function ObjectsPage() {
   const { id: worldId } = useParams<{ id: string }>()
-  const { data, isLoading, error } = useFactions(worldId)
+  const { data, isLoading, error } = useObjects(worldId)
   const {
-    editingFactionId,
+    editingObjectId,
     setCreateDialogOpen,
-  } = useFactionStore()
+  } = useObjectStore()
 
-  const factions = data?.data ?? []
-  const editingFaction = factions.find((f) => f.id === editingFactionId)
+  const objects = data?.data ?? []
+  const editingObject = objects.find((o) => o.id === editingObjectId)
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Factions</h1>
+          <h1 className="text-2xl font-bold">Objects</h1>
           <p className="text-sm text-muted-foreground">
-            {factions.length > 0
-              ? `${factions.length} faction${factions.length === 1 ? '' : 's'}`
-              : 'Factions, organizations, and power dynamics.'}
+            {objects.length > 0
+              ? `${objects.length} object${objects.length === 1 ? '' : 's'}`
+              : 'Significant items, artifacts, and props in your story world.'}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Faction
+          New Object
         </Button>
       </div>
 
       {isLoading ? (
-        <FactionSkeletons />
+        <ObjectSkeletons />
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load factions. Please try again.
+          Failed to load objects. Please try again.
         </div>
-      ) : factions.length === 0 ? (
+      ) : objects.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {factions.map((faction) => (
-            <FactionCard
-              key={faction.id}
-              faction={faction}
+          {objects.map((object) => (
+            <ObjectCard
+              key={object.id}
+              object={object}
               worldId={worldId}
             />
           ))}
         </div>
       )}
 
-      <CreateFactionDialog worldId={worldId} />
-      {editingFaction && (
-        <EditFactionDialog worldId={worldId} faction={editingFaction} />
+      <CreateObjectDialog worldId={worldId} />
+      {editingObject && (
+        <EditObjectDialog worldId={worldId} object={editingObject} />
       )}
     </div>
   )

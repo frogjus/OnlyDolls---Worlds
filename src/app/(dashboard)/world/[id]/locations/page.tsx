@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
-  Shield,
+  MapPin,
   MoreVertical,
   Pencil,
   Trash2,
 } from 'lucide-react'
 
-import type { Faction, CreateFactionPayload, UpdateFactionPayload } from '@/types'
+import type { Location, CreateLocationPayload, UpdateLocationPayload } from '@/types'
 import {
-  useFactions,
-  useCreateFaction,
-  useUpdateFaction,
-  useDeleteFaction,
-} from '@/lib/hooks/use-factions'
-import { useFactionStore } from '@/stores/faction-store'
+  useLocations,
+  useCreateLocation,
+  useUpdateLocation,
+  useDeleteLocation,
+} from '@/lib/hooks/use-locations'
+import { useLocationStore } from '@/stores/location-store'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,24 +44,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateFactionDialog({ worldId }: { worldId: string }) {
-  const { createDialogOpen, setCreateDialogOpen } = useFactionStore()
-  const create = useCreateFaction(worldId)
-  const [form, setForm] = useState<CreateFactionPayload>({ name: '' })
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
+function CreateLocationDialog({ worldId }: { worldId: string }) {
+  const { createDialogOpen, setCreateDialogOpen } = useLocationStore()
+  const create = useCreateLocation(worldId)
+  const [form, setForm] = useState<CreateLocationPayload>({ name: '' })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,7 +56,6 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
-        setGoalInput('')
       },
     })
   }
@@ -79,7 +64,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Faction</DialogTitle>
+          <DialogTitle>New Location</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -88,7 +73,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. The Silver Order"
+              placeholder="e.g. The Iron Citadel"
               autoFocus
             />
           </div>
@@ -96,45 +81,19 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
             <Label htmlFor="create-type">Type</Label>
             <Input
               id="create-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              value={form.locationType ?? ''}
+              onChange={(e) => setForm({ ...form, locationType: e.target.value })}
+              placeholder="e.g. city, room, planet"
             />
           </div>
           <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Label htmlFor="create-parent">Parent Location ID</Label>
+            <Input
+              id="create-parent"
+              value={form.parentId ?? ''}
+              onChange={(e) => setForm({ ...form, parentId: e.target.value || undefined })}
+              placeholder="Optional parent location ID"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-desc">Description</Label>
@@ -142,7 +101,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-desc"
               value={form.description ?? ''}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe this faction..."
+              placeholder="Describe this location..."
               rows={3}
             />
           </div>
@@ -168,51 +127,34 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
 // Edit Dialog
 // ---------------------------------------------------------------------------
 
-function EditFactionDialog({
+function EditLocationDialog({
   worldId,
-  faction,
+  location,
 }: {
   worldId: string
-  faction: Faction
+  location: Location
 }) {
-  const { setEditingFactionId } = useFactionStore()
-  const update = useUpdateFaction(worldId)
+  const { setEditingLocationId } = useLocationStore()
+  const update = useUpdateLocation(worldId)
 
-  const initialGoals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
-
-  const [form, setForm] = useState<UpdateFactionPayload & { id: string }>({
-    id: faction.id,
-    name: faction.name,
-    factionType: faction.type ?? '',
-    description: faction.description ?? '',
-    goals: initialGoals,
+  const [form, setForm] = useState<UpdateLocationPayload & { id: string }>({
+    id: location.id,
+    name: location.name,
+    locationType: location.type ?? '',
+    description: location.description ?? '',
+    parentId: location.parentId ?? '',
   })
-
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingFactionId(null) })
+    update.mutate(form, { onSuccess: () => setEditingLocationId(null) })
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && setEditingFactionId(null)}>
+    <Dialog open onOpenChange={(open) => !open && setEditingLocationId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Faction</DialogTitle>
+          <DialogTitle>Edit Location</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -227,45 +169,18 @@ function EditFactionDialog({
             <Label htmlFor="edit-type">Type</Label>
             <Input
               id="edit-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              value={form.locationType ?? ''}
+              onChange={(e) => setForm({ ...form, locationType: e.target.value })}
+              placeholder="e.g. city, room, planet"
             />
           </div>
           <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Label htmlFor="edit-parent">Parent Location ID</Label>
+            <Input
+              id="edit-parent"
+              value={form.parentId ?? ''}
+              onChange={(e) => setForm({ ...form, parentId: e.target.value || undefined })}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-desc">Description</Label>
@@ -280,7 +195,7 @@ function EditFactionDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setEditingFactionId(null)}
+              onClick={() => setEditingLocationId(null)}
             >
               Cancel
             </Button>
@@ -295,35 +210,39 @@ function EditFactionDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Faction Card
+// Location Card
 // ---------------------------------------------------------------------------
 
-function FactionCard({
-  faction,
+function LocationCard({
+  location,
   worldId,
+  allLocations,
 }: {
-  faction: Faction
+  location: Location
   worldId: string
+  allLocations: Location[]
 }) {
-  const { setEditingFactionId, setSelectedFactionId } = useFactionStore()
-  const deleteFaction = useDeleteFaction(worldId)
+  const { setEditingLocationId, setSelectedLocationId } = useLocationStore()
+  const deleteLocation = useDeleteLocation(worldId)
 
-  const goals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
+  const parentLocation = location.parentId
+    ? allLocations.find((l) => l.id === location.parentId)
+    : null
 
   return (
     <Card
       className="group cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => setSelectedFactionId(faction.id)}
+      onClick={() => setSelectedLocationId(location.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Shield className="h-5 w-5 text-muted-foreground" />
+          <MapPin className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{faction.name}</CardTitle>
-          {faction.type && (
+          <CardTitle className="text-base truncate">{location.name}</CardTitle>
+          {location.type && (
             <Badge variant="secondary" className="mt-1 text-xs">
-              {faction.type}
+              {location.type}
             </Badge>
           )}
         </div>
@@ -338,7 +257,7 @@ function FactionCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                setEditingFactionId(faction.id)
+                setEditingLocationId(location.id)
               }}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -348,7 +267,7 @@ function FactionCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteFaction.mutate(faction.id)
+                deleteLocation.mutate(location.id)
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -358,21 +277,17 @@ function FactionCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        {faction.description ? (
+        {location.description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {faction.description}
+            {location.description}
           </p>
         ) : (
           <p className="text-sm text-muted-foreground italic">No description</p>
         )}
-        {goals.length > 0 && (
-          <ul className="mt-2 space-y-0.5">
-            {goals.map((goal, i) => (
-              <li key={i} className="text-xs text-muted-foreground">
-                - {goal}
-              </li>
-            ))}
-          </ul>
+        {parentLocation && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Parent: {parentLocation.name}
+          </p>
         )}
       </CardContent>
     </Card>
@@ -383,7 +298,7 @@ function FactionCard({
 // Loading Skeletons
 // ---------------------------------------------------------------------------
 
-function FactionSkeletons() {
+function LocationSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -410,17 +325,17 @@ function FactionSkeletons() {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
-  const { setCreateDialogOpen } = useFactionStore()
+  const { setCreateDialogOpen } = useLocationStore()
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Shield className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No factions yet</h3>
+      <MapPin className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-lg font-semibold">No locations yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Create your first faction to map power dynamics in your story world.
+        Create your first location to start mapping your story world.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Faction
+        New Location
       </Button>
     </div>
   )
@@ -430,57 +345,58 @@ function EmptyState() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function FactionsPage() {
+export default function LocationsPage() {
   const { id: worldId } = useParams<{ id: string }>()
-  const { data, isLoading, error } = useFactions(worldId)
+  const { data, isLoading, error } = useLocations(worldId)
   const {
-    editingFactionId,
+    editingLocationId,
     setCreateDialogOpen,
-  } = useFactionStore()
+  } = useLocationStore()
 
-  const factions = data?.data ?? []
-  const editingFaction = factions.find((f) => f.id === editingFactionId)
+  const locations = data?.data ?? []
+  const editingLocation = locations.find((l) => l.id === editingLocationId)
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Factions</h1>
+          <h1 className="text-2xl font-bold">Locations</h1>
           <p className="text-sm text-muted-foreground">
-            {factions.length > 0
-              ? `${factions.length} faction${factions.length === 1 ? '' : 's'}`
-              : 'Factions, organizations, and power dynamics.'}
+            {locations.length > 0
+              ? `${locations.length} location${locations.length === 1 ? '' : 's'}`
+              : 'Places, settings, and geography of your story world.'}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Faction
+          New Location
         </Button>
       </div>
 
       {isLoading ? (
-        <FactionSkeletons />
+        <LocationSkeletons />
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load factions. Please try again.
+          Failed to load locations. Please try again.
         </div>
-      ) : factions.length === 0 ? (
+      ) : locations.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {factions.map((faction) => (
-            <FactionCard
-              key={faction.id}
-              faction={faction}
+          {locations.map((location) => (
+            <LocationCard
+              key={location.id}
+              location={location}
               worldId={worldId}
+              allLocations={locations}
             />
           ))}
         </div>
       )}
 
-      <CreateFactionDialog worldId={worldId} />
-      {editingFaction && (
-        <EditFactionDialog worldId={worldId} faction={editingFaction} />
+      <CreateLocationDialog worldId={worldId} />
+      {editingLocation && (
+        <EditLocationDialog worldId={worldId} location={editingLocation} />
       )}
     </div>
   )

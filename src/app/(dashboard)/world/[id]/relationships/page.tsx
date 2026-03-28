@@ -4,21 +4,20 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
-  FileText,
+  Heart,
   MoreVertical,
   Pencil,
   Trash2,
-  ExternalLink,
 } from 'lucide-react'
 
-import type { SourceMaterial, CreateSourceMaterialPayload, UpdateSourceMaterialPayload } from '@/types'
+import type { Relationship, CreateRelationshipPayload, UpdateRelationshipPayload } from '@/types'
 import {
-  useSources,
-  useCreateSource,
-  useUpdateSource,
-  useDeleteSource,
-} from '@/lib/hooks/use-sources'
-import { useSourceStore } from '@/stores/source-store'
+  useRelationships,
+  useCreateRelationship,
+  useUpdateRelationship,
+  useDeleteRelationship,
+} from '@/lib/hooks/use-relationships'
+import { useRelationshipStore } from '@/stores/relationship-store'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,18 +44,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateSourceDialog({ worldId }: { worldId: string }) {
-  const { createDialogOpen, setCreateDialogOpen } = useSourceStore()
-  const create = useCreateSource(worldId)
-  const [form, setForm] = useState<CreateSourceMaterialPayload>({ title: '' })
+function CreateRelationshipDialog({ worldId }: { worldId: string }) {
+  const { createDialogOpen, setCreateDialogOpen } = useRelationshipStore()
+  const create = useCreateRelationship(worldId)
+  const [form, setForm] = useState<CreateRelationshipPayload>({
+    type: '',
+    characterAId: '',
+    characterBId: '',
+  })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.title.trim()) return
+    if (!form.type.trim() || !form.characterAId.trim() || !form.characterBId.trim()) return
     create.mutate(form, {
       onSuccess: () => {
         setCreateDialogOpen(false)
-        setForm({ title: '' })
+        setForm({ type: '', characterAId: '', characterBId: '' })
       },
     })
   }
@@ -65,64 +68,58 @@ function CreateSourceDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Source Material</DialogTitle>
+          <DialogTitle>New Relationship</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="create-title">Title *</Label>
+            <Label htmlFor="create-type">Type *</Label>
             <Input
-              id="create-title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g. Original Manuscript"
+              id="create-type"
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              placeholder="e.g. ally, enemy, lover, mentor"
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-sourceType">Type</Label>
+            <Label htmlFor="create-charA">Source Character ID *</Label>
             <Input
-              id="create-sourceType"
-              value={form.sourceType ?? ''}
-              onChange={(e) => setForm({ ...form, sourceType: e.target.value })}
-              placeholder="e.g. novel, screenplay, research"
+              id="create-charA"
+              value={form.characterAId}
+              onChange={(e) => setForm({ ...form, characterAId: e.target.value })}
+              placeholder="Character A ID"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-author">Author</Label>
+            <Label htmlFor="create-charB">Target Character ID *</Label>
             <Input
-              id="create-author"
-              value={form.author ?? ''}
-              onChange={(e) => setForm({ ...form, author: e.target.value })}
-              placeholder="Author name"
+              id="create-charB"
+              value={form.characterBId}
+              onChange={(e) => setForm({ ...form, characterBId: e.target.value })}
+              placeholder="Character B ID"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-url">URL</Label>
+            <Label htmlFor="create-intensity">Strength (0-10)</Label>
             <Input
-              id="create-url"
-              value={form.url ?? ''}
-              onChange={(e) => setForm({ ...form, url: e.target.value })}
-              placeholder="https://..."
+              id="create-intensity"
+              type="number"
+              min={0}
+              max={10}
+              value={form.intensity !== undefined ? form.intensity * 10 : 5}
+              onChange={(e) =>
+                setForm({ ...form, intensity: Number(e.target.value) / 10 })
+              }
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-content">Content</Label>
+            <Label htmlFor="create-desc">Description</Label>
             <Textarea
-              id="create-content"
-              value={form.content ?? ''}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="Paste or type source content..."
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="create-notes">Notes</Label>
-            <Textarea
-              id="create-notes"
-              value={form.notes ?? ''}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Additional notes..."
-              rows={2}
+              id="create-desc"
+              value={form.description ?? ''}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Describe this relationship..."
+              rows={3}
             />
           </div>
           <DialogFooter>
@@ -133,7 +130,15 @@ function CreateSourceDialog({ worldId }: { worldId: string }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending || !form.title.trim()}>
+            <Button
+              type="submit"
+              disabled={
+                create.isPending ||
+                !form.type.trim() ||
+                !form.characterAId.trim() ||
+                !form.characterBId.trim()
+              }
+            >
               {create.isPending ? 'Creating...' : 'Create'}
             </Button>
           </DialogFooter>
@@ -147,97 +152,74 @@ function CreateSourceDialog({ worldId }: { worldId: string }) {
 // Edit Dialog
 // ---------------------------------------------------------------------------
 
-function EditSourceDialog({
+function EditRelationshipDialog({
   worldId,
-  source,
+  relationship,
 }: {
   worldId: string
-  source: SourceMaterial
+  relationship: Relationship
 }) {
-  const { setEditingSourceId } = useSourceStore()
-  const update = useUpdateSource(worldId)
+  const { setEditingRelationshipId } = useRelationshipStore()
+  const update = useUpdateRelationship(worldId)
 
-  const [form, setForm] = useState<UpdateSourceMaterialPayload & { id: string }>({
-    id: source.id,
-    title: source.title,
-    sourceType: source.type ?? '',
-    author: source.author ?? '',
-    url: source.url ?? '',
-    content: source.content ?? '',
-    notes: source.notes ?? '',
+  const [form, setForm] = useState<UpdateRelationshipPayload & { id: string }>({
+    id: relationship.id,
+    type: relationship.type,
+    description: relationship.description ?? '',
+    intensity: relationship.intensity ?? 0.5,
   })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingSourceId(null) })
+    update.mutate(form, { onSuccess: () => setEditingRelationshipId(null) })
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && setEditingSourceId(null)}>
+    <Dialog open onOpenChange={(open) => !open && setEditingRelationshipId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Source Material</DialogTitle>
+          <DialogTitle>Edit Relationship</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-title">Title *</Label>
+            <Label htmlFor="edit-type">Type *</Label>
             <Input
-              id="edit-title"
-              value={form.title ?? ''}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              id="edit-type"
+              value={form.type ?? ''}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-sourceType">Type</Label>
+            <Label htmlFor="edit-intensity">Strength (0-10)</Label>
             <Input
-              id="edit-sourceType"
-              value={form.sourceType ?? ''}
-              onChange={(e) => setForm({ ...form, sourceType: e.target.value })}
+              id="edit-intensity"
+              type="number"
+              min={0}
+              max={10}
+              value={Math.round((form.intensity ?? 0.5) * 10)}
+              onChange={(e) =>
+                setForm({ ...form, intensity: Number(e.target.value) / 10 })
+              }
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-author">Author</Label>
-            <Input
-              id="edit-author"
-              value={form.author ?? ''}
-              onChange={(e) => setForm({ ...form, author: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-url">URL</Label>
-            <Input
-              id="edit-url"
-              value={form.url ?? ''}
-              onChange={(e) => setForm({ ...form, url: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-content">Content</Label>
+            <Label htmlFor="edit-desc">Description</Label>
             <Textarea
-              id="edit-content"
-              value={form.content ?? ''}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-notes">Notes</Label>
-            <Textarea
-              id="edit-notes"
-              value={form.notes ?? ''}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={2}
+              id="edit-desc"
+              value={form.description ?? ''}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
             />
           </div>
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setEditingSourceId(null)}
+              onClick={() => setEditingRelationshipId(null)}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={update.isPending || !form.title?.trim()}>
+            <Button type="submit" disabled={update.isPending || !form.type?.trim()}>
               {update.isPending ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
@@ -248,38 +230,40 @@ function EditSourceDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Source Card
+// Relationship Card
 // ---------------------------------------------------------------------------
 
-function SourceCard({
-  source,
+function RelationshipCard({
+  relationship,
   worldId,
 }: {
-  source: SourceMaterial
+  relationship: Relationship
   worldId: string
 }) {
-  const { setEditingSourceId } = useSourceStore()
-  const deleteSrc = useDeleteSource(worldId)
+  const { setEditingRelationshipId } = useRelationshipStore()
+  const deleteRel = useDeleteRelationship(worldId)
+
+  const strengthDisplay = Math.round((relationship.intensity ?? 0.5) * 10)
 
   return (
     <Card className="group cursor-pointer transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <FileText className="h-5 w-5 text-muted-foreground" />
+          <Heart className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{source.title}</CardTitle>
+          <CardTitle className="text-base truncate">
+            {relationship.character1Id} &harr; {relationship.character2Id}
+          </CardTitle>
           <div className="flex items-center gap-2 mt-1">
-            {source.type && (
+            {relationship.type && (
               <Badge variant="secondary" className="text-xs">
-                {source.type}
+                {relationship.type}
               </Badge>
             )}
-            {source.author && (
-              <span className="text-xs text-muted-foreground">
-                by {source.author}
-              </span>
-            )}
+            <span className="text-xs text-muted-foreground">
+              Strength: {strengthDisplay}/10
+            </span>
           </div>
         </div>
         <DropdownMenu>
@@ -293,7 +277,7 @@ function SourceCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                setEditingSourceId(source.id)
+                setEditingRelationshipId(relationship.id)
               }}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -303,7 +287,7 @@ function SourceCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteSrc.mutate(source.id)
+                deleteRel.mutate(relationship.id)
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -313,28 +297,12 @@ function SourceCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        {source.content ? (
+        {relationship.description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {source.content}
-          </p>
-        ) : source.notes ? (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {source.notes}
+            {relationship.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No content</p>
-        )}
-        {source.url && (
-          <a
-            href={source.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            Open link
-          </a>
+          <p className="text-sm text-muted-foreground italic">No description</p>
         )}
       </CardContent>
     </Card>
@@ -345,7 +313,7 @@ function SourceCard({
 // Loading Skeletons
 // ---------------------------------------------------------------------------
 
-function SourceSkeletons() {
+function RelationshipSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -353,8 +321,8 @@ function SourceSkeletons() {
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-5 w-24" />
             </div>
           </CardHeader>
           <CardContent>
@@ -372,17 +340,17 @@ function SourceSkeletons() {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
-  const { setCreateDialogOpen } = useSourceStore()
+  const { setCreateDialogOpen } = useRelationshipStore()
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <FileText className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No sources yet</h3>
+      <Heart className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-lg font-semibold">No relationships yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Add source materials to analyze and extract story elements.
+        Create your first relationship to map character connections.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Source
+        New Relationship
       </Button>
     </div>
   )
@@ -392,56 +360,56 @@ function EmptyState() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function SourcesPage() {
+export default function RelationshipsPage() {
   const { id: worldId } = useParams<{ id: string }>()
-  const { data, isLoading, error } = useSources(worldId)
+  const { data, isLoading, error } = useRelationships(worldId)
   const {
-    editingSourceId,
+    editingRelationshipId,
     setCreateDialogOpen,
-  } = useSourceStore()
+  } = useRelationshipStore()
 
-  const sources = data?.data ?? []
-  const editingSource = sources.find((s) => s.id === editingSourceId)
+  const relationships = data?.data ?? []
+  const editingRelationship = relationships.find((r) => r.id === editingRelationshipId)
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Sources</h1>
+          <h1 className="text-2xl font-bold">Relationships</h1>
           <p className="text-sm text-muted-foreground">
-            {sources.length > 0
-              ? `${sources.length} source${sources.length === 1 ? '' : 's'}`
-              : 'Source materials -- text, audio, video ingestion.'}
+            {relationships.length > 0
+              ? `${relationships.length} relationship${relationships.length === 1 ? '' : 's'}`
+              : 'Character connections and dynamics.'}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Source
+          New Relationship
         </Button>
       </div>
 
       {/* Content */}
       {isLoading ? (
-        <SourceSkeletons />
+        <RelationshipSkeletons />
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load sources. Please try again.
+          Failed to load relationships. Please try again.
         </div>
-      ) : sources.length === 0 ? (
+      ) : relationships.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sources.map((source) => (
-            <SourceCard key={source.id} source={source} worldId={worldId} />
+          {relationships.map((rel) => (
+            <RelationshipCard key={rel.id} relationship={rel} worldId={worldId} />
           ))}
         </div>
       )}
 
       {/* Dialogs */}
-      <CreateSourceDialog worldId={worldId} />
-      {editingSource && (
-        <EditSourceDialog worldId={worldId} source={editingSource} />
+      <CreateRelationshipDialog worldId={worldId} />
+      {editingRelationship && (
+        <EditRelationshipDialog worldId={worldId} relationship={editingRelationship} />
       )}
     </div>
   )

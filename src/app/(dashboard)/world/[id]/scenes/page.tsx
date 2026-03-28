@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
-  TrendingUp,
+  Film,
   MoreVertical,
   Pencil,
   Trash2,
 } from 'lucide-react'
 
-import type { Arc, CreateArcPayload, UpdateArcPayload } from '@/types'
+import type { Scene, CreateScenePayload, UpdateScenePayload } from '@/types'
 import {
-  useArcs,
-  useCreateArc,
-  useUpdateArc,
-  useDeleteArc,
-} from '@/lib/hooks/use-arcs'
-import { useArcStore } from '@/stores/arc-store'
+  useScenes,
+  useCreateScene,
+  useUpdateScene,
+  useDeleteScene,
+} from '@/lib/hooks/use-scenes'
+import { useSceneStore } from '@/stores/scene-store'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -37,17 +37,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateArcDialog({ worldId }: { worldId: string }) {
-  const { createDialogOpen, setCreateDialogOpen } = useArcStore()
-  const create = useCreateArc(worldId)
-  const [form, setForm] = useState<CreateArcPayload>({ name: '' })
+function CreateSceneDialog({ worldId }: { worldId: string }) {
+  const { createDialogOpen, setCreateDialogOpen } = useSceneStore()
+  const create = useCreateScene(worldId)
+  const [form, setForm] = useState<CreateScenePayload>({ name: '' })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -64,7 +63,7 @@ function CreateArcDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Arc</DialogTitle>
+          <DialogTitle>New Scene</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -73,35 +72,35 @@ function CreateArcDialog({ worldId }: { worldId: string }) {
               id="create-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Redemption Arc"
+              placeholder="e.g. The Confrontation"
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-arcType">Arc Type</Label>
+            <Label htmlFor="create-purpose">Purpose</Label>
             <Input
-              id="create-arcType"
-              value={form.arcType ?? ''}
-              onChange={(e) => setForm({ ...form, arcType: e.target.value })}
-              placeholder="e.g. character, thematic, relational"
+              id="create-purpose"
+              value={form.purpose ?? ''}
+              onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+              placeholder="e.g. exposition, climax, resolution"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-characterId">Character ID</Label>
+            <Label htmlFor="create-tone">Tone</Label>
             <Input
-              id="create-characterId"
-              value={form.characterId ?? ''}
-              onChange={(e) => setForm({ ...form, characterId: e.target.value || undefined })}
-              placeholder="Optional character ID"
+              id="create-tone"
+              value={form.tone ?? ''}
+              onChange={(e) => setForm({ ...form, tone: e.target.value })}
+              placeholder="e.g. tense, hopeful, melancholic"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-desc">Description</Label>
+            <Label htmlFor="create-summary">Summary</Label>
             <Textarea
-              id="create-desc"
-              value={form.description ?? ''}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe the arc's progression..."
+              id="create-summary"
+              value={form.summary ?? ''}
+              onChange={(e) => setForm({ ...form, summary: e.target.value })}
+              placeholder="What happens in this scene..."
               rows={3}
             />
           </div>
@@ -127,34 +126,34 @@ function CreateArcDialog({ worldId }: { worldId: string }) {
 // Edit Dialog
 // ---------------------------------------------------------------------------
 
-function EditArcDialog({
+function EditSceneDialog({
   worldId,
-  arc,
+  scene,
 }: {
   worldId: string
-  arc: Arc
+  scene: Scene
 }) {
-  const { setEditingArcId } = useArcStore()
-  const update = useUpdateArc(worldId)
+  const { setEditingSceneId } = useSceneStore()
+  const update = useUpdateScene(worldId)
 
-  const [form, setForm] = useState<UpdateArcPayload & { id: string }>({
-    id: arc.id,
-    name: arc.name,
-    arcType: arc.type ?? '',
-    description: arc.description ?? '',
-    characterId: arc.characterId ?? '',
+  const [form, setForm] = useState<UpdateScenePayload & { id: string }>({
+    id: scene.id,
+    name: scene.name,
+    summary: scene.summary ?? '',
+    purpose: scene.purpose ?? '',
+    tone: scene.tone ?? '',
   })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingArcId(null) })
+    update.mutate(form, { onSuccess: () => setEditingSceneId(null) })
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && setEditingArcId(null)}>
+    <Dialog open onOpenChange={(open) => !open && setEditingSceneId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Arc</DialogTitle>
+          <DialogTitle>Edit Scene</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -166,27 +165,29 @@ function EditArcDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-arcType">Arc Type</Label>
+            <Label htmlFor="edit-purpose">Purpose</Label>
             <Input
-              id="edit-arcType"
-              value={form.arcType ?? ''}
-              onChange={(e) => setForm({ ...form, arcType: e.target.value })}
+              id="edit-purpose"
+              value={form.purpose ?? ''}
+              onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+              placeholder="e.g. exposition, climax, resolution"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-characterId">Character ID</Label>
+            <Label htmlFor="edit-tone">Tone</Label>
             <Input
-              id="edit-characterId"
-              value={form.characterId ?? ''}
-              onChange={(e) => setForm({ ...form, characterId: e.target.value || null })}
+              id="edit-tone"
+              value={form.tone ?? ''}
+              onChange={(e) => setForm({ ...form, tone: e.target.value })}
+              placeholder="e.g. tense, hopeful, melancholic"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-desc">Description</Label>
+            <Label htmlFor="edit-summary">Summary</Label>
             <Textarea
-              id="edit-desc"
-              value={form.description ?? ''}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              id="edit-summary"
+              value={form.summary ?? ''}
+              onChange={(e) => setForm({ ...form, summary: e.target.value })}
               rows={3}
             />
           </div>
@@ -194,7 +195,7 @@ function EditArcDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setEditingArcId(null)}
+              onClick={() => setEditingSceneId(null)}
             >
               Cancel
             </Button>
@@ -209,32 +210,30 @@ function EditArcDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Arc Card
+// Scene Card
 // ---------------------------------------------------------------------------
 
-function ArcCard({
-  arc,
+function SceneCard({
+  scene,
   worldId,
 }: {
-  arc: Arc
+  scene: Scene
   worldId: string
 }) {
-  const { setEditingArcId } = useArcStore()
-  const deleteArc = useDeleteArc(worldId)
+  const { setEditingSceneId, setSelectedSceneId } = useSceneStore()
+  const deleteScene = useDeleteScene(worldId)
 
   return (
-    <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+    <Card
+      className="group cursor-pointer transition-shadow hover:shadow-md"
+      onClick={() => setSelectedSceneId(scene.id)}
+    >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          <Film className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{arc.name}</CardTitle>
-          {arc.type && (
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {arc.type}
-            </Badge>
-          )}
+          <CardTitle className="text-base truncate">{scene.name}</CardTitle>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -247,7 +246,7 @@ function ArcCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                setEditingArcId(arc.id)
+                setEditingSceneId(scene.id)
               }}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -257,7 +256,7 @@ function ArcCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteArc.mutate(arc.id)
+                deleteScene.mutate(scene.id)
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -267,13 +266,30 @@ function ArcCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        {arc.description ? (
+        {scene.summary ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {arc.description}
+            {scene.summary}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground italic">No summary</p>
         )}
+        <div className="mt-2 space-y-1">
+          {scene.purpose && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Purpose:</span> {scene.purpose}
+            </p>
+          )}
+          {scene.tone && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Tone:</span> {scene.tone}
+            </p>
+          )}
+          {scene.polarity && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Polarity:</span> {scene.polarity}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
@@ -283,7 +299,7 @@ function ArcCard({
 // Loading Skeletons
 // ---------------------------------------------------------------------------
 
-function ArcSkeletons() {
+function SceneSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -310,17 +326,17 @@ function ArcSkeletons() {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
-  const { setCreateDialogOpen } = useArcStore()
+  const { setCreateDialogOpen } = useSceneStore()
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No arcs yet</h3>
+      <Film className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-lg font-semibold">No scenes yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Create your first arc to track story progression.
+        Create your first scene to start structuring your narrative.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Arc
+        New Scene
       </Button>
     </div>
   )
@@ -330,56 +346,57 @@ function EmptyState() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function ArcsPage() {
+export default function ScenesPage() {
   const { id: worldId } = useParams<{ id: string }>()
-  const { data, isLoading, error } = useArcs(worldId)
+  const { data, isLoading, error } = useScenes(worldId)
   const {
-    editingArcId,
+    editingSceneId,
     setCreateDialogOpen,
-  } = useArcStore()
+  } = useSceneStore()
 
-  const arcs = data?.data ?? []
-  const editingArc = arcs.find((a) => a.id === editingArcId)
+  const scenes = data?.data ?? []
+  const editingScene = scenes.find((s) => s.id === editingSceneId)
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Arcs</h1>
+          <h1 className="text-2xl font-bold">Scenes</h1>
           <p className="text-sm text-muted-foreground">
-            {arcs.length > 0
-              ? `${arcs.length} arc${arcs.length === 1 ? '' : 's'}`
-              : 'Story arcs, phases, and structure template overlays.'}
+            {scenes.length > 0
+              ? `${scenes.length} scene${scenes.length === 1 ? '' : 's'}`
+              : 'Scenes with purpose, tone, and value changes.'}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Arc
+          New Scene
         </Button>
       </div>
 
-      {/* Content */}
       {isLoading ? (
-        <ArcSkeletons />
+        <SceneSkeletons />
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load arcs. Please try again.
+          Failed to load scenes. Please try again.
         </div>
-      ) : arcs.length === 0 ? (
+      ) : scenes.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {arcs.map((arc) => (
-            <ArcCard key={arc.id} arc={arc} worldId={worldId} />
+          {scenes.map((scene) => (
+            <SceneCard
+              key={scene.id}
+              scene={scene}
+              worldId={worldId}
+            />
           ))}
         </div>
       )}
 
-      {/* Dialogs */}
-      <CreateArcDialog worldId={worldId} />
-      {editingArc && (
-        <EditArcDialog worldId={worldId} arc={editingArc} />
+      <CreateSceneDialog worldId={worldId} />
+      {editingScene && (
+        <EditSceneDialog worldId={worldId} scene={editingScene} />
       )}
     </div>
   )

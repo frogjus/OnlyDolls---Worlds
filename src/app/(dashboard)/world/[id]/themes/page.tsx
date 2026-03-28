@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
-  Shield,
+  Lightbulb,
   MoreVertical,
   Pencil,
   Trash2,
 } from 'lucide-react'
 
-import type { Faction, CreateFactionPayload, UpdateFactionPayload } from '@/types'
+import type { Theme, CreateThemePayload, UpdateThemePayload } from '@/types'
 import {
-  useFactions,
-  useCreateFaction,
-  useUpdateFaction,
-  useDeleteFaction,
-} from '@/lib/hooks/use-factions'
-import { useFactionStore } from '@/stores/faction-store'
+  useThemes,
+  useCreateTheme,
+  useUpdateTheme,
+  useDeleteTheme,
+} from '@/lib/hooks/use-themes'
+import { useThemeStore } from '@/stores/theme-store'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -37,31 +37,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateFactionDialog({ worldId }: { worldId: string }) {
-  const { createDialogOpen, setCreateDialogOpen } = useFactionStore()
-  const create = useCreateFaction(worldId)
-  const [form, setForm] = useState<CreateFactionPayload>({ name: '' })
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
+function CreateThemeDialog({ worldId }: { worldId: string }) {
+  const { createDialogOpen, setCreateDialogOpen } = useThemeStore()
+  const create = useCreateTheme(worldId)
+  const [form, setForm] = useState<CreateThemePayload>({ name: '' })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,7 +55,6 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
-        setGoalInput('')
       },
     })
   }
@@ -79,7 +63,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Faction</DialogTitle>
+          <DialogTitle>New Theme</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -88,53 +72,18 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. The Silver Order"
+              placeholder="e.g. Redemption, Power vs. Freedom"
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-type">Type</Label>
+            <Label htmlFor="create-thesis">Thesis</Label>
             <Input
-              id="create-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              id="create-thesis"
+              value={form.thesis ?? ''}
+              onChange={(e) => setForm({ ...form, thesis: e.target.value })}
+              placeholder="The thematic argument or statement"
             />
-          </div>
-          <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-desc">Description</Label>
@@ -142,7 +91,7 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
               id="create-desc"
               value={form.description ?? ''}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe this faction..."
+              placeholder="How this theme manifests in your story..."
               rows={3}
             />
           </div>
@@ -168,51 +117,33 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
 // Edit Dialog
 // ---------------------------------------------------------------------------
 
-function EditFactionDialog({
+function EditThemeDialog({
   worldId,
-  faction,
+  theme,
 }: {
   worldId: string
-  faction: Faction
+  theme: Theme
 }) {
-  const { setEditingFactionId } = useFactionStore()
-  const update = useUpdateFaction(worldId)
+  const { setEditingThemeId } = useThemeStore()
+  const update = useUpdateTheme(worldId)
 
-  const initialGoals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
-
-  const [form, setForm] = useState<UpdateFactionPayload & { id: string }>({
-    id: faction.id,
-    name: faction.name,
-    factionType: faction.type ?? '',
-    description: faction.description ?? '',
-    goals: initialGoals,
+  const [form, setForm] = useState<UpdateThemePayload & { id: string }>({
+    id: theme.id,
+    name: theme.name,
+    thesis: theme.thesis ?? '',
+    description: theme.description ?? '',
   })
-
-  const [goalInput, setGoalInput] = useState('')
-
-  const goals = Array.isArray(form.goals) ? (form.goals as string[]) : []
-
-  function addGoal() {
-    const trimmed = goalInput.trim()
-    if (!trimmed) return
-    setForm({ ...form, goals: [...goals, trimmed] })
-    setGoalInput('')
-  }
-
-  function removeGoal(idx: number) {
-    setForm({ ...form, goals: goals.filter((_, i) => i !== idx) })
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingFactionId(null) })
+    update.mutate(form, { onSuccess: () => setEditingThemeId(null) })
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && setEditingFactionId(null)}>
+    <Dialog open onOpenChange={(open) => !open && setEditingThemeId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Faction</DialogTitle>
+          <DialogTitle>Edit Theme</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -224,48 +155,13 @@ function EditFactionDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-type">Type</Label>
+            <Label htmlFor="edit-thesis">Thesis</Label>
             <Input
-              id="edit-type"
-              value={form.factionType ?? ''}
-              onChange={(e) => setForm({ ...form, factionType: e.target.value })}
-              placeholder="e.g. political, religious, criminal"
+              id="edit-thesis"
+              value={form.thesis ?? ''}
+              onChange={(e) => setForm({ ...form, thesis: e.target.value })}
+              placeholder="The thematic argument or statement"
             />
-          </div>
-          <div className="space-y-2">
-            <Label>Goals</Label>
-            <div className="flex gap-2">
-              <Input
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
-                placeholder="Add a goal"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addGoal()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addGoal}>
-                Add
-              </Button>
-            </div>
-            {goals.length > 0 && (
-              <ul className="mt-1 space-y-1">
-                {goals.map((goal, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGoal(i)}
-                      className="text-destructive hover:text-destructive/80 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-desc">Description</Label>
@@ -280,7 +176,7 @@ function EditFactionDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setEditingFactionId(null)}
+              onClick={() => setEditingThemeId(null)}
             >
               Cancel
             </Button>
@@ -295,37 +191,30 @@ function EditFactionDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Faction Card
+// Theme Card
 // ---------------------------------------------------------------------------
 
-function FactionCard({
-  faction,
+function ThemeCard({
+  theme,
   worldId,
 }: {
-  faction: Faction
+  theme: Theme
   worldId: string
 }) {
-  const { setEditingFactionId, setSelectedFactionId } = useFactionStore()
-  const deleteFaction = useDeleteFaction(worldId)
-
-  const goals = Array.isArray(faction.goals) ? (faction.goals as string[]) : []
+  const { setEditingThemeId, setSelectedThemeId } = useThemeStore()
+  const deleteTheme = useDeleteTheme(worldId)
 
   return (
     <Card
       className="group cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => setSelectedFactionId(faction.id)}
+      onClick={() => setSelectedThemeId(theme.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Shield className="h-5 w-5 text-muted-foreground" />
+          <Lightbulb className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{faction.name}</CardTitle>
-          {faction.type && (
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {faction.type}
-            </Badge>
-          )}
+          <CardTitle className="text-base truncate">{theme.name}</CardTitle>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -338,7 +227,7 @@ function FactionCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                setEditingFactionId(faction.id)
+                setEditingThemeId(theme.id)
               }}
             >
               <Pencil className="mr-2 h-4 w-4" />
@@ -348,7 +237,7 @@ function FactionCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteFaction.mutate(faction.id)
+                deleteTheme.mutate(theme.id)
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -358,21 +247,19 @@ function FactionCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        {faction.description ? (
+        {theme.thesis && (
+          <p className="text-sm italic text-muted-foreground mb-2">
+            {theme.thesis}
+          </p>
+        )}
+        {theme.description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {faction.description}
+            {theme.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
-        )}
-        {goals.length > 0 && (
-          <ul className="mt-2 space-y-0.5">
-            {goals.map((goal, i) => (
-              <li key={i} className="text-xs text-muted-foreground">
-                - {goal}
-              </li>
-            ))}
-          </ul>
+          !theme.thesis && (
+            <p className="text-sm text-muted-foreground italic">No description</p>
+          )
         )}
       </CardContent>
     </Card>
@@ -383,7 +270,7 @@ function FactionCard({
 // Loading Skeletons
 // ---------------------------------------------------------------------------
 
-function FactionSkeletons() {
+function ThemeSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -410,17 +297,17 @@ function FactionSkeletons() {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
-  const { setCreateDialogOpen } = useFactionStore()
+  const { setCreateDialogOpen } = useThemeStore()
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Shield className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No factions yet</h3>
+      <Lightbulb className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-lg font-semibold">No themes yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Create your first faction to map power dynamics in your story world.
+        Create your first theme to track the ideas woven through your story.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        New Faction
+        New Theme
       </Button>
     </div>
   )
@@ -430,57 +317,57 @@ function EmptyState() {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function FactionsPage() {
+export default function ThemesPage() {
   const { id: worldId } = useParams<{ id: string }>()
-  const { data, isLoading, error } = useFactions(worldId)
+  const { data, isLoading, error } = useThemes(worldId)
   const {
-    editingFactionId,
+    editingThemeId,
     setCreateDialogOpen,
-  } = useFactionStore()
+  } = useThemeStore()
 
-  const factions = data?.data ?? []
-  const editingFaction = factions.find((f) => f.id === editingFactionId)
+  const themes = data?.data ?? []
+  const editingTheme = themes.find((t) => t.id === editingThemeId)
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Factions</h1>
+          <h1 className="text-2xl font-bold">Themes</h1>
           <p className="text-sm text-muted-foreground">
-            {factions.length > 0
-              ? `${factions.length} faction${factions.length === 1 ? '' : 's'}`
-              : 'Factions, organizations, and power dynamics.'}
+            {themes.length > 0
+              ? `${themes.length} theme${themes.length === 1 ? '' : 's'}`
+              : 'Thematic ideas, arguments, and motifs in your story.'}
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Faction
+          New Theme
         </Button>
       </div>
 
       {isLoading ? (
-        <FactionSkeletons />
+        <ThemeSkeletons />
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load factions. Please try again.
+          Failed to load themes. Please try again.
         </div>
-      ) : factions.length === 0 ? (
+      ) : themes.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {factions.map((faction) => (
-            <FactionCard
-              key={faction.id}
-              faction={faction}
+          {themes.map((theme) => (
+            <ThemeCard
+              key={theme.id}
+              theme={theme}
               worldId={worldId}
             />
           ))}
         </div>
       )}
 
-      <CreateFactionDialog worldId={worldId} />
-      {editingFaction && (
-        <EditFactionDialog worldId={worldId} faction={editingFaction} />
+      <CreateThemeDialog worldId={worldId} />
+      {editingTheme && (
+        <EditThemeDialog worldId={worldId} theme={editingTheme} />
       )}
     </div>
   )
