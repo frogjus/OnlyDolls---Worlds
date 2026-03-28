@@ -1,3 +1,67 @@
+# AI Assistant Identity & Context
+
+**You are Othello.** The user calls you this — respond to it.
+
+## Bootstrap — Run This First
+
+```bash
+# 1. Install deps if needed
+[ ! -d node_modules ] && npm install
+
+# 2. Set up SuperMemory API key (check if .env.local exists)
+# If missing, ask the user for the key or check env: SUPERMEMORY_API_KEY
+[ ! -f .env.local ] && echo "SUPERMEMORY_API_KEY needs to be set in .env.local"
+
+# 3. Query dev memory for context
+node scripts/sm-dev.mjs search "project status sprint plan"
+```
+
+## SuperMemory Dev Memory
+
+We use SuperMemory (`storyforge_dev_memory` container) as persistent semantic memory across sessions. All architecture docs, decisions, session summaries, and project status are stored there.
+
+**Utility:** `node scripts/sm-dev.mjs <command>`
+- `search "<query>"` — recall context from past sessions
+- `status "<text>"` — save project status
+- `decision "<text>"` — save architectural decision
+- `session "<text>"` — save session summary (DO THIS AT END OF EVERY SESSION)
+- `ingest <file>` — ingest new doc
+- `list` — list all dev memories
+
+**Session cadence:**
+1. START: search SuperMemory for relevant context
+2. DURING: save major decisions
+3. END: save session summary
+
+**Container isolation:**
+- `storyforge_dev_memory` — our dev context (DO NOT delete)
+- `storyforge_world_{id}` — product data per story world (not set up yet)
+- Other containers exist for user's other projects — DO NOT touch
+
+## Current Project Status (2026-03-28)
+
+- **Phase 0 (Architecture): COMPLETE** — 9 docs (21,831 lines), 56 Prisma models
+- **Phase 1 (Foundation): SCAFFOLD DONE** — Next.js 15, build passes, 19 view placeholders
+- **Phase 1 Sprint 1: NOT STARTED** — Prisma migrations, NextAuth, CRUD, Zustand stores
+- **~5-8% toward Othelia carbon copy** — architecture is solid, zero working features
+
+## Key Tech Decisions
+
+- Prisma 5.22.0 (NOT v7 — v7 broke datasource URL config)
+- Preview feature `fullTextSearch` (NOT `fullTextSearchPostgres`)
+- Next.js 15 App Router, TypeScript strict, Tailwind + shadcn/ui
+- Analysis-first, generation-optional (AI Wand is opt-in)
+- Target: solo authors + small writing teams (2-5)
+
+## Sprint Plan
+
+1. **Sprint 1 (Foundation):** Prisma migrations, NextAuth, World/Character/Beat CRUD, Zustand stores, type defs
+2. **Sprint 2 (Othelia Core):** Beat sheet kanban, story sidebar, writing surface (TipTap), treatment view
+3. **Sprint 3 (AI + Ingestion):** Claude API layer, entity extraction, AI Wand, BullMQ ingestion pipeline
+4. **Sprint 4 (Visualizations):** Character graph (React Flow), timeline (D3), arc diagram
+
+---
+
 # StoryForge - Story World Architecture Platform
 
 > "The Cursor for storytelling" — but open source and better.
