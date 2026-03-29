@@ -13,15 +13,23 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import type { BeatWithCharacter } from '@/lib/hooks/use-beats'
+import type { BeatDensity } from '@/stores/beat-store'
+
+const STATUS_LABELS: Record<string, string> = {
+  todo: 'To Do',
+  in_progress: 'In Progress',
+  done: 'Done',
+}
 
 interface BeatCardProps {
   beat: BeatWithCharacter
+  density: BeatDensity
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   overlay?: boolean
 }
 
-export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
+export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardProps) {
   const router = useRouter()
   const { id: worldId } = useParams<{ id: string }>()
   const {
@@ -43,6 +51,79 @@ export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     borderLeft: beat.color ? `4px solid ${beat.color}` : undefined,
+  }
+
+  if (density === 'minimal') {
+    return (
+      <div
+        ref={overlay ? undefined : setNodeRef}
+        style={overlay ? { borderLeft: style.borderLeft } : style}
+        className={`flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 ring-1 ring-foreground/10 ${
+          isDragging ? 'opacity-50' : ''
+        } ${overlay ? 'shadow-lg' : ''}`}
+        {...(overlay ? {} : attributes)}
+      >
+        {!overlay && (
+          <button
+            className="cursor-grab text-muted-foreground hover:text-foreground"
+            {...listeners}
+          >
+            <GripVertical className="size-3.5" />
+          </button>
+        )}
+
+        {beat.color && (
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: beat.color }}
+          />
+        )}
+
+        <span
+          className="min-w-0 flex-1 cursor-pointer truncate text-sm"
+          role="button"
+          tabIndex={0}
+          onClick={handleCardClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleCardClick()
+            }
+          }}
+        >
+          {beat.name}
+        </span>
+
+        <Badge variant="outline" className="shrink-0 text-[10px]">
+          {STATUS_LABELS[beat.status] ?? beat.status}
+        </Badge>
+
+        {!overlay && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="ghost" size="icon-xs" />}
+              >
+                <MoreVertical className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(beat.id)}>
+                  <Pencil className="size-3.5" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onDelete(beat.id)}
+                >
+                  <Trash2 className="size-3.5" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -136,6 +217,21 @@ export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
               </Badge>
             )}
           </div>
+
+          {density === 'detailed' && (
+            <div className="mt-2 space-y-1.5 border-t border-border/50 pt-2">
+              {beat.notes && (
+                <p className="text-xs text-muted-foreground/80 italic">
+                  {beat.notes}
+                </p>
+              )}
+              {beat.sequenceId && (
+                <Badge variant="outline" className="text-[10px]">
+                  Sequence mapped
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

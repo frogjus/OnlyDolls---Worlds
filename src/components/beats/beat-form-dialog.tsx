@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Star } from 'lucide-react'
+import { Star, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -20,9 +20,10 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
-import { useCreateBeat, useUpdateBeat, useCharacters } from '@/lib/hooks/use-beats'
+import { useCreateBeat, useUpdateBeat, useDeleteBeat, useCharacters } from '@/lib/hooks/use-beats'
 import type { BeatWithCharacter } from '@/lib/hooks/use-beats'
 import type { BeatStatus } from '@/types'
+import { showSuccess, showError } from '@/lib/toast'
 
 const COLOR_PRESETS = [
   '#ef4444',
@@ -51,6 +52,7 @@ export function BeatFormDialog({
   const isEditing = !!beat
   const createBeat = useCreateBeat(worldId)
   const updateBeat = useUpdateBeat(worldId)
+  const deleteBeat = useDeleteBeat(worldId)
   const { data: characters } = useCharacters(worldId)
 
   const [name, setName] = useState('')
@@ -97,16 +99,45 @@ export function BeatFormDialog({
     if (isEditing && beat) {
       updateBeat.mutate(
         { id: beat.id, ...payload },
-        { onSuccess: () => onOpenChange(false) },
+        {
+          onSuccess: () => {
+            showSuccess('Beat saved')
+            onOpenChange(false)
+          },
+          onError: () => {
+            showError('Failed to save beat')
+          },
+        },
       )
     } else {
       createBeat.mutate(payload, {
-        onSuccess: () => onOpenChange(false),
+        onSuccess: () => {
+          showSuccess('Beat saved')
+          onOpenChange(false)
+        },
+        onError: () => {
+          showError('Failed to save beat')
+        },
       })
     }
   }
 
-  const isPending = createBeat.isPending || updateBeat.isPending
+  const handleDelete = () => {
+    if (!beat) return
+    if (!window.confirm('Delete this beat? This cannot be undone.')) return
+
+    deleteBeat.mutate(beat.id, {
+      onSuccess: () => {
+        showSuccess('Beat deleted')
+        onOpenChange(false)
+      },
+      onError: () => {
+        showError('Failed to delete beat')
+      },
+    })
+  }
+
+  const isPending = createBeat.isPending || updateBeat.isPending || deleteBeat.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,6 +242,17 @@ export function BeatFormDialog({
           </div>
 
           <DialogFooter className="mt-4">
+            {isEditing && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isPending}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            )}
             <Button type="submit" disabled={isPending || !name.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </Button>
