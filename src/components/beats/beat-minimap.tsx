@@ -11,13 +11,24 @@ import {
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { BeatWithCharacter } from '@/lib/hooks/use-beats'
 import type { BeatStatus } from '@/types'
+import type { BeatDensity } from '@/stores/beat-store'
 
 const MINIMAP_WIDTH = 200
 const MINIMAP_HEIGHT = 120
-const CARD_HEIGHT = 6
-const CARD_GAP = 2
 const COL_GAP = 4
 const COL_PADDING = 3
+
+const CARD_HEIGHTS: Record<BeatDensity, number> = {
+  minimal: 4,
+  standard: 6,
+  detailed: 9,
+}
+
+const CARD_GAPS: Record<BeatDensity, number> = {
+  minimal: 1,
+  standard: 2,
+  detailed: 3,
+}
 
 const STATUS_COLORS: Record<BeatStatus, string> = {
   todo: '#a1a1aa',
@@ -27,13 +38,13 @@ const STATUS_COLORS: Record<BeatStatus, string> = {
 
 interface BeatMinimapProps {
   columns: Record<BeatStatus, BeatWithCharacter[]>
+  density: BeatDensity
   scrollContainerRef: RefObject<HTMLDivElement | null>
 }
 
-export function BeatMinimap({ columns, scrollContainerRef }: BeatMinimapProps) {
+export function BeatMinimap({ columns, density, scrollContainerRef }: BeatMinimapProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [viewport, setViewport] = useState({ x: 0, y: 0, w: 1, h: 1 })
-  const [contentSize, setContentSize] = useState({ w: 0, h: 0 })
   const [needsMinimap, setNeedsMinimap] = useState(false)
   const isDragging = useRef(false)
   const minimapRef = useRef<HTMLDivElement>(null)
@@ -48,7 +59,6 @@ export function BeatMinimap({ columns, scrollContainerRef }: BeatMinimapProps) {
     const ch = el.clientHeight
 
     setNeedsMinimap(sw > cw + 1 || sh > ch + 1)
-    setContentSize({ w: sw, h: sh })
     setViewport({
       x: sw > 0 ? el.scrollLeft / sw : 0,
       y: sh > 0 ? el.scrollTop / sh : 0,
@@ -120,12 +130,15 @@ export function BeatMinimap({ columns, scrollContainerRef }: BeatMinimapProps) {
   const innerWidth = MINIMAP_WIDTH - COL_PADDING * 2
   const colWidth = (innerWidth - COL_GAP * (colCount - 1)) / colCount
 
+  const cardH = CARD_HEIGHTS[density]
+  const cardGap = CARD_GAPS[density]
+
   // Compute max column height in cards to scale vertically
   const maxCards = Math.max(1, ...statuses.map((s) => columns[s].length))
-  const naturalHeight = COL_PADDING + maxCards * (CARD_HEIGHT + CARD_GAP) + COL_PADDING
+  const naturalHeight = COL_PADDING + maxCards * (cardH + cardGap) + COL_PADDING
   const scaleY = naturalHeight > MINIMAP_HEIGHT ? MINIMAP_HEIGHT / naturalHeight : 1
-  const scaledCardH = CARD_HEIGHT * scaleY
-  const scaledGap = CARD_GAP * scaleY
+  const scaledCardH = cardH * scaleY
+  const scaledGap = cardGap * scaleY
 
   return (
     <div className="fixed bottom-4 left-4 z-50 select-none">
