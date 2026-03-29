@@ -232,12 +232,12 @@ function LocationCard({
 
   return (
     <Card
-      className="group cursor-pointer transition-shadow hover:shadow-md"
+      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5"
       onClick={() => setSelectedLocationId(location.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <MapPin className="h-5 w-5 text-muted-foreground" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+          <MapPin className="h-5 w-5 text-teal-400" />
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{location.name}</CardTitle>
@@ -363,7 +363,7 @@ export default function LocationsPage() {
               : 'Places, settings, and geography of your story world.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Location
         </Button>

@@ -247,10 +247,10 @@ function RelationshipCard({
   const strengthDisplay = Math.round((relationship.intensity ?? 0.5) * 10)
 
   return (
-    <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+    <Card className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/5">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Heart className="h-5 w-5 text-muted-foreground" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+          <Heart className="h-5 w-5 text-rose-400" />
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">
@@ -347,13 +347,15 @@ function RelationshipSkeletons() {
 function EmptyState() {
   const { setCreateDialogOpen } = useRelationshipStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Heart className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No relationships mapped yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Heart className="h-10 w-10 text-teal-400/70" />
+      </div>
+      <h3 className="mt-6 text-lg font-bold text-slate-100">No relationships mapped yet</h3>
+      <p className="mt-2 text-sm text-slate-400 max-w-sm">
         Add characters first, then map their connections.
       </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+      <Button className="mt-6 bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
         New Relationship
       </Button>
@@ -388,7 +390,7 @@ export default function RelationshipsPage() {
               : 'Character connections and dynamics.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Relationship
         </Button>

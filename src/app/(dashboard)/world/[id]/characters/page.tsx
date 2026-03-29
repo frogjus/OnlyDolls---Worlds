@@ -309,15 +309,15 @@ function CharacterCard({
 
   return (
     <Card
-      className="group cursor-pointer transition-shadow hover:shadow-md"
+      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5"
       onClick={() => {
         setSelectedCharacterId(character.id)
         setInspectorOpen(true)
       }}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarFallback>{initials}</AvatarFallback>
+        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-teal-500/30">
+          <AvatarFallback className="bg-slate-800 text-teal-300 text-xs">{initials}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{character.name}</CardTitle>
@@ -416,13 +416,15 @@ function CharacterSkeletons() {
 function EmptyState() {
   const { setCreateDialogOpen } = useCharacterStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Users className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No characters yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Users className="h-10 w-10 text-teal-400/70" />
+      </div>
+      <h3 className="mt-6 text-lg font-bold text-slate-100">No characters yet</h3>
+      <p className="mt-2 text-sm text-slate-400">
         Create your first character to start building your story world.
       </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+      <Button className="mt-6 bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
         New Character
       </Button>
@@ -489,7 +491,7 @@ export default function CharactersPage() {
               : 'Character profiles, relationships, and voice analysis.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Character
         </Button>
@@ -497,7 +499,7 @@ export default function CharactersPage() {
 
       {/* Relationship Graph (collapsible) */}
       {graphData && (
-        <div className="rounded-lg border">
+        <div className="rounded-lg border border-slate-700/50 bg-slate-900/40">
           <button
             onClick={() => setGraphExpanded(!graphExpanded)}
             className="flex w-full items-center gap-2 p-4 text-left hover:bg-accent/50 transition-colors"
