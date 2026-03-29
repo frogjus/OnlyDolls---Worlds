@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import {
   Plus,
   FileText,
@@ -9,6 +10,8 @@ import {
   Pencil,
   Trash2,
   ExternalLink,
+  Upload,
+  BookOpen,
 } from 'lucide-react'
 
 import type { SourceMaterial, CreateSourceMaterialPayload, UpdateSourceMaterialPayload } from '@/types'
@@ -19,6 +22,7 @@ import {
   useDeleteSource,
 } from '@/lib/hooks/use-sources'
 import { useSourceStore } from '@/stores/source-store'
+import { IngestionFlow } from '@/components/ingestion/ingestion-flow'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -262,82 +266,93 @@ function SourceCard({
   const deleteSrc = useDeleteSource(worldId)
 
   return (
-    <Card className="group cursor-pointer transition-shadow hover:shadow-md">
-      <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <FileText className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{source.title}</CardTitle>
-          <div className="flex items-center gap-2 mt-1">
-            {source.type && (
-              <Badge variant="secondary" className="text-xs">
-                {source.type}
-              </Badge>
+    <Link href={`/world/${worldId}/sources/${source.id}`}>
+      <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+        <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base truncate">{source.title}</CardTitle>
+            <div className="flex items-center gap-2 mt-1">
+              {source.type && (
+                <Badge variant="secondary" className="text-xs">
+                  {source.type}
+                </Badge>
+              )}
+              {source.author && (
+                <span className="text-xs text-muted-foreground">
+                  by {source.author}
+                </span>
+              )}
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  setEditingSourceId(source.id)
+                }}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  deleteSrc.mutate(source.id)
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+        <CardContent>
+          {source.content ? (
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {source.content}
+            </p>
+          ) : source.notes ? (
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {source.notes}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No content</p>
+          )}
+          <div className="flex items-center gap-3 mt-2">
+            {source.url && (
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open link
+              </a>
             )}
-            {source.author && (
+            {source.createdAt && (
               <span className="text-xs text-muted-foreground">
-                by {source.author}
+                {new Date(source.createdAt).toLocaleDateString()}
               </span>
             )}
           </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                setEditingSourceId(source.id)
-              }}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                deleteSrc.mutate(source.id)
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardHeader>
-      <CardContent>
-        {source.content ? (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {source.content}
-          </p>
-        ) : source.notes ? (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {source.notes}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground italic">No content</p>
-        )}
-        {source.url && (
-          <a
-            href={source.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            Open link
-          </a>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 
@@ -368,22 +383,24 @@ function SourceSkeletons() {
 }
 
 // ---------------------------------------------------------------------------
-// Empty State
+// Empty State — ingest-first
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
-  const { setCreateDialogOpen } = useSourceStore()
+function EmptyState({ worldId }: { worldId: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <FileText className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No sources yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Add source materials to analyze and extract story elements.
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-16 text-center">
+      <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+        <BookOpen className="size-8 text-muted-foreground" />
+      </div>
+      <h3 className="mt-6 text-xl font-semibold">Bring your story to life</h3>
+      <p className="mt-2 max-w-md text-sm text-muted-foreground">
+        Upload a manuscript, screenplay, or reference material to start building
+        your story world. We&apos;ll analyze the content and extract characters,
+        locations, events, and more.
       </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Source
-      </Button>
+      <div className="mt-8 w-full max-w-lg">
+        <IngestionFlow worldId={worldId} />
+      </div>
     </div>
   )
 }
@@ -410,16 +427,21 @@ export default function SourcesPage() {
         <div>
           <h1 className="text-2xl font-bold">Sources</h1>
           <p className="text-sm text-muted-foreground">
-            {sources.length > 0
-              ? `${sources.length} source${sources.length === 1 ? '' : 's'}`
-              : 'Source materials -- text, audio, video ingestion.'}
+            Upload and analyze your story materials
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Source
-        </Button>
+        {sources.length > 0 && (
+          <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Manually
+          </Button>
+        )}
       </div>
+
+      {/* Upload Dropzone — always visible when sources exist */}
+      {!isLoading && !error && sources.length > 0 && (
+        <IngestionFlow worldId={worldId} />
+      )}
 
       {/* Content */}
       {isLoading ? (
@@ -429,13 +451,20 @@ export default function SourcesPage() {
           Failed to load sources. Please try again.
         </div>
       ) : sources.length === 0 ? (
-        <EmptyState />
+        <EmptyState worldId={worldId} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sources.map((source) => (
-            <SourceCard key={source.id} source={source} worldId={worldId} />
-          ))}
-        </div>
+        <>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              {sources.length} source{sources.length === 1 ? '' : 's'}
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sources.map((source) => (
+              <SourceCard key={source.id} source={source} worldId={worldId} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Dialogs */}
