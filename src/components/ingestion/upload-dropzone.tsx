@@ -10,11 +10,20 @@ interface UploadDropzoneProps {
   onError?: (error: string) => void
 }
 
+interface ExtractedEntityItem {
+  name: string
+  type: 'character' | 'location' | 'event' | 'item' | 'faction'
+  description: string
+  confidence: number
+  confirmed: boolean
+}
+
 interface UploadResult {
   jobId: string
   status: string
   entityCount: number
   sectionCount: number
+  entities?: ExtractedEntityItem[]
 }
 
 const ACCEPTED_EXTENSIONS = ['.txt', '.md', '.markdown', '.fountain']
