@@ -102,6 +102,7 @@ export function QuickstartWizard() {
 
   const isPending =
     createWorld.isPending || createCharacter.isPending || createBeat.isPending
+  const error = createWorld.error || createCharacter.error || createBeat.error
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -144,6 +145,13 @@ export function QuickstartWizard() {
           </div>
         ))}
       </div>
+
+      {/* Error display */}
+      {error && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          {error.message || 'Something went wrong. Please try again.'}
+        </div>
+      )}
 
       {/* Step 1: Create World */}
       {step === 1 && (
