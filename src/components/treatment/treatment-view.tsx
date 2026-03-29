@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
   useTreatmentBeats,
+  useSaveTreatmentOverride,
   generateTreatment,
   type TreatmentSection,
 } from '@/lib/hooks/use-treatments'
@@ -18,24 +19,14 @@ interface TreatmentViewProps {
 
 export function TreatmentView({ worldId }: TreatmentViewProps) {
   const { data: beats, isLoading } = useTreatmentBeats(worldId)
-  const [overrides, setOverrides] = useState<Record<string, string>>({})
+  const saveMutation = useSaveTreatmentOverride(worldId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
 
   const sections = useMemo(() => {
     if (!beats || beats.length === 0) return []
-    const generated = generateTreatment(beats)
-    return generated.map((section) => {
-      if (section.beatId && overrides[section.beatId] !== undefined) {
-        return {
-          ...section,
-          content: overrides[section.beatId],
-          isOverridden: true,
-        }
-      }
-      return section
-    })
-  }, [beats, overrides])
+    return generateTreatment(beats)
+  }, [beats])
 
   if (isLoading) {
     return <TreatmentSkeleton />
@@ -61,7 +52,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
   }
 
   function saveEdit(beatId: string) {
-    setOverrides((prev) => ({ ...prev, [beatId]: editValue }))
+    saveMutation.mutate({ beatId, treatmentOverride: editValue })
     setEditingId(null)
     setEditValue('')
   }
