@@ -17,6 +17,7 @@ interface EntityReviewProps {
   entities: ExtractedEntityItem[]
   onConfirm: (confirmed: ExtractedEntityItem[]) => void
   onCancel: () => void
+  isLoading?: boolean
 }
 
 const ENTITY_TYPE_CONFIG: Record<
@@ -46,6 +47,7 @@ export function EntityReview({
   entities,
   onConfirm,
   onCancel,
+  isLoading = false,
 }: EntityReviewProps) {
   const [entityStates, setEntityStates] = useState<Record<number, boolean>>(
     () => {
@@ -176,8 +178,8 @@ export function EntityReview({
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={handleConfirm} disabled={selectedCount === 0}>
-          Import {selectedCount} {selectedCount === 1 ? 'Entity' : 'Entities'}
+        <Button onClick={handleConfirm} disabled={selectedCount === 0 || isLoading}>
+          {isLoading ? 'Importing...' : `Import ${selectedCount} ${selectedCount === 1 ? 'Entity' : 'Entities'}`}
         </Button>
       </div>
     </div>

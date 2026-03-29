@@ -6,11 +6,14 @@ interface EditorUIState {
   activeManuscriptId: string | null
   isDirty: boolean
   sidebarCollapsed: boolean
+  focusMode: boolean
   setMode: (mode: 'prose' | 'screenplay') => void
   setWordCount: (count: number) => void
   setActiveManuscriptId: (id: string | null) => void
   setIsDirty: (dirty: boolean) => void
   toggleSidebar: () => void
+  toggleFocusMode: () => void
+  exitFocusMode: () => void
 }
 
 export const useEditorUI = create<EditorUIState>((set) => ({
@@ -19,9 +22,12 @@ export const useEditorUI = create<EditorUIState>((set) => ({
   activeManuscriptId: null,
   isDirty: false,
   sidebarCollapsed: false,
+  focusMode: false,
   setMode: (mode) => set({ mode }),
   setWordCount: (count) => set({ wordCount: count }),
   setActiveManuscriptId: (id) => set({ activeManuscriptId: id }),
   setIsDirty: (dirty) => set({ isDirty: dirty }),
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
+  exitFocusMode: () => set({ focusMode: false }),
 }))

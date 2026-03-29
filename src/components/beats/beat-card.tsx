@@ -2,7 +2,8 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Star, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
+import { GripVertical, Star, MoreVertical, Pencil, PenLine, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -21,6 +22,8 @@ interface BeatCardProps {
 }
 
 export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
+  const router = useRouter()
+  const { id: worldId } = useParams<{ id: string }>()
   const {
     attributes,
     listeners,
@@ -29,6 +32,12 @@ export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
     transition,
     isDragging,
   } = useSortable({ id: beat.id, data: { beat }, disabled: overlay })
+
+  const handleCardClick = () => {
+    if (!overlay) {
+      router.push(`/world/${worldId}/write?beatId=${beat.id}`)
+    }
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -55,30 +64,48 @@ export function BeatCard({ beat, onEdit, onDelete, overlay }: BeatCardProps) {
           </button>
         )}
 
-        <div className="min-w-0 flex-1">
+        <div
+          className="min-w-0 flex-1 cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={handleCardClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleCardClick()
+            }
+          }}
+        >
           <div className="flex items-center justify-between gap-2">
-            <h4 className="truncate text-sm font-medium">{beat.name}</h4>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h4 className="truncate text-sm font-medium">{beat.name}</h4>
+              {!overlay && (
+                <PenLine className="size-3 shrink-0 text-muted-foreground/50" />
+              )}
+            </div>
             {!overlay && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={<Button variant="ghost" size="icon-xs" />}
-                >
-                  <MoreVertical className="size-3.5" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(beat.id)}>
-                    <Pencil className="size-3.5" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onDelete(beat.id)}
+              <div onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<Button variant="ghost" size="icon-xs" />}
                   >
-                    <Trash2 className="size-3.5" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <MoreVertical className="size-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(beat.id)}>
+                      <Pencil className="size-3.5" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(beat.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
 

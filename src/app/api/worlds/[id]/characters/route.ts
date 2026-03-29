@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/helpers'
 import { characterQueries, verifyWorldOwnership } from '@/lib/db/queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { CreateCharacterPayload } from '@/types'
 
 export async function GET(
@@ -58,5 +59,6 @@ export async function POST(
     traits: body.traits ?? undefined,
   })
 
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: character }, { status: 201 })
 }

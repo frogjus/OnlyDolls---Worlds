@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
 import { locationQueries } from '@/lib/db/location-queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { UpdateLocationPayload } from '@/types'
 
 type Params = { params: Promise<{ id: string; locationId: string }> }
@@ -42,6 +43,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updated = await locationQueries.getById(locationId, id)
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: updated })
 }
 

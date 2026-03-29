@@ -15,6 +15,7 @@ import Gapcursor from '@tiptap/extension-gapcursor'
 import Placeholder from '@tiptap/extension-placeholder'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from './editor-toolbar'
+import { BeatAnchorNode } from './extensions/beat-anchor'
 import './editor.css'
 
 type EditorMode = 'prose' | 'screenplay'
@@ -55,6 +56,7 @@ function StoryEditor({
       Dropcursor,
       Gapcursor,
       Placeholder.configure({ placeholder }),
+      BeatAnchorNode,
     ],
     content: content ?? undefined,
     editable,
