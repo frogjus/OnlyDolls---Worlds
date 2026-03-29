@@ -12,6 +12,7 @@ import {
   generateTreatment,
   type TreatmentSection,
 } from '@/lib/hooks/use-treatments'
+import { showSuccess, showError } from '@/lib/toast'
 
 interface TreatmentViewProps {
   worldId: string
@@ -52,9 +53,19 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
   }
 
   function saveEdit(beatId: string) {
-    saveMutation.mutate({ beatId, treatmentOverride: editValue })
-    setEditingId(null)
-    setEditValue('')
+    saveMutation.mutate(
+      { beatId, treatmentOverride: editValue },
+      {
+        onSuccess: () => {
+          showSuccess('Treatment section saved')
+          setEditingId(null)
+          setEditValue('')
+        },
+        onError: () => {
+          showError('Failed to save treatment override')
+        },
+      },
+    )
   }
 
   function cancelEdit() {

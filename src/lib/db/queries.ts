@@ -93,7 +93,10 @@ export const beatQueries = {
   list(storyWorldId: string) {
     return prisma.beat.findMany({
       where: { storyWorldId, ...notDeleted },
-      include: { character: { select: { id: true, name: true } } },
+      include: {
+        character: { select: { id: true, name: true } },
+        sequence: { select: { actId: true, act: { select: { id: true, name: true } } } },
+      },
       orderBy: { position: 'asc' },
     })
   },
@@ -101,7 +104,10 @@ export const beatQueries = {
   getById(id: string, storyWorldId: string) {
     return prisma.beat.findFirst({
       where: { id, storyWorldId, ...notDeleted },
-      include: { character: { select: { id: true, name: true } } },
+      include: {
+        character: { select: { id: true, name: true } },
+        sequence: { select: { actId: true, act: { select: { id: true, name: true } } } },
+      },
     })
   },
 

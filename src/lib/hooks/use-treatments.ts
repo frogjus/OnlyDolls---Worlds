@@ -30,8 +30,16 @@ export function useTreatmentBeats(worldId: string) {
     queryFn: async () => {
       const res = await fetch(`/api/worlds/${worldId}/beats`)
       if (!res.ok) throw new Error('Failed to fetch beats')
-      const json: ApiListResponse<ApiBeat> = await res.json()
-      return json.data.sort((a, b) => a.position - b.position)
+      const json = await res.json()
+      // Flatten nested sequence->act into top-level actId/actName
+      return (json.data as Record<string, unknown>[]).map((beat) => {
+        const seq = beat.sequence as { actId?: string; act?: { id: string; name: string } } | null
+        return {
+          ...beat,
+          actId: seq?.actId ?? null,
+          actName: seq?.act?.name ?? null,
+        } as ApiBeat
+      }).sort((a: ApiBeat, b: ApiBeat) => a.position - b.position)
     },
     enabled: !!worldId,
   })
