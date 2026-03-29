@@ -18,6 +18,7 @@ import {
   useDeleteObject,
 } from '@/lib/hooks/use-objects'
 import { useObjectStore } from '@/stores/object-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -57,7 +58,9 @@ function CreateObjectDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Object created')
       },
+      onError: () => showError('Failed to create object'),
     })
   }
 
@@ -148,7 +151,13 @@ function EditObjectDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingObjectId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingObjectId(null)
+        showSuccess('Object updated')
+      },
+      onError: () => showError('Failed to update object'),
+    })
   }
 
   return (
@@ -262,7 +271,11 @@ function ObjectCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteObject.mutate(object.id)
+                if (!window.confirm('Delete this object? This cannot be undone.')) return
+                deleteObject.mutate(object.id, {
+                  onSuccess: () => showSuccess('Object deleted'),
+                  onError: () => showError('Failed to delete object'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

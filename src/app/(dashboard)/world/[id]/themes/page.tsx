@@ -18,6 +18,7 @@ import {
   useDeleteTheme,
 } from '@/lib/hooks/use-themes'
 import { useThemeStore } from '@/stores/theme-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -56,7 +57,9 @@ function CreateThemeDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Theme created')
       },
+      onError: () => showError('Failed to create theme'),
     })
   }
 
@@ -137,7 +140,13 @@ function EditThemeDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingThemeId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingThemeId(null)
+        showSuccess('Theme updated')
+      },
+      onError: () => showError('Failed to update theme'),
+    })
   }
 
   return (
@@ -238,7 +247,11 @@ function ThemeCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteTheme.mutate(theme.id)
+                if (!window.confirm('Delete this theme? This cannot be undone.')) return
+                deleteTheme.mutate(theme.id, {
+                  onSuccess: () => showSuccess('Theme deleted'),
+                  onError: () => showError('Failed to delete theme'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
