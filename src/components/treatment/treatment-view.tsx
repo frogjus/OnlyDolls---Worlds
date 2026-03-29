@@ -69,7 +69,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
           return (
             <h2
               key={`act-${i}`}
-              className="border-b pb-2 text-xl font-semibold tracking-tight"
+              className="border-b-2 border-teal-500/50 pb-2 text-xl font-bold tracking-tight"
             >
               {section.heading}
             </h2>
@@ -79,7 +79,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
         const isEditing = editingId === section.beatId
 
         return (
-          <div key={section.beatId ?? i} className="group relative">
+          <div key={section.beatId ?? i} className="group relative border-l-2 border-transparent pl-3 transition-colors hover:border-teal-500/50">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -102,6 +102,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
                       <Button
                         size="xs"
                         onClick={() => saveEdit(section.beatId!)}
+                        className="bg-teal-600 hover:bg-teal-500 text-white"
                       >
                         <Check className="size-3" />
                         Save
@@ -110,6 +111,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
                         size="xs"
                         variant="ghost"
                         onClick={cancelEdit}
+                        className="text-slate-400 hover:text-slate-300"
                       >
                         <X className="size-3" />
                         Cancel
@@ -127,7 +129,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-teal-400 hover:text-teal-300 hover:bg-teal-500/10"
                   onClick={() => startEdit(section)}
                 >
                   <Pencil className="size-3" />

@@ -128,7 +128,7 @@ export default function WritePage() {
   if (isLoading) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b px-4 py-2">
+        <div className="flex items-center gap-2 border-b border-slate-700/50 bg-slate-900/30 px-4 py-2">
           <Skeleton className="h-8 w-24" />
           <Skeleton className="h-8 w-24" />
           <Skeleton className="ml-auto h-8 w-48" />
@@ -146,9 +146,9 @@ export default function WritePage() {
   if (!manuscripts?.length) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
-        <FileText className="size-12 text-muted-foreground" />
+        <FileText className="size-12 text-teal-500/40" />
         <p className="text-lg text-muted-foreground">No manuscript yet</p>
-        <Button onClick={handleCreate} disabled={createManuscript.isPending}>
+        <Button onClick={handleCreate} disabled={createManuscript.isPending} className="bg-teal-600 hover:bg-teal-500 text-white">
           <Plus className="size-4" />
           Create Manuscript
         </Button>
@@ -158,20 +158,22 @@ export default function WritePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b px-4 py-2">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2 border-b border-slate-700/50 bg-slate-900/30 px-4 py-2">
+        <div className="flex items-center rounded-lg border border-teal-500/20 bg-slate-900/60 p-0.5">
           <Button
-            variant={mode === 'prose' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
             onClick={() => setMode('prose')}
+            className={mode === 'prose' ? 'bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 hover:text-teal-200' : 'text-slate-400 hover:text-slate-200'}
           >
             <BookOpen className="size-4" />
             Prose
           </Button>
           <Button
-            variant={mode === 'screenplay' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
             onClick={() => setMode('screenplay')}
+            className={mode === 'screenplay' ? 'bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 hover:text-teal-200' : 'text-slate-400 hover:text-slate-200'}
           >
             <Clapperboard className="size-4" />
             Screenplay
@@ -185,7 +187,7 @@ export default function WritePage() {
             value={activeManuscriptId ?? ''}
             onValueChange={setActiveManuscriptId}
           >
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-48 border-teal-500/20 bg-slate-900/60 focus:ring-teal-500/30">
               <SelectValue placeholder="Select manuscript" />
             </SelectTrigger>
             <SelectContent>
@@ -199,11 +201,11 @@ export default function WritePage() {
         )}
 
         {isDirty && (
-          <span className="ml-auto text-xs text-muted-foreground">Unsaved changes</span>
+          <span className="ml-auto text-xs text-teal-400/60">Unsaved changes</span>
         )}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden shadow-[inset_0_2px_12px_rgba(0,0,0,0.3)]">
         {activeManuscript ? (
           <StoryEditor
             key={activeManuscriptId}
