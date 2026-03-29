@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import type { Editor } from '@tiptap/core';
+import { useBeatUI } from '@/stores/beat-store';
 
 interface BeatAnchorInfo {
   beatId: string;
@@ -16,6 +18,9 @@ interface BeatGutterProps {
 }
 
 export function BeatGutter({ editor, onBeatClick }: BeatGutterProps) {
+  const router = useRouter();
+  const { id: worldId } = useParams<{ id: string }>();
+  const setHighlightBeatId = useBeatUI((s) => s.setHighlightBeatId);
   const [anchors, setAnchors] = useState<BeatAnchorInfo[]>([]);
 
   const updateAnchors = useCallback(() => {
@@ -27,7 +32,7 @@ export function BeatGutter({ editor, onBeatClick }: BeatGutterProps) {
     const found: BeatAnchorInfo[] = [];
 
     editor.state.doc.descendants((node, pos) => {
-      if (node.type.name === 'beatAnchor') {
+      if (node.type.name === 'beatAnchor' || node.type.name === 'beatAnchorNode') {
         const dom = editor.view.nodeDOM(pos);
         if (dom instanceof HTMLElement) {
           const rect = dom.getBoundingClientRect();
@@ -73,11 +78,23 @@ export function BeatGutter({ editor, onBeatClick }: BeatGutterProps) {
           role="button"
           tabIndex={0}
           title={anchor.beatTitle}
-          onClick={() => onBeatClick?.(anchor.beatId)}
+          onClick={() => {
+            if (onBeatClick) {
+              onBeatClick(anchor.beatId);
+            } else {
+              setHighlightBeatId(anchor.beatId);
+              router.push(`/world/${worldId}/beats?highlight=${anchor.beatId}`);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onBeatClick?.(anchor.beatId);
+              if (onBeatClick) {
+                onBeatClick(anchor.beatId);
+              } else {
+                setHighlightBeatId(anchor.beatId);
+                router.push(`/world/${worldId}/beats?highlight=${anchor.beatId}`);
+              }
             }
           }}
           style={{
