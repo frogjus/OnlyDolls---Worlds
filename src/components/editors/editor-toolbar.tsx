@@ -14,16 +14,23 @@ import {
   Quote,
   Undo,
   Redo,
+  Maximize2,
+  Minimize2,
+  BookOpen,
+  Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useEditorUI } from '@/stores/editor-store'
 
 interface EditorToolbarProps {
   editor: Editor | null
 }
 
 function EditorToolbar({ editor }: EditorToolbarProps) {
+  const { mode, focusMode, toggleFocusMode } = useEditorUI()
+
   if (!editor) {
     return null
   }
@@ -132,9 +139,27 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
         disabled={!editor.can().redo()}
       />
 
-      {/* Word count */}
-      <div className="ml-auto text-xs text-muted-foreground">
-        {wordCount} {wordCount === 1 ? 'word' : 'words'}
+      {/* Word count + mode indicator + focus toggle */}
+      <div className="ml-auto flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">
+          {wordCount} {wordCount === 1 ? 'word' : 'words'}
+        </span>
+        <Separator orientation="vertical" className="h-4" />
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          {mode === 'prose' ? <BookOpen className="size-3" /> : <Clapperboard className="size-3" />}
+          {mode === 'prose' ? 'Prose' : 'Screenplay'}
+        </span>
+        <Separator orientation="vertical" className="h-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleFocusMode}
+          aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
+          className="size-7"
+          title={focusMode ? 'Exit focus mode (Escape)' : 'Focus mode (Ctrl+Shift+F)'}
+        >
+          {focusMode ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+        </Button>
       </div>
     </div>
   )

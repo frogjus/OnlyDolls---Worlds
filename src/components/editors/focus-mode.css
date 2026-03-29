@@ -1,41 +1,18 @@
-.focus-mode-overlay {
+.editor-focus-mode {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: hsl(40 30% 96%);
+  background: var(--background);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 4rem 2rem;
-  overflow-y: auto;
-  animation: focus-fade-in 0.3s ease;
+  flex-direction: column;
+  animation-name: focus-fade-in;
+  animation-duration: var(--duration-normal, 300ms);
+  animation-timing-function: var(--ease-out, ease-out);
 }
 
-.dark .focus-mode-overlay {
-  background: hsl(30 10% 12%);
-}
-
-.focus-mode-overlay .focus-mode-editor {
-  width: 100%;
+.editor-focus-mode .storyforge-editor {
   max-width: 720px;
-  min-height: calc(100vh - 8rem);
-}
-
-.focus-mode-exit {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 51;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.focus-mode-overlay:hover .focus-mode-exit {
-  opacity: 1;
-}
-
-.focus-mode-exit:focus-visible {
-  opacity: 1;
+  margin: 0 auto;
 }
 
 @keyframes focus-fade-in {
