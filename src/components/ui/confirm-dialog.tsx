@@ -55,7 +55,11 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={handleCancel}>
             {cancelLabel}
           </Button>
-          <Button variant={variant} onClick={handleConfirm}>
+          <Button
+            variant={variant}
+            onClick={handleConfirm}
+            className={variant === 'destructive' ? 'bg-destructive text-white hover:bg-destructive/90' : ''}
+          >
             {confirmLabel}
           </Button>
         </DialogFooter>
