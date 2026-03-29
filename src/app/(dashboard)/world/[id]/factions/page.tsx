@@ -18,6 +18,7 @@ import {
   useDeleteFaction,
 } from '@/lib/hooks/use-factions'
 import { useFactionStore } from '@/stores/faction-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -409,20 +410,15 @@ function FactionSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function FactionsEmptyState() {
   const { setCreateDialogOpen } = useFactionStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Shield className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No factions yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first faction to map power dynamics in your story world.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Faction
-      </Button>
-    </div>
+    <EmptyState
+      icon={Shield}
+      title="No factions yet"
+      description="Define the organizations, alliances, and power structures in your world. Track goals, hierarchies, and shifting allegiances."
+      primaryAction={{ label: 'New Faction', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -465,7 +461,7 @@ export default function FactionsPage() {
           Failed to load factions. Please try again.
         </div>
       ) : factions.length === 0 ? (
-        <EmptyState />
+        <FactionsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {factions.map((faction) => (

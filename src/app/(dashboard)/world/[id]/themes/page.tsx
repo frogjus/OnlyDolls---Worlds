@@ -18,6 +18,7 @@ import {
   useDeleteTheme,
 } from '@/lib/hooks/use-themes'
 import { useThemeStore } from '@/stores/theme-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -296,20 +297,15 @@ function ThemeSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function ThemesEmptyState() {
   const { setCreateDialogOpen } = useThemeStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Lightbulb className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No themes yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first theme to track the ideas woven through your story.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Theme
-      </Button>
-    </div>
+    <EmptyState
+      icon={Lightbulb}
+      title="No themes yet"
+      description="Track the thematic ideas, arguments, and motifs woven through your story. Define thematic oppositions and trace how themes manifest across scenes."
+      primaryAction={{ label: 'New Theme', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -352,7 +348,7 @@ export default function ThemesPage() {
           Failed to load themes. Please try again.
         </div>
       ) : themes.length === 0 ? (
-        <EmptyState />
+        <ThemesEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {themes.map((theme) => (

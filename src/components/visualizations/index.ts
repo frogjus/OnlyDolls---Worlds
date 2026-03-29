@@ -14,3 +14,25 @@ export { VizSkeleton } from './viz-skeleton'
 export type { VizSkeletonProps } from './viz-skeleton'
 
 export { exportToSvg, exportToPng, downloadBlob, downloadSvg } from '@/lib/viz-export'
+
+// Visualization components
+export { DualTimeline } from './dual-timeline'
+export type { DualTimelineProps, DualTimelineData, TimelineEvent, TimelineLane } from './dual-timeline'
+
+export { MindMap } from './mind-map'
+export type { MindMapProps, MindMapData, WorldElement, WorldConnection } from './mind-map'
+
+export { ForeshadowingWeb } from './foreshadowing-web'
+export type { ForeshadowingWebProps } from './foreshadowing-web'
+
+export { PacingHeatmap } from './pacing-heatmap'
+export type { PacingHeatmapProps, PacingHeatmapData, PacingMetric, PacingRow } from './pacing-heatmap'
+
+export { CharacterGraph } from './character-graph'
+export type { CharacterGraphProps, CharacterGraphData, CharacterNode, CharacterRelationship } from './character-graph'
+
+export { EmotionalArc } from './emotional-arc'
+
+export { ArcDiagram } from './arc-diagram'
+
+export { default as FactionMap } from './faction-map'

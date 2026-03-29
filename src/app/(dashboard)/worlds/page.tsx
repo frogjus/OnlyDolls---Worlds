@@ -34,12 +34,18 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorldStore } from '@/stores/world-store'
 import { useWorlds, useCreateWorld, useDeleteWorld } from '@/lib/hooks/use-worlds'
+import { useOnboardingStore } from '@/stores/onboarding-store'
+import { QuickstartWizard } from '@/components/onboarding/quickstart-wizard'
+import { SignupSurvey } from '@/components/onboarding/signup-survey'
 
 export default function WorldsPage() {
   const { data, isLoading } = useWorlds()
   const createWorld = useCreateWorld()
   const deleteWorld = useDeleteWorld()
   const { createDialogOpen, setCreateDialogOpen } = useWorldStore()
+  const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding)
+  const surveyResponses = useOnboardingStore((s) => s.surveyResponses)
+  const [surveyDone, setSurveyDone] = useState(false)
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -47,6 +53,25 @@ export default function WorldsPage() {
   const [logline, setLogline] = useState('')
 
   const worlds = data?.data ?? []
+
+  const showOnboarding = !isLoading && worlds.length === 0 && !hasCompletedOnboarding
+  const showSurvey = showOnboarding && !surveyDone && !surveyResponses.usage
+
+  if (showSurvey) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <SignupSurvey onComplete={() => setSurveyDone(true)} />
+      </div>
+    )
+  }
+
+  if (showOnboarding) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <QuickstartWizard />
+      </div>
+    )
+  }
 
   function resetForm() {
     setName('')

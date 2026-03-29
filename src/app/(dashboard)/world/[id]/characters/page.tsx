@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Plus,
@@ -9,6 +9,9 @@ import {
   Pencil,
   Trash2,
   X,
+  ChevronDown,
+  ChevronRight,
+  GitGraph,
 } from 'lucide-react'
 
 import type { Character, CreateCharacterPayload, UpdateCharacterPayload } from '@/types'
@@ -18,9 +21,15 @@ import {
   useUpdateCharacter,
   useDeleteCharacter,
 } from '@/lib/hooks/use-characters'
+import { useRelationships } from '@/lib/hooks/use-relationships'
+import { useFactions } from '@/lib/hooks/use-factions'
 import { useCharacterStore } from '@/stores/character-store'
 import { useLayoutStore } from '@/stores/layout-store'
 import { showSuccess, showError } from '@/lib/toast'
+import {
+  CharacterGraph,
+  type CharacterGraphData,
+} from '@/components/visualizations/character-graph'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -428,13 +437,45 @@ function EmptyState() {
 export default function CharactersPage() {
   const { id: worldId } = useParams<{ id: string }>()
   const { data, isLoading, error } = useCharacters(worldId)
+  const { data: relsData } = useRelationships(worldId)
+  const { data: factionsData } = useFactions(worldId)
   const {
     editingCharacterId,
     setCreateDialogOpen,
   } = useCharacterStore()
+  const [graphExpanded, setGraphExpanded] = useState(false)
 
   const characters = data?.data ?? []
+  const relationships = relsData?.data ?? []
+  const factions = factionsData?.data ?? []
   const editingCharacter = characters.find((c) => c.id === editingCharacterId)
+
+  const graphData = useMemo<CharacterGraphData | null>(() => {
+    if (characters.length < 2 || relationships.length === 0) return null
+    return {
+      characters: characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        importance: 0.5,
+        traits: Array.isArray(c.traits) ? (c.traits as string[]) : [],
+        status: 'alive' as const,
+      })),
+      relationships: relationships.map((r) => ({
+        id: r.id,
+        sourceId: r.character1Id,
+        targetId: r.character2Id,
+        type: (r.type as 'family' | 'romantic' | 'friendship' | 'rivalry' | 'professional' | 'mentor' | 'custom') ?? 'custom',
+        weight: (r.intensity ?? 50) / 100,
+        sentiment: 0,
+        bidirectional: r.bidirectional ?? false,
+      })),
+      factions: factions.map((f) => ({
+        id: f.id,
+        name: f.name,
+        color: '#6366f1',
+      })),
+    }
+  }, [characters, relationships, factions])
 
   return (
     <div className="p-6 space-y-6">
@@ -453,6 +494,32 @@ export default function CharactersPage() {
           New Character
         </Button>
       </div>
+
+      {/* Relationship Graph (collapsible) */}
+      {graphData && (
+        <div className="rounded-lg border">
+          <button
+            onClick={() => setGraphExpanded(!graphExpanded)}
+            className="flex w-full items-center gap-2 p-4 text-left hover:bg-accent/50 transition-colors"
+          >
+            {graphExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+            <GitGraph className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Relationship Map</span>
+            <span className="text-xs text-muted-foreground ml-1">
+              ({relationships.length} relationship{relationships.length === 1 ? '' : 's'})
+            </span>
+          </button>
+          {graphExpanded && (
+            <div className="h-[500px] border-t">
+              <CharacterGraph data={graphData} readOnly />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       {isLoading ? (

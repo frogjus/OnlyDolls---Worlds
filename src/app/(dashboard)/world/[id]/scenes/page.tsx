@@ -18,6 +18,7 @@ import {
   useDeleteScene,
 } from '@/lib/hooks/use-scenes'
 import { useSceneStore } from '@/stores/scene-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -325,20 +326,15 @@ function SceneSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function ScenesEmptyState() {
   const { setCreateDialogOpen } = useSceneStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Film className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No scenes yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first scene to start structuring your narrative.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Scene
-      </Button>
-    </div>
+    <EmptyState
+      icon={Film}
+      title="No scenes yet"
+      description="Structure your narrative into scenes with purpose, tone, and value changes. Each scene tracks a net shift in your story."
+      primaryAction={{ label: 'New Scene', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -381,7 +377,7 @@ export default function ScenesPage() {
           Failed to load scenes. Please try again.
         </div>
       ) : scenes.length === 0 ? (
-        <EmptyState />
+        <ScenesEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {scenes.map((scene) => (
