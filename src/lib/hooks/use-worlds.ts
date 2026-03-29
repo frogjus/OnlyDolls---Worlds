@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { showSuccess, showError } from '@/lib/toast'
 import type {
   ApiListResponse,
   ApiResponse,
   CreateWorldPayload,
+  UpdateWorldPayload,
   StoryWorld,
 } from '@/types'
 
@@ -32,7 +34,32 @@ export function useCreateWorld() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['worlds'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['worlds'] })
+      showSuccess('World created')
+    },
+    onError: (err: Error) => {
+      showError(err.message || 'Failed to create world')
+    },
+  })
+}
+
+export function useUpdateWorld() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...payload }: UpdateWorldPayload & { id: string }) =>
+      fetchJson<ApiResponse<StoryWorld>>(`/api/worlds/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['worlds'] })
+      showSuccess('World updated')
+    },
+    onError: (err: Error) => {
+      showError(err.message || 'Failed to update world')
+    },
   })
 }
 
@@ -43,6 +70,12 @@ export function useDeleteWorld() {
       fetchJson<ApiResponse<StoryWorld>>(`/api/worlds/${id}`, {
         method: 'DELETE',
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['worlds'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['worlds'] })
+      showSuccess('World deleted')
+    },
+    onError: (err: Error) => {
+      showError(err.message || 'Failed to delete world')
+    },
   })
 }
