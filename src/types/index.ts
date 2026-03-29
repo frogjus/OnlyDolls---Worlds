@@ -106,6 +106,7 @@ export interface UpdateBeatPayload {
   characterId?: string | null
   sequenceId?: string | null
   position?: number
+  treatmentOverride?: string | null
 }
 
 export interface ReorderBeatsPayload {

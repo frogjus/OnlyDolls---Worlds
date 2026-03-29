@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 export interface TreatmentSection {
   type: 'beat' | 'act-header'
@@ -34,6 +34,30 @@ export function useTreatmentBeats(worldId: string) {
       return json.data.sort((a, b) => a.position - b.position)
     },
     enabled: !!worldId,
+  })
+}
+
+export function useSaveTreatmentOverride(worldId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      beatId,
+      treatmentOverride,
+    }: {
+      beatId: string
+      treatmentOverride: string | null
+    }) => {
+      const res = await fetch(`/api/worlds/${worldId}/beats/${beatId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ treatmentOverride }),
+      })
+      if (!res.ok) throw new Error('Failed to save treatment override')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['treatment-beats', worldId] })
+    },
   })
 }
 

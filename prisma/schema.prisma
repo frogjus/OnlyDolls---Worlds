@@ -474,6 +474,7 @@ model Beat {
   starRating      Int?     // 1-5 star rating (Othelia parity)
   notes           String?
   status          String   @default("todo") // todo, in_progress, done — kanban column
+  treatmentOverride String?
   metadata        Json     @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
