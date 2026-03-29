@@ -51,14 +51,15 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
     transform: CSS.Transform.toString(transform),
     transition,
     borderLeft: beat.color ? `4px solid ${beat.color}` : undefined,
+    boxShadow: beat.color ? `inset 4px 0 12px -4px ${beat.color}66` : undefined,
   }
 
   if (density === 'minimal') {
     return (
       <div
         ref={overlay ? undefined : setNodeRef}
-        style={overlay ? { borderLeft: style.borderLeft } : style}
-        className={`flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 ring-1 ring-foreground/10 ${
+        style={overlay ? { borderLeft: style.borderLeft, boxShadow: style.boxShadow } : style}
+        className={`flex items-center gap-2 rounded-lg bg-[#0f172a] px-3 py-1.5 ring-1 ring-white/[0.06] transition-all duration-200 hover:-translate-y-0.5 hover:ring-teal-500/20 hover:shadow-[0_0_12px_rgba(20,184,166,0.1)] ${
           isDragging ? 'opacity-50' : ''
         } ${overlay ? 'shadow-lg' : ''}`}
         {...(overlay ? {} : attributes)}
@@ -129,8 +130,8 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
   return (
     <div
       ref={overlay ? undefined : setNodeRef}
-      style={overlay ? { borderLeft: style.borderLeft } : style}
-      className={`rounded-lg bg-card p-3 ring-1 ring-foreground/10 ${
+      style={overlay ? { borderLeft: style.borderLeft, boxShadow: style.boxShadow } : style}
+      className={`rounded-lg bg-[#0f172a] p-3 ring-1 ring-white/[0.06] transition-all duration-200 hover:-translate-y-0.5 hover:ring-teal-500/20 hover:shadow-[0_0_12px_rgba(20,184,166,0.1)] ${
         isDragging ? 'opacity-50' : ''
       } ${overlay ? 'shadow-lg' : ''}`}
       {...(overlay ? {} : attributes)}
@@ -159,7 +160,7 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h4 className="truncate text-sm font-medium">{beat.name}</h4>
+              <h4 className="truncate text-sm font-semibold">{beat.name}</h4>
               {!overlay && (
                 <PenLine className="size-3 shrink-0 text-muted-foreground/50" />
               )}
@@ -191,7 +192,7 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
           </div>
 
           {beat.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-xs text-slate-400/80">
               {beat.description}
             </p>
           )}
@@ -204,15 +205,15 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
                     key={i}
                     className={`size-3 ${
                       i <= (beat.starRating ?? 0)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-muted-foreground/40'
+                        ? 'fill-teal-400 text-teal-400'
+                        : 'text-slate-600'
                     }`}
                   />
                 ))}
               </div>
             )}
             {beat.character && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-[10px] border border-teal-500/30 bg-teal-500/5">
                 {beat.character.name}
               </Badge>
             )}
