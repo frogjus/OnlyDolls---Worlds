@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useWorldStats } from '@/lib/hooks/use-world-stats'
+import { showSuccess, showError } from '@/lib/toast'
 import { SynopsisPanel } from './synopsis-panel'
 import { StatsPanel } from './stats-panel'
 import { SceneNotes } from './scene-notes'
@@ -32,6 +33,34 @@ interface SectionHeaderProps {
   label: string
   open: boolean
   onToggle: () => void
+}
+
+type SectionState = {
+  synopsis: boolean
+  stats: boolean
+  notes: boolean
+  characters: boolean
+}
+
+const DEFAULT_SECTIONS: SectionState = {
+  synopsis: true,
+  stats: true,
+  notes: true,
+  characters: true,
+}
+
+function getSectionsKey(worldId: string) {
+  return `storyforge-sidebar-sections-${worldId}`
+}
+
+function loadSections(worldId: string): SectionState {
+  try {
+    const raw = localStorage.getItem(getSectionsKey(worldId))
+    if (raw) return { ...DEFAULT_SECTIONS, ...JSON.parse(raw) }
+  } catch {
+    // ignore bad data
+  }
+  return DEFAULT_SECTIONS
 }
 
 function SectionHeader({ icon, label, open, onToggle }: SectionHeaderProps) {
@@ -54,19 +83,66 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
   const isCollapsed = collapsed ?? internalCollapsed
   const toggle = onToggle ?? (() => setInternalCollapsed((v) => !v))
 
-  const [sections, setSections] = useState({
-    synopsis: true,
-    stats: true,
-    notes: true,
-    characters: true,
-  })
+  // --- Section collapse persistence ---
+  const [sections, setSections] = useState<SectionState>(DEFAULT_SECTIONS)
 
+  useEffect(() => {
+    setSections(loadSections(worldId))
+  }, [worldId])
+
+  const toggleSection = useCallback(
+    (key: keyof SectionState) => {
+      setSections((prev) => {
+        const next = { ...prev, [key]: !prev[key] }
+        localStorage.setItem(getSectionsKey(worldId), JSON.stringify(next))
+        return next
+      })
+    },
+    [worldId]
+  )
+
+  // --- Synopsis: fetch from API, save on blur ---
   const [synopsis, setSynopsis] = useState('')
-  const [sceneNotes, setSceneNotes] = useState('')
+  const [synopsisSaving, setSynopsisSaving] = useState(false)
+  const lastSavedRef = useRef('')
 
-  const toggleSection = (key: keyof typeof sections) => {
-    setSections((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/worlds/${worldId}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return
+        const desc = json.data?.description ?? ''
+        setSynopsis(desc)
+        lastSavedRef.current = desc
+      })
+      .catch(() => {
+        // world fetch failed — leave empty
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [worldId])
+
+  const saveSynopsis = useCallback(async () => {
+    const trimmed = synopsis.trim()
+    if (trimmed === lastSavedRef.current.trim()) return
+    setSynopsisSaving(true)
+    try {
+      const res = await fetch(`/api/worlds/${worldId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: synopsis }),
+      })
+      if (!res.ok) throw new Error('save failed')
+      lastSavedRef.current = synopsis
+      showSuccess('Synopsis saved')
+    } catch {
+      showError('Failed to save synopsis')
+    } finally {
+      setSynopsisSaving(false)
+    }
+  }, [synopsis, worldId])
 
   return (
     <aside
@@ -109,7 +185,12 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             >
               <div className="overflow-hidden">
                 <div className="pb-2">
-                  <SynopsisPanel synopsis={synopsis} onSynopsisChange={setSynopsis} />
+                  <SynopsisPanel
+                    synopsis={synopsis}
+                    saving={synopsisSaving}
+                    onSynopsisChange={setSynopsis}
+                    onBlur={saveSynopsis}
+                  />
                 </div>
               </div>
             </div>
@@ -156,7 +237,7 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             >
               <div className="overflow-hidden">
                 <div className="pb-2">
-                  <SceneNotes notes={sceneNotes} onChange={setSceneNotes} />
+                  <SceneNotes worldId={worldId} />
                 </div>
               </div>
             </div>
