@@ -7,8 +7,8 @@ import { Toaster } from '@/components/ui/sonner'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'StoryForge',
-  description: 'Story world architecture platform',
+  title: 'OnlyDolls - World',
+  description: 'Your story world, architected.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

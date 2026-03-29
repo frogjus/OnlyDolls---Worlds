@@ -36,7 +36,6 @@ import { useWorldStore } from '@/stores/world-store'
 import { useWorlds, useCreateWorld, useDeleteWorld } from '@/lib/hooks/use-worlds'
 import { useOnboardingStore } from '@/stores/onboarding-store'
 import { QuickstartWizard } from '@/components/onboarding/quickstart-wizard'
-import { SignupSurvey } from '@/components/onboarding/signup-survey'
 
 export default function WorldsPage() {
   const { data, isLoading } = useWorlds()
@@ -44,8 +43,6 @@ export default function WorldsPage() {
   const deleteWorld = useDeleteWorld()
   const { createDialogOpen, setCreateDialogOpen } = useWorldStore()
   const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding)
-  const surveyResponses = useOnboardingStore((s) => s.surveyResponses)
-  const [surveyDone, setSurveyDone] = useState(false)
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -55,15 +52,6 @@ export default function WorldsPage() {
   const worlds = data?.data ?? []
 
   const showOnboarding = !isLoading && worlds.length === 0 && !hasCompletedOnboarding
-  const showSurvey = showOnboarding && !surveyDone && !surveyResponses.usage
-
-  if (showSurvey) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <SignupSurvey onComplete={() => setSurveyDone(true)} />
-      </div>
-    )
-  }
 
   if (showOnboarding) {
     return (
@@ -128,9 +116,11 @@ export default function WorldsPage() {
 
       {/* Empty state */}
       {!isLoading && worlds.length === 0 && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-border/50">
           <CardHeader className="items-center py-12 text-center">
-            <Globe className="mb-2 h-10 w-10 text-muted-foreground" />
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Globe className="h-6 w-6 text-primary" />
+            </div>
             <CardTitle className="text-muted-foreground">
               No worlds yet
             </CardTitle>
@@ -157,7 +147,7 @@ export default function WorldsPage() {
               href={`/world/${world.id}/beats`}
               className="group/link"
             >
-              <Card className="transition-shadow hover:ring-2 hover:ring-primary/20">
+              <Card className="border-border/50 transition-all duration-200 hover:border-primary/30 hover:shadow-[0_0_20px_-5px] hover:shadow-primary/10">
                 <CardHeader>
                   <CardTitle>{world.name}</CardTitle>
                   <CardAction>
