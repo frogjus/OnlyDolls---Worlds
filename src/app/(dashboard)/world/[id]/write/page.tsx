@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import type { JSONContent } from '@tiptap/react'
-import { BookOpen, Clapperboard, Plus, FileText } from 'lucide-react'
+import { BookOpen, Clapperboard, Plus, FileText, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -26,6 +26,7 @@ import {
 } from '@/lib/hooks/use-manuscripts'
 import '@/components/editors/editor.css'
 import '@/components/editors/screenplay.css'
+import '@/components/editors/focus-mode.css'
 
 function extractText(content: JSONContent): string {
   if (!content) return ''
@@ -46,11 +47,14 @@ export default function WritePage() {
     activeManuscriptId,
     isDirty,
     sidebarCollapsed,
+    focusMode,
     setMode,
     setWordCount,
     setActiveManuscriptId,
     setIsDirty,
     toggleSidebar,
+    toggleFocusMode,
+    exitFocusMode,
   } = useEditorUI()
 
   const { data: manuscripts, isLoading } = useManuscripts(worldId)
@@ -77,6 +81,20 @@ export default function WritePage() {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault()
+        toggleFocusMode()
+      }
+      if (e.key === 'Escape' && focusMode) {
+        exitFocusMode()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [focusMode, toggleFocusMode, exitFocusMode])
 
   const handleUpdate = useCallback(
     (content: JSONContent) => {
@@ -180,9 +198,19 @@ export default function WritePage() {
           </Select>
         )}
 
-        {isDirty && (
-          <span className="ml-auto text-xs text-muted-foreground">Unsaved changes</span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {isDirty && (
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleFocusMode}
+            title="Focus mode (Cmd+Shift+F)"
+          >
+            <Maximize2 className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -205,6 +233,29 @@ export default function WritePage() {
           onToggle={toggleSidebar}
         />
       </div>
+
+      {focusMode && activeManuscript && (
+        <div className="focus-mode-overlay">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="focus-mode-exit"
+            onClick={exitFocusMode}
+            title="Exit focus mode (Escape)"
+          >
+            <Minimize2 className="size-4" />
+          </Button>
+          <div className="focus-mode-editor">
+            <StoryEditor
+              key={`focus-${activeManuscriptId}`}
+              content={activeManuscript.content}
+              onUpdate={handleUpdate}
+              mode={mode}
+              className="border-0 rounded-none bg-transparent"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
