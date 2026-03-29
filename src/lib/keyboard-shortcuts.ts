@@ -16,6 +16,9 @@ export const shortcuts: KeyboardShortcut[] = [
   { id: 'shortcut-help', keys: ['?'], description: 'Open shortcut help', category: 'Panels' },
   { id: 'close-dialog', keys: ['Esc'], description: 'Close dialogs/panels', category: 'Panels' },
 
+  // Editor
+  { id: 'ai-wand', keys: ['mod', 'Shift', 'A'], description: 'Open AI Wand (in editor)', category: 'Editor' },
+
   // Navigation (chord sequences)
   { id: 'go-beats', keys: ['G', 'B'], description: 'Go to Beats', category: 'Navigation', chord: true },
   { id: 'go-write', keys: ['G', 'W'], description: 'Go to Write', category: 'Navigation', chord: true },
