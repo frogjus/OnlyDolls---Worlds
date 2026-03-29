@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,7 @@ import { SynopsisPanel } from './synopsis-panel'
 import { StatsPanel } from './stats-panel'
 import { SceneNotes } from './scene-notes'
 import { CharacterListPanel } from './character-list-panel'
+import { sectionCollapse } from '@/lib/animations'
 
 interface StorySidebarProps {
   worldId: string
@@ -72,7 +74,12 @@ function SectionHeader({ icon, label, open, onToggle }: SectionHeaderProps) {
     >
       {icon}
       <span className="flex-1 text-left">{label}</span>
-      {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      <motion.span
+        animate={{ rotate: open ? 180 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <ChevronDown className="h-3.5 w-3.5" />
+      </motion.span>
     </button>
   )
 }
@@ -145,11 +152,10 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
   }, [synopsis, worldId])
 
   return (
-    <aside
-      className={cn(
-        'relative border-l bg-card transition-all duration-200 flex flex-col',
-        isCollapsed ? 'w-0 overflow-hidden' : 'w-72'
-      )}
+    <motion.aside
+      className="relative border-l bg-card flex flex-col overflow-hidden"
+      animate={{ width: isCollapsed ? 0 : 288 }}
+      transition={{ duration: 0.25, ease: [0, 0, 0.2, 1] }}
     >
       <Button
         variant="ghost"
@@ -177,23 +183,26 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
               open={sections.synopsis}
               onToggle={() => toggleSection('synopsis')}
             />
-            <div
-              className={cn(
-                'grid transition-all duration-200',
-                sections.synopsis ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            <AnimatePresence initial={false}>
+              {sections.synopsis && (
+                <motion.div
+                  variants={sectionCollapse}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2">
+                    <SynopsisPanel
+                      synopsis={synopsis}
+                      saving={synopsisSaving}
+                      onSynopsisChange={setSynopsis}
+                      onBlur={saveSynopsis}
+                    />
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="pb-2">
-                  <SynopsisPanel
-                    synopsis={synopsis}
-                    saving={synopsisSaving}
-                    onSynopsisChange={setSynopsis}
-                    onBlur={saveSynopsis}
-                  />
-                </div>
-              </div>
-            </div>
+            </AnimatePresence>
 
             <Separator />
 
@@ -203,23 +212,26 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
               open={sections.stats}
               onToggle={() => toggleSection('stats')}
             />
-            <div
-              className={cn(
-                'grid transition-all duration-200',
-                sections.stats ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            <AnimatePresence initial={false}>
+              {sections.stats && (
+                <motion.div
+                  variants={sectionCollapse}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2">
+                    <StatsPanel
+                      wordCount={stats?.wordCount ?? 0}
+                      beatsDone={stats?.beatsDone ?? 0}
+                      beatsTotal={stats?.beatsTotal ?? 0}
+                      characterCount={stats?.characterCount ?? 0}
+                    />
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="pb-2">
-                  <StatsPanel
-                    wordCount={stats?.wordCount ?? 0}
-                    beatsDone={stats?.beatsDone ?? 0}
-                    beatsTotal={stats?.beatsTotal ?? 0}
-                    characterCount={stats?.characterCount ?? 0}
-                  />
-                </div>
-              </div>
-            </div>
+            </AnimatePresence>
 
             <Separator />
 
@@ -229,18 +241,21 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
               open={sections.notes}
               onToggle={() => toggleSection('notes')}
             />
-            <div
-              className={cn(
-                'grid transition-all duration-200',
-                sections.notes ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            <AnimatePresence initial={false}>
+              {sections.notes && (
+                <motion.div
+                  variants={sectionCollapse}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2">
+                    <SceneNotes worldId={worldId} />
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="pb-2">
-                  <SceneNotes worldId={worldId} />
-                </div>
-              </div>
-            </div>
+            </AnimatePresence>
 
             <Separator />
 
@@ -250,21 +265,24 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
               open={sections.characters}
               onToggle={() => toggleSection('characters')}
             />
-            <div
-              className={cn(
-                'grid transition-all duration-200',
-                sections.characters ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            <AnimatePresence initial={false}>
+              {sections.characters && (
+                <motion.div
+                  variants={sectionCollapse}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2">
+                    <CharacterListPanel characters={[]} />
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="pb-2">
-                  <CharacterListPanel characters={[]} />
-                </div>
-              </div>
-            </div>
+            </AnimatePresence>
           </div>
         </ScrollArea>
       )}
-    </aside>
+    </motion.aside>
   )
 }
