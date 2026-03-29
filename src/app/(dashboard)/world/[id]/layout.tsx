@@ -2,6 +2,7 @@ import { WorldNav } from '@/components/layout/world-nav'
 import { StorySidebar } from '@/components/layout/story-sidebar'
 import { WorkspaceSidebar } from '@/components/layout/workspace-sidebar'
 import { InspectorPanel } from '@/components/layout/inspector-panel'
+import { PageTransition } from '@/components/layout/page-transition'
 
 export default async function WorldLayout({
   children,
@@ -17,7 +18,7 @@ export default async function WorldLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <WorldNav />
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-auto">{children}</div>
+          <PageTransition>{children}</PageTransition>
           <StorySidebar worldId={id} />
           <InspectorPanel />
         </div>

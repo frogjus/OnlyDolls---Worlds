@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { CommandPalette } from '@/components/command-palette'
 import { useCommandPaletteKeyboard } from '@/components/command-palette/use-command-palette'
 import { ShortcutProvider } from '@/components/keyboard-shortcuts/shortcut-provider'
+import { MotionProvider } from '@/components/layout/motion-provider'
 
 function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   useCommandPaletteKeyboard()
@@ -22,11 +23,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <CommandPaletteProvider>
-            <ShortcutProvider>{children}</ShortcutProvider>
-          </CommandPaletteProvider>
-        </TooltipProvider>
+        <MotionProvider>
+          <TooltipProvider>
+            <CommandPaletteProvider>
+              <ShortcutProvider>{children}</ShortcutProvider>
+            </CommandPaletteProvider>
+          </TooltipProvider>
+        </MotionProvider>
       </QueryClientProvider>
     </SessionProvider>
   )

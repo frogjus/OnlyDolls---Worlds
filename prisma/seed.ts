@@ -4,15 +4,15 @@ import { hash } from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Seeding StoryForge demo data...')
+  console.log('Seeding OnlyDolls demo data...')
 
   // 1. Create demo user
   const passwordHash = await hash('demo1234', 10)
   const user = await prisma.user.upsert({
-    where: { email: 'demo@storyforge.dev' },
+    where: { email: 'demo@onlydolls.world' },
     update: {},
     create: {
-      email: 'demo@storyforge.dev',
+      email: 'demo@onlydolls.world',
       name: 'Demo Writer',
       passwordHash,
     },
@@ -444,7 +444,7 @@ The final image: a council table where a throne once stood. Five empty chairs, s
   })
   console.log('  Treatments: 1')
 
-  console.log('\nSeed complete! Login with demo@storyforge.dev / demo1234')
+  console.log('\nSeed complete! Login with demo@onlydolls.world / demo1234')
 }
 
 main()

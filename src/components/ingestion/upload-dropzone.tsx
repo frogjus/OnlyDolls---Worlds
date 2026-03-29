@@ -171,8 +171,8 @@ export function UploadDropzone({
         onDrop={handleDrop}
         className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all ${
           isDragOver
-            ? 'scale-[1.01] border-primary bg-primary/5 shadow-lg'
-            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30'
+            ? 'scale-[1.01] border-teal-400 bg-teal-500/5 shadow-[0_0_30px_rgba(20,184,166,0.15)]'
+            : 'border-slate-600/50 bg-slate-900/40 hover:border-teal-500/50 hover:bg-slate-900/60'
         }`}
         style={{
           transitionDuration: 'var(--duration-normal)',
@@ -191,8 +191,8 @@ export function UploadDropzone({
         <div
           className={`mb-4 flex size-14 items-center justify-center rounded-full transition-all ${
             isDragOver
-              ? 'scale-110 bg-primary/10 text-primary'
-              : 'bg-muted text-muted-foreground'
+              ? 'scale-110 bg-teal-500/10 text-teal-400'
+              : 'bg-slate-800 text-teal-400/60'
           }`}
           style={{
             transitionDuration: 'var(--duration-normal)',
@@ -249,9 +249,9 @@ export function UploadDropzone({
             </span>
             <span className="tabular-nums">{Math.round(uploadProgress)}%</span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className="h-full rounded-full bg-teal-500 transition-all"
               style={{
                 width: `${uploadProgress}%`,
                 transitionDuration: 'var(--duration-normal)',

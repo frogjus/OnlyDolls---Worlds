@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useParams } from 'next/navigation'
 import { useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { workspaceGroups } from '@/lib/navigation-config'
@@ -15,6 +16,7 @@ import {
   TooltipContent,
   TooltipProvider,
 } from '@/components/ui/tooltip'
+import { sidebarSlide, sidebarContent, sectionCollapse } from '@/lib/animations'
 
 export function WorkspaceSidebar() {
   const pathname = usePathname()
@@ -44,111 +46,149 @@ export function WorkspaceSidebar() {
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  if (sidebarCollapsed) {
-    return (
-      <TooltipProvider>
-        <div className="flex h-full w-12 flex-col border-r bg-muted/30">
-          <div className="flex flex-1 flex-col gap-1 py-2">
-            {workspaceGroups.map((group) => {
-              const GroupIcon = group.icon
-              const hasActive = group.views.some((v) => isActive(v.slug))
-              return (
-                <Tooltip key={group.id}>
-                  <TooltipTrigger
-                    className={cn(
-                      'mx-auto flex size-8 items-center justify-center rounded-md transition-colors',
-                      hasActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )}
-                    render={
-                      <Link href={`/world/${worldId}/${group.views[0].slug}`} />
-                    }
-                  >
-                    <GroupIcon className="size-4" />
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{group.label}</TooltipContent>
-                </Tooltip>
-              )
-            })}
-          </div>
-          <div className="border-t p-1">
-            <Tooltip>
-              <TooltipTrigger
-                className="mx-auto flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                render={<button onClick={toggleSidebar} />}
-              >
-                <PanelLeft className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent side="right">Expand sidebar</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </TooltipProvider>
-    )
-  }
-
   return (
-    <div className="flex h-full w-[260px] flex-col border-r bg-muted/30">
-      <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-0.5 p-2">
-          {workspaceGroups.map((group) => {
-            const GroupIcon = group.icon
-            const isCollapsed = collapsedSections[group.id] ?? false
-            return (
-              <div key={group.id}>
-                <button
-                  onClick={() => toggleSection(group.id)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <GroupIcon className="size-4" />
-                  <span className="flex-1 text-left">{group.label}</span>
-                  <ChevronDown
-                    className={cn(
-                      'size-3.5 transition-transform',
-                      isCollapsed && '-rotate-90'
-                    )}
-                  />
-                </button>
-                {!isCollapsed && (
-                  <div className="ml-2 flex flex-col gap-0.5 py-0.5">
-                    {group.views.map((view) => {
-                      const ViewIcon = view.icon
-                      const active = isActive(view.slug)
-                      return (
-                        <Link
-                          key={view.slug}
-                          href={`/world/${worldId}/${view.slug}`}
+    <motion.div
+      className="flex h-full flex-col border-r bg-muted/30 overflow-hidden"
+      variants={sidebarSlide}
+      animate={sidebarCollapsed ? 'collapsed' : 'expanded'}
+      initial={false}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {sidebarCollapsed ? (
+          <motion.div
+            key="collapsed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex h-full flex-col"
+          >
+            <TooltipProvider>
+              <div className="flex flex-1 flex-col gap-1 py-2">
+                {workspaceGroups.map((group, idx) => {
+                  const GroupIcon = group.icon
+                  const hasActive = group.views.some((v) => isActive(v.slug))
+                  return (
+                    <motion.div
+                      key={group.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.03, duration: 0.2 }}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger
                           className={cn(
-                            'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-                            active
+                            'mx-auto flex size-8 items-center justify-center rounded-md transition-colors',
+                            hasActive
                               ? 'bg-primary text-primary-foreground'
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                           )}
+                          render={
+                            <Link href={`/world/${worldId}/${group.views[0].slug}`} />
+                          }
                         >
-                          <ViewIcon className="size-3.5" />
-                          {view.label}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                )}
+                          <GroupIcon className="size-4" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{group.label}</TooltipContent>
+                      </Tooltip>
+                    </motion.div>
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
-      </ScrollArea>
-      <div className="border-t p-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="w-full justify-start gap-2 text-muted-foreground"
-        >
-          <PanelLeftClose className="size-4" />
-          <span className="text-xs">Collapse</span>
-        </Button>
-      </div>
-    </div>
+              <div className="border-t p-1">
+                <Tooltip>
+                  <TooltipTrigger
+                    className="mx-auto flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    render={<button onClick={toggleSidebar} />}
+                  >
+                    <PanelLeft className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Expand sidebar</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="expanded"
+            variants={sidebarContent}
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
+            className="flex h-full flex-col"
+          >
+            <ScrollArea className="flex-1">
+              <div className="flex flex-col gap-0.5 p-2">
+                {workspaceGroups.map((group) => {
+                  const GroupIcon = group.icon
+                  const isCollapsed = collapsedSections[group.id] ?? false
+                  return (
+                    <div key={group.id}>
+                      <button
+                        onClick={() => toggleSection(group.id)}
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <GroupIcon className="size-4" />
+                        <span className="flex-1 text-left">{group.label}</span>
+                        <motion.span
+                          animate={{ rotate: isCollapsed ? -90 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="size-3.5" />
+                        </motion.span>
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {!isCollapsed && (
+                          <motion.div
+                            variants={sectionCollapse}
+                            initial="closed"
+                            animate="open"
+                            exit="closed"
+                            className="overflow-hidden"
+                          >
+                            <div className="ml-2 flex flex-col gap-0.5 py-0.5">
+                              {group.views.map((view) => {
+                                const ViewIcon = view.icon
+                                const active = isActive(view.slug)
+                                return (
+                                  <Link
+                                    key={view.slug}
+                                    href={`/world/${worldId}/${view.slug}`}
+                                    className={cn(
+                                      'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-all duration-150',
+                                      active
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-0.5'
+                                    )}
+                                  >
+                                    <ViewIcon className="size-3.5" />
+                                    {view.label}
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )
+                })}
+              </div>
+            </ScrollArea>
+            <div className="border-t p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="w-full justify-start gap-2 text-muted-foreground"
+              >
+                <PanelLeftClose className="size-4" />
+                <span className="text-xs">Collapse</span>
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }

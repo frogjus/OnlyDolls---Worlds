@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useParams, useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { GripVertical, Star, MoreVertical, Pencil, PenLine, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -55,17 +56,18 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
 
   if (density === 'minimal') {
     return (
-      <div
+      <motion.div
         ref={overlay ? undefined : setNodeRef}
         style={overlay ? { borderLeft: style.borderLeft } : style}
         className={`flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 ring-1 ring-foreground/10 ${
           isDragging ? 'opacity-50' : ''
-        } ${overlay ? 'shadow-lg' : ''}`}
+        } ${overlay ? 'shadow-lg ring-2 ring-primary/30' : ''}`}
+        whileHover={overlay ? undefined : { y: -1, transition: { duration: 0.15 } }}
         {...(overlay ? {} : attributes)}
       >
         {!overlay && (
           <button
-            className="cursor-grab text-muted-foreground hover:text-foreground"
+            className="cursor-grab text-muted-foreground hover:text-foreground transition-colors"
             {...listeners}
           >
             <GripVertical className="size-3.5" />
@@ -122,23 +124,27 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
             </DropdownMenu>
           </div>
         )}
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div
+    <motion.div
       ref={overlay ? undefined : setNodeRef}
       style={overlay ? { borderLeft: style.borderLeft } : style}
-      className={`rounded-lg bg-card p-3 ring-1 ring-foreground/10 ${
+      className={`rounded-lg bg-card p-3 ring-1 ring-foreground/10 transition-shadow ${
         isDragging ? 'opacity-50' : ''
-      } ${overlay ? 'shadow-lg' : ''}`}
+      } ${overlay ? 'shadow-lg ring-2 ring-primary/30' : 'hover:ring-foreground/20'}`}
+      whileHover={overlay ? undefined : {
+        y: -2,
+        transition: { duration: 0.15, ease: [0, 0, 0.2, 1] },
+      }}
       {...(overlay ? {} : attributes)}
     >
       <div className="flex items-start gap-2">
         {!overlay && (
           <button
-            className="mt-0.5 cursor-grab text-muted-foreground hover:text-foreground"
+            className="mt-0.5 cursor-grab text-muted-foreground hover:text-foreground transition-colors"
             {...listeners}
           >
             <GripVertical className="size-4" />
@@ -234,6 +240,6 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

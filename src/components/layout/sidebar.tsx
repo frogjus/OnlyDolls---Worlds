@@ -20,20 +20,20 @@ export function Sidebar() {
   const pathname = usePathname()
   return (
     <TooltipProvider>
-      <aside className="flex w-14 flex-col items-center border-r bg-card py-3">
+      <aside className="flex w-14 flex-col items-center border-r border-sidebar-border bg-sidebar py-3">
         {/* Logo */}
         <Tooltip>
           <TooltipTrigger
             render={
               <Link
                 href="/worlds"
-                className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg text-primary transition-colors duration-200 hover:bg-primary/10 hover:shadow-[0_0_12px_-2px] hover:shadow-primary/30"
               />
             }
           >
             <BookOpen className="h-5 w-5" />
           </TooltipTrigger>
-          <TooltipContent side="right">StoryForge</TooltipContent>
+          <TooltipContent side="right">OD:W</TooltipContent>
         </Tooltip>
 
         {/* Nav items */}
@@ -48,10 +48,10 @@ export function Sidebar() {
                     <Link
                       href={item.href}
                       className={cn(
-                        'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                        'relative flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200',
                         active
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          ? 'bg-primary/10 text-primary before:absolute before:left-0 before:top-1/2 before:h-5 before:-translate-x-[5px] before:-translate-y-1/2 before:w-[3px] before:rounded-r-full before:bg-primary'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-[0_0_12px_-2px] hover:shadow-primary/20'
                       )}
                     />
                   }
@@ -71,7 +71,7 @@ export function Sidebar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 text-muted-foreground transition-colors duration-200 hover:text-foreground"
               />
             }
           >

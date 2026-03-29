@@ -37,7 +37,7 @@ export function SignupSurvey({ onComplete }: SignupSurveyProps) {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Welcome to StoryForge</h1>
+        <h1 className="text-2xl font-bold">Welcome to OnlyDolls</h1>
         <p className="mt-1 text-muted-foreground">
           A couple of quick questions to get you started
         </p>
@@ -45,7 +45,7 @@ export function SignupSurvey({ onComplete }: SignupSurveyProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">How will you use StoryForge?</CardTitle>
+          <CardTitle className="text-base">How will you use OnlyDolls?</CardTitle>
           <CardDescription>Pick whichever fits best</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2">

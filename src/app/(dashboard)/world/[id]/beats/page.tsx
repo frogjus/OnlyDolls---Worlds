@@ -196,7 +196,7 @@ export default function BeatsPage() {
     return (
       <div className="flex h-full flex-col p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Beats</h1>
+          <h1 className="text-2xl font-bold"><span className="border-b-2 border-teal-500/70 pb-1">Beats</span></h1>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <div className="text-center">
@@ -205,7 +205,7 @@ export default function BeatsPage() {
               Start building your story structure by adding your first beat
             </p>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => setCreateDialogOpen(true)} className="bg-teal-600 hover:bg-teal-500 text-white">
             <Plus className="size-4" />
             Add First Beat
           </Button>
@@ -222,12 +222,12 @@ export default function BeatsPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-lg bg-slate-900/50 px-4 py-3 border border-white/5">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Beats</h1>
+          <h1 className="text-2xl font-bold"><span className="border-b-2 border-teal-500/70 pb-1">Beats</span></h1>
 
           {/* Density toggle */}
-          <div className="flex items-center rounded-md border border-border/50">
+          <div className="flex items-center rounded-md border border-teal-500/20 bg-slate-900/60">
             {DENSITY_OPTIONS.map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
@@ -281,7 +281,7 @@ export default function BeatsPage() {
             </Select>
 
             {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-teal-400 hover:text-teal-300 hover:bg-teal-500/10">
                 <X className="size-3.5" />
                 Reset
               </Button>
@@ -289,7 +289,7 @@ export default function BeatsPage() {
           </div>
         </div>
 
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+        <Button size="sm" onClick={() => setCreateDialogOpen(true)} className="bg-teal-600 hover:bg-teal-500 text-white">
           <Plus className="size-4" />
           New Beat
         </Button>
@@ -302,7 +302,7 @@ export default function BeatsPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div ref={scrollContainerRef} className="flex flex-1 gap-4 overflow-x-auto">
+        <div ref={scrollContainerRef} className="flex flex-1 gap-4 overflow-x-auto rounded-lg p-2" style={{ backgroundImage: 'radial-gradient(circle, rgba(20,184,166,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
           {STATUSES.map((status) => (
             <BeatColumn
               key={status}
