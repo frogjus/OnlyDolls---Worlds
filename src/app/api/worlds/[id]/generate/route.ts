@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
 import { prisma } from '@/lib/db/prisma'
 import { generateBeat, generateScript, generateSynopsis } from '@/lib/ai/generation'
+import { searchWorldMemory } from '@/lib/supermemory/sync'
 import type { AIOperationType, GenerationContext } from '@/lib/ai/types'
 
 interface GenerateRequestBody {
@@ -51,10 +52,21 @@ export async function POST(
     )
   }
 
+  // Search SuperMemory for relevant world context to enrich generation
+  let memoryContext: string[] = []
+  try {
+    const searchQuery = body.context?.currentBeat?.description ?? synopsis
+    const memories = await searchWorldMemory(id, searchQuery, 5)
+    memoryContext = memories.map((m) => m.content)
+  } catch {
+    // Non-blocking — proceed without memory context
+  }
+
   const context: GenerationContext = {
     ...body.context,
     worldId: id,
     synopsis,
+    memoryContext,
   }
 
   try {

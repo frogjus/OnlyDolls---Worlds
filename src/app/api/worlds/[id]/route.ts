@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/helpers'
 import { worldQueries } from '@/lib/db/queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { UpdateWorldPayload } from '@/types'
 
 export async function GET(
@@ -41,6 +42,7 @@ export async function PATCH(
   }
 
   const updated = await worldQueries.getById(id, user.id)
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: updated })
 }
 

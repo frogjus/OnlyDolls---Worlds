@@ -16,6 +16,7 @@ export interface AIContext {
   synopsis?: string
   characters?: { id: string; name: string }[]
   beats?: { id: string; title: string; description?: string }[]
+  memoryContext?: string[]
 }
 
 export interface AISuggestion {
