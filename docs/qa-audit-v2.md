@@ -17,9 +17,9 @@
 | Onboarding Survey | PARTIAL | 0 | 1 | 0 | 1 |
 | Onboarding Wizard | PARTIAL | 0 | 0 | 3 | 1 |
 | World Management | PARTIAL | 0 | 2 | 2 | 2 |
-| Beat Sheet / Kanban | BROKEN | 0 | 3 | 1 | 1 |
-| Treatment View | BROKEN | 0 | 2 | 0 | 0 |
-| Writing Surface | BROKEN | 2 | 0 | 0 | 0 |
+| Beat Sheet / Kanban | PARTIAL | 0 | 1 | 2 | 3 |
+| Treatment View | PARTIAL | 0 | 1 | 2 | 2 |
+| Writing Surface | BROKEN | 3 | 2 | 2 | 2 |
 | Characters CRUD | PARTIAL | 0 | 0 | 1 | 1 |
 | Locations CRUD | PARTIAL | 0 | 1 | 1 | 1 |
 | Factions CRUD | PARTIAL | 0 | 0 | 1 | 2 |
@@ -35,7 +35,7 @@
 | Sources / Ingestion | BROKEN | 2 | 2 | 2 | 1 |
 | Ingestion API | BROKEN | 2 | 2 | 2 | 0 |
 | **Cross-cutting (all entities)** | -- | 0 | 1 | 2 | 0 |
-| **TOTALS** | | **8** | **18** | **33** | **23** |
+| **TOTALS** | | **9** | **19** | **38** | **30** |
 
 **Overall verdict: ~35% functional.** Core features (writing, beats kanban, sources) are structurally broken. Auth and entity CRUD are partially working. Navigation and command palette are mostly functional.
 
@@ -71,10 +71,15 @@
 - **File**: `src/app/(dashboard)/world/[id]/relationships/page.tsx:86-101`
 - **Impact**: "Source Character ID" and "Target Character ID" are plain text inputs requiring users to type raw CUID strings. The card display also shows raw IDs instead of character names (line 257). Effectively unusable.
 
-### CRIT-8: Sign-out button is non-functional (duplicate from sidebar nav audit)
-- Confirmed by two independent auditors. Same as CRIT-1.
+### CRIT-8: Screenplay mode, AI Wand, entity highlighting are all dead code
+- **File**: `src/components/editors/story-editor.tsx:46-65`
+- **Impact**: The `ScreenplayMode`, `AIWandExtension`, `EntityHighlighter`, and `BeatMarker` extensions are defined in separate files but **never registered** in the editor's extensions array. Screenplay mode shows a monospace font (via CSS) but no screenplay node types (slugline, action, dialogue, parenthetical, transition) are registered. AI Wand commands (`Mod+Shift+A`) don't exist. Entity highlighting is non-functional. Block-level beat markers are missing. These are core Tier 1 features that are entirely inert.
 
-> **Deduplicated critical count: 7 unique critical bugs.**
+### CRIT-9: Auto-save race condition can overwrite newer content with older content
+- **File**: `src/app/(dashboard)/world/[id]/write/page.tsx:60-63, 91-118`
+- **Impact**: When switching manuscripts, `activeIdRef` updates immediately but `contentRef` still holds old content. The debounced save can write the OLD manuscript's content to the NEW manuscript ID. Additionally, rapid typing creates stacking mutations with no cancellation — an older payload can land after a newer one.
+
+> **Deduplicated critical count: 8 unique critical bugs** (CRIT-1 confirmed by two independent auditors).
 
 ---
 
@@ -100,25 +105,23 @@
 - **File**: `src/components/onboarding/signup-survey.tsx:106`
 - **Impact**: Button enables with only one of two answers. Partial survey data stored as `projectType: ''`.
 
-### HIGH-6: Beat update API route missing (404)
-- **File**: Missing `src/app/api/worlds/[id]/beats/[beatId]/route.ts`
-- **Impact**: `useUpdateBeat` calls `PATCH /api/worlds/${worldId}/beats/${id}` which returns 404. Editing beats fails.
+### HIGH-6: Beat form edit always resets status to 'todo'
+- **File**: `src/components/beats/beat-form-dialog.tsx:89-97`
+- **Impact**: The edit payload always sends `status: defaultStatus` (which defaults to `'todo'`), overwriting the beat's current status. Editing a beat in "In Progress" or "Done" column resets it back to "To Do".
 
-### HIGH-7: Beat delete API route missing (404)
-- **File**: Missing `src/app/api/worlds/[id]/beats/[beatId]/route.ts`
-- **Impact**: `useDeleteBeat` calls `DELETE /api/worlds/${worldId}/beats/${id}` which returns 404.
+### HIGH-7: ~~Beat delete API route missing~~ CORRECTED — routes exist
+- **Correction**: Beat CRUD routes (`GET/PATCH/DELETE /api/worlds/[id]/beats/[beatId]`) and reorder route (`PATCH /api/worlds/[id]/beats/reorder`) DO exist. Initial quick scan was incorrect; thorough audit confirmed they are present and auth-protected.
 
-### HIGH-8: Beat reorder API route missing (404)
-- **File**: Missing `src/app/api/worlds/[id]/beats/reorder/route.ts`
-- **Impact**: `useReorderBeats` calls `PATCH /api/worlds/${worldId}/beats/reorder` which returns 404. Drag-and-drop reorder is non-functional.
+### HIGH-8: Auto-save mutation stacking — no cancellation
+- **File**: `src/app/(dashboard)/world/[id]/write/page.tsx:91-118`
+- **Impact**: Auto-save fires `saveRef.current.mutate(...)` without checking if a previous mutation is pending. Multiple simultaneous PATCH requests can race, with an older payload potentially landing after a newer one, causing content loss.
 
 ### HIGH-9: Treatment act grouping uses ghost fields
 - **File**: `src/lib/hooks/use-treatments.ts:18-19, 64-78`
 - **Impact**: `ApiBeat` interface declares `actId`/`actName` but Beat model has no such fields. Values are always `null`. Treatment degrades to flat list without act headers.
 
-### HIGH-10: Treatment override save depends on missing beat PATCH route
-- **File**: Uses `useUpdateBeat` which 404s (see HIGH-6)
-- **Impact**: Cannot save treatment text overrides.
+### HIGH-10: ~~Treatment override save depends on missing beat PATCH route~~ CORRECTED
+- **Correction**: Beat PATCH route exists. Treatment override save uses `useUpdateBeat` which works. However, treatment act grouping (HIGH-9) still causes flat list rendering.
 
 ### HIGH-11: Location parentId requires raw CUID input
 - **File**: `src/app/(dashboard)/world/[id]/locations/page.tsx:93-97`
@@ -186,11 +189,15 @@
 | MED-15 | World delete has no error handling or undo | `worlds/page.tsx:192` | No `onError` callback, no undo |
 | MED-16 | Create world dialog shows no error on failure | `worlds/page.tsx:226-283` | No error display element |
 
-### Beats & Treatment
+### Beats & Treatment & Writing
 
 | # | Bug | File | Details |
 |---|-----|------|---------|
-| MED-17 | Beat form edit resets status to 'todo' | `beat-form-dialog.tsx:89-97` | `status: defaultStatus` always sent, overwriting current |
+| MED-17 | Beat drag-drop `finalBeats` capture is fragile | `beats/page.tsx:138-166` | State captured in setter callback then used outside; concurrent React could break |
+| MED-17a | Treatment generated twice (page + view) | `treatment/page.tsx:19-22`, `treatment-view.tsx:26-29` | Dual `useTreatmentBeats` + `generateTreatment` calls; could show different content |
+| MED-17b | No PDF/DOCX export for treatment | `treatment-export.tsx` | Only Markdown clipboard + text download; spec requires PDF/DOCX |
+| MED-17c | Word count disagreement between toolbar and store | `editor-toolbar.tsx:38` vs `write/page.tsx` | `CharacterCount` words vs `extractText` `/\s+/` split produce different counts |
+| MED-17d | TipTap content not reactive to prop changes | `story-editor.tsx:66` | Switching manuscripts without remount shows stale content |
 
 ### Navigation & Commands
 
@@ -247,6 +254,13 @@
 | LOW-21 | Keyboard shortcuts `Editor` category is empty/dead code | `keyboard-shortcuts.ts:38` |
 | LOW-22 | Simulated progress bar on upload | `upload-dropzone.tsx:116-124` |
 | LOW-23 | No inspector panel component rendered for any entity | All entity pages |
+| LOW-24 | No tag support on beat cards (spec requires tags, model has no `tags` field) | `beat-card.tsx`, Prisma Beat model |
+| LOW-25 | Beat `SelectItem` with `value=""` may misbehave with base-ui | `beats/page.tsx:257,274` |
+| LOW-26 | Beat `localBeats` ignores server changes during drag | `beats/page.tsx:73-77` |
+| LOW-27 | Treatment `Treatment` model and API routes are orphaned (never used by frontend) | `api/worlds/[id]/treatments/` |
+| LOW-28 | Treatment `saveEdit` uses non-null assertion on `beatId` | `treatment-view.tsx:104` |
+| LOW-29 | Entity popover fetches from nonexistent `/api/entities/${id}` route | `entity-popover.tsx:29` |
+| LOW-30 | AI Wand auto-generates on mount with no abort controller | `ai-wand-panel.tsx:73-79` |
 
 ---
 
@@ -265,16 +279,17 @@
 | World List | WORKS | Loading, empty state, cards all correct |
 | World Edit | BROKEN | Button is a TODO no-op |
 | World Delete | PARTIAL | No confirmation dialog |
-| Beat Board (view) | WORKS | Cards, kanban columns, star ratings, filtering |
-| Beat Create | WORKS | Form and POST API work |
-| Beat Edit | BROKEN | API route missing (404) |
-| Beat Delete | BROKEN | API route missing (404) |
-| Beat Drag-Drop Reorder | BROKEN | API route missing (404) |
-| Treatment View | BROKEN | Act grouping uses ghost fields; override save 404s |
-| Treatment Export | WORKS | PDF/text export functional |
-| Writing Surface (editor UI) | WORKS | TipTap renders, modes work |
+| Beat Board (view) | WORKS | Cards, kanban columns, star ratings, density modes, filtering, mini-map |
+| Beat Create | WORKS | Form dialog and POST API work |
+| Beat Edit | PARTIAL | API works but form always resets status to 'todo' (HIGH-6) |
+| Beat Delete | WORKS | Confirmation prompt, API works |
+| Beat Drag-Drop Reorder | WORKS | dnd-kit, cross-column moves, reorder API works |
+| Treatment View | PARTIAL | Flat list works; act headers never render (ghost fields); override save works |
+| Treatment Export | PARTIAL | Markdown clipboard + text download work; no PDF/DOCX |
+| Writing Surface (editor UI) | PARTIAL | TipTap renders in prose mode; screenplay mode is dead code (CRIT-8) |
+| Writing Surface (AI Wand) | BROKEN | Extension never registered; commands don't exist (CRIT-8) |
 | Writing Surface (load content) | BROKEN | Schema mismatch (CRIT-2) |
-| Writing Surface (save content) | BROKEN | Auto-save discards data (CRIT-3) |
+| Writing Surface (save content) | BROKEN | Auto-save discards data (CRIT-3); race conditions (CRIT-9) |
 | Sources List | BROKEN | API endpoint missing (CRIT-4) |
 | Source Upload/Ingest | PARTIAL | Upload works but records not persisted |
 | Source Edit/Delete | BROKEN | API handlers missing (CRIT-5) |
@@ -309,16 +324,16 @@
 
 ### P0 - Ship Blockers (fix before any demo)
 1. **CRIT-1**: Add `signOut()` call to logout button
-2. **CRIT-2 + CRIT-3**: Fix Manuscript content architecture (add `content` field or route through ManuscriptSection)
-3. **HIGH-6/7/8**: Create beat CRUD and reorder API routes
+2. **CRIT-2 + CRIT-3 + CRIT-9**: Fix Manuscript content architecture (add `content` field or route through ManuscriptSection; fix auto-save race conditions)
+3. **CRIT-8**: Register missing TipTap extensions (ScreenplayMode, AIWandExtension, EntityHighlighter, BeatMarker) in story-editor.tsx
 4. **CRIT-4 + CRIT-5 + CRIT-6**: Create sources list/create API route, add PATCH/DELETE handlers, persist SourceMaterial on ingest
 
 ### P1 - Usability Blockers
 5. **CRIT-7 + HIGH-11 + HIGH-12**: Replace raw CUID inputs with entity dropdowns (relationships, locations, arcs)
-6. **HIGH-3 + MED-1**: Add delete confirmation dialogs across all entities
-7. **HIGH-4 + MED-16**: Add error display for create/delete mutations
-8. **HIGH-9**: Fix treatment act grouping (join through Scene or remove act headers)
-9. **MED-17**: Fix beat form edit status reset
+6. **HIGH-6**: Fix beat form edit status reset (don't overwrite status on edit)
+7. **HIGH-3 + MED-1**: Add delete confirmation dialogs across all entities
+8. **HIGH-4 + MED-16**: Add error display for create/delete mutations
+9. **HIGH-9**: Fix treatment act grouping (join through Scene or remove act headers)
 
 ### P2 - Quality & Polish
 10. **HIGH-1**: Add try/catch to all API route handlers
@@ -326,6 +341,7 @@
 12. **MED-9 + MED-10**: Fix auth middleware redirect and AUTH_SECRET
 13. **MED-27 + MED-28**: Add pagination and basic search/filter to entity pages
 14. **HIGH-13**: Add mobile responsive sidebar
+15. **MED-17b**: Add PDF/DOCX export for treatment view
 
 ---
 
