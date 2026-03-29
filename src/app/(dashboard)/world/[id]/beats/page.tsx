@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import {
   DndContext,
@@ -34,6 +34,7 @@ import type { BeatStatus } from '@/types'
 import { BeatColumn } from '@/components/beats/beat-column'
 import { BeatCard } from '@/components/beats/beat-card'
 import { BeatFormDialog } from '@/components/beats/beat-form-dialog'
+import { BeatMinimap } from '@/components/beats/beat-minimap'
 
 const STATUSES: BeatStatus[] = ['todo', 'in_progress', 'done']
 
@@ -58,6 +59,7 @@ export default function BeatsPage() {
 
   const [localBeats, setLocalBeats] = useState<BeatWithCharacter[]>([])
   const [activeBeat, setActiveBeat] = useState<BeatWithCharacter | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (beats && !activeBeat) {
@@ -245,7 +247,7 @@ export default function BeatsPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-4 overflow-x-auto">
+        <div ref={scrollContainerRef} className="flex flex-1 gap-4 overflow-x-auto">
           {STATUSES.map((status) => (
             <BeatColumn
               key={status}
@@ -281,6 +283,11 @@ export default function BeatsPage() {
         }}
         worldId={worldId}
         beat={editingBeat}
+      />
+
+      <BeatMinimap
+        columns={grouped}
+        scrollContainerRef={scrollContainerRef}
       />
     </div>
   )
