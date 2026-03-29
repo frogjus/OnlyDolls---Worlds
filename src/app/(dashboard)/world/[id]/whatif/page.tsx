@@ -1,8 +1,21 @@
+import { GitBranch } from 'lucide-react'
+import { EmptyState } from '@/components/empty-states/empty-state'
+
 export default function WhatIfPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">What-If</h1>
-      <p className="mt-2 text-muted-foreground">What-if scenario exploration and branching analysis.</p>
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">What-If</h1>
+        <p className="text-sm text-muted-foreground">
+          What-if scenario exploration and branching analysis.
+        </p>
+      </div>
+      <EmptyState
+        icon={GitBranch}
+        title="What-If Scenarios"
+        description="Fork any plot point and simulate cascading consequences. Compare parallel timelines side by side to explore alternate story paths before committing to changes."
+        comingSoon
+      />
     </div>
   )
 }

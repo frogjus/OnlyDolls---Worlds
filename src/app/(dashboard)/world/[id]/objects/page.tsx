@@ -18,6 +18,7 @@ import {
   useDeleteObject,
 } from '@/lib/hooks/use-objects'
 import { useObjectStore } from '@/stores/object-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -318,20 +319,15 @@ function ObjectSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function ObjectsEmptyState() {
   const { setCreateDialogOpen } = useObjectStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <Gem className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No objects yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first story object to track significant items in your world.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Object
-      </Button>
-    </div>
+    <EmptyState
+      icon={Gem}
+      title="No objects yet"
+      description="Track significant items, artifacts, and props in your story. From Chekhov's gun to magical macguffins — every object that matters."
+      primaryAction={{ label: 'New Object', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -374,7 +370,7 @@ export default function ObjectsPage() {
           Failed to load objects. Please try again.
         </div>
       ) : objects.length === 0 ? (
-        <EmptyState />
+        <ObjectsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {objects.map((object) => (

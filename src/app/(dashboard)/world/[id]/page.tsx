@@ -15,12 +15,23 @@ import {
   FileText,
   Settings,
   Layers,
+  Gem,
+  Lightbulb,
+  Rocket,
 } from 'lucide-react'
 
 import type { ApiResponse, ApiListResponse, StoryWorld, Character, Beat } from '@/types'
+import { useLocations } from '@/lib/hooks/use-locations'
+import { useEvents } from '@/lib/hooks/use-events'
+import { useScenes } from '@/lib/hooks/use-scenes'
+import { useArcs } from '@/lib/hooks/use-arcs'
+import { useObjects } from '@/lib/hooks/use-objects'
+import { useFactions } from '@/lib/hooks/use-factions'
+import { useThemes } from '@/lib/hooks/use-themes'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -79,9 +90,26 @@ export default function WorldOverviewPage() {
     enabled: !!worldId,
   })
 
+  const { data: locationsData } = useLocations(worldId)
+  const { data: eventsData } = useEvents(worldId)
+  const { data: scenesData } = useScenes(worldId)
+  const { data: arcsData } = useArcs(worldId)
+  const { data: objectsData } = useObjects(worldId)
+  const { data: factionsData } = useFactions(worldId)
+  const { data: themesData } = useThemes(worldId)
+
   const world = worldData?.data
-  const characterCount = charsData?.total ?? charsData?.data?.length
-  const beatCount = beatsData?.total ?? beatsData?.data?.length
+  const characterCount = charsData?.total ?? charsData?.data?.length ?? 0
+  const beatCount = beatsData?.total ?? beatsData?.data?.length ?? 0
+  const locationCount = locationsData?.data?.length ?? 0
+  const sceneCount = scenesData?.data?.length ?? 0
+  const eventCount = eventsData?.data?.length ?? 0
+  const arcCount = arcsData?.data?.length ?? 0
+  const objectCount = objectsData?.data?.length ?? 0
+  const factionCount = factionsData?.data?.length ?? 0
+  const themeCount = themesData?.data?.length ?? 0
+
+  const totalEntities = characterCount + beatCount + locationCount + sceneCount + eventCount + arcCount + objectCount + factionCount + themeCount
 
   if (worldLoading) {
     return (
@@ -108,12 +136,15 @@ export default function WorldOverviewPage() {
   }
 
   const stats = [
-    { label: 'Characters', value: characterCount ?? '—' },
-    { label: 'Beats', value: beatCount ?? '—' },
-    { label: 'Locations', value: '—' },
-    { label: 'Scenes', value: '—' },
-    { label: 'Events', value: '—' },
-    { label: 'Arcs', value: '—' },
+    { label: 'Characters', value: characterCount, icon: Users },
+    { label: 'Beats', value: beatCount, icon: Music },
+    { label: 'Locations', value: locationCount, icon: MapPin },
+    { label: 'Scenes', value: sceneCount, icon: Clapperboard },
+    { label: 'Events', value: eventCount, icon: Calendar },
+    { label: 'Arcs', value: arcCount, icon: TrendingUp },
+    { label: 'Objects', value: objectCount, icon: Gem },
+    { label: 'Factions', value: factionCount, icon: Shield },
+    { label: 'Themes', value: themeCount, icon: Lightbulb },
   ]
 
   return (
@@ -139,20 +170,34 @@ export default function WorldOverviewPage() {
         )}
       </div>
 
-      {/* Stats Grid */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Overview</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {stats.map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="pt-4">
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Stats Grid or Empty State */}
+      {totalEntities === 0 ? (
+        <EmptyState
+          icon={Rocket}
+          title="Your story world is empty"
+          description="Start building your world by adding characters, beats, locations, or any other story elements. Use the quick links below to get started."
+        />
+      ) : (
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Overview</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {stats.map((stat) => {
+              const Icon = stat.icon
+              return (
+                <Card key={stat.label}>
+                  <CardContent className="flex items-center gap-3 pt-4">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Links */}
       <div>

@@ -18,6 +18,7 @@ import {
   useDeleteLocation,
 } from '@/lib/hooks/use-locations'
 import { useLocationStore } from '@/stores/location-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -324,20 +325,15 @@ function LocationSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function LocationsEmptyState() {
   const { setCreateDialogOpen } = useLocationStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <MapPin className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No locations yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first location to start mapping your story world.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Location
-      </Button>
-    </div>
+    <EmptyState
+      icon={MapPin}
+      title="No locations yet"
+      description="Map the places, settings, and geography of your story world. Build a hierarchy from continents down to rooms."
+      primaryAction={{ label: 'New Location', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -380,7 +376,7 @@ export default function LocationsPage() {
           Failed to load locations. Please try again.
         </div>
       ) : locations.length === 0 ? (
-        <EmptyState />
+        <LocationsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {locations.map((location) => (

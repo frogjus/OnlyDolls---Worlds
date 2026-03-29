@@ -18,6 +18,7 @@ import {
   useDeleteEvent,
 } from '@/lib/hooks/use-events'
 import { useEventStore } from '@/stores/event-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -355,20 +356,15 @@ function EventSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function EventsEmptyState() {
   const { setCreateDialogOpen } = useEventStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <CalendarClock className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No events yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first event to start building your story timeline.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Event
-      </Button>
-    </div>
+    <EmptyState
+      icon={CalendarClock}
+      title="No events yet"
+      description="Create chronological events to build your story's fabula timeline — the ground truth of what happens in your world."
+      primaryAction={{ label: 'New Event', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -411,7 +407,7 @@ export default function EventsPage() {
           Failed to load events. Please try again.
         </div>
       ) : events.length === 0 ? (
-        <EmptyState />
+        <EventsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (

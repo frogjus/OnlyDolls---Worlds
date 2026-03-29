@@ -18,6 +18,7 @@ import {
   useDeleteArc,
 } from '@/lib/hooks/use-arcs'
 import { useArcStore } from '@/stores/arc-store'
+import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -309,20 +310,15 @@ function ArcSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function ArcsEmptyState() {
   const { setCreateDialogOpen } = useArcStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No arcs yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first arc to track story progression.
-      </p>
-      <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Arc
-      </Button>
-    </div>
+    <EmptyState
+      icon={TrendingUp}
+      title="No arcs yet"
+      description="Track character arcs, plot arcs, and thematic throughlines as they progress across your story."
+      primaryAction={{ label: 'New Arc', onClick: () => setCreateDialogOpen(true) }}
+    />
   )
 }
 
@@ -367,7 +363,7 @@ export default function ArcsPage() {
           Failed to load arcs. Please try again.
         </div>
       ) : arcs.length === 0 ? (
-        <EmptyState />
+        <ArcsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {arcs.map((arc) => (
