@@ -76,7 +76,9 @@ function CreateCharacterDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Character created')
       },
+      onError: () => showError('Failed to create character'),
     })
   }
 
@@ -174,7 +176,13 @@ function EditCharacterSheet({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingCharacterId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingCharacterId(null)
+        showSuccess('Character updated')
+      },
+      onError: () => showError('Failed to update character'),
+    })
   }
 
   return (

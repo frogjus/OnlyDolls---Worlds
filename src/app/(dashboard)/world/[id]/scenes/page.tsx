@@ -18,6 +18,7 @@ import {
   useDeleteScene,
 } from '@/lib/hooks/use-scenes'
 import { useSceneStore } from '@/stores/scene-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -56,7 +57,9 @@ function CreateSceneDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Scene created')
       },
+      onError: () => showError('Failed to create scene'),
     })
   }
 
@@ -147,7 +150,13 @@ function EditSceneDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingSceneId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingSceneId(null)
+        showSuccess('Scene updated')
+      },
+      onError: () => showError('Failed to update scene'),
+    })
   }
 
   return (
@@ -257,7 +266,11 @@ function SceneCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteScene.mutate(scene.id)
+                if (!window.confirm('Delete this scene? This cannot be undone.')) return
+                deleteScene.mutate(scene.id, {
+                  onSuccess: () => showSuccess('Scene deleted'),
+                  onError: () => showError('Failed to delete scene'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

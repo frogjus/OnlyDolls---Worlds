@@ -10,13 +10,14 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import type { Relationship, CreateRelationshipPayload, UpdateRelationshipPayload } from '@/types'
+import type { Relationship, Character, CreateRelationshipPayload, UpdateRelationshipPayload } from '@/types'
 import {
   useRelationships,
   useCreateRelationship,
   useUpdateRelationship,
   useDeleteRelationship,
 } from '@/lib/hooks/use-relationships'
+import { useCharacters } from '@/lib/hooks/use-characters'
 import { useRelationshipStore } from '@/stores/relationship-store'
 import { showSuccess, showError } from '@/lib/toast'
 
@@ -35,6 +36,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -45,7 +53,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Create Dialog
 // ---------------------------------------------------------------------------
 
-function CreateRelationshipDialog({ worldId }: { worldId: string }) {
+function CreateRelationshipDialog({ worldId, characters }: { worldId: string; characters: Character[] }) {
   const { createDialogOpen, setCreateDialogOpen } = useRelationshipStore()
   const create = useCreateRelationship(worldId)
   const [form, setForm] = useState<CreateRelationshipPayload>({
@@ -56,12 +64,14 @@ function CreateRelationshipDialog({ worldId }: { worldId: string }) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.type.trim() || !form.characterAId.trim() || !form.characterBId.trim()) return
+    if (!form.type.trim() || !form.characterAId || !form.characterBId) return
     create.mutate(form, {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ type: '', characterAId: '', characterBId: '' })
+        showSuccess('Relationship created')
       },
+      onError: () => showError('Failed to create relationship'),
     })
   }
 
@@ -83,22 +93,40 @@ function CreateRelationshipDialog({ worldId }: { worldId: string }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-charA">Source Character ID *</Label>
-            <Input
-              id="create-charA"
+            <Label>Source Character *</Label>
+            <Select
               value={form.characterAId}
-              onChange={(e) => setForm({ ...form, characterAId: e.target.value })}
-              placeholder="Character A ID"
-            />
+              onValueChange={(val) => val && setForm({ ...form, characterAId: val })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a character" />
+              </SelectTrigger>
+              <SelectContent>
+                {characters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-charB">Target Character ID *</Label>
-            <Input
-              id="create-charB"
+            <Label>Target Character *</Label>
+            <Select
               value={form.characterBId}
-              onChange={(e) => setForm({ ...form, characterBId: e.target.value })}
-              placeholder="Character B ID"
-            />
+              onValueChange={(val) => val && setForm({ ...form, characterBId: val })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a character" />
+              </SelectTrigger>
+              <SelectContent>
+                {characters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-intensity">Strength (0-10)</Label>
@@ -136,8 +164,8 @@ function CreateRelationshipDialog({ worldId }: { worldId: string }) {
               disabled={
                 create.isPending ||
                 !form.type.trim() ||
-                !form.characterAId.trim() ||
-                !form.characterBId.trim()
+                !form.characterAId ||
+                !form.characterBId
               }
             >
               {create.isPending ? 'Creating...' : 'Create'}
@@ -172,7 +200,13 @@ function EditRelationshipDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingRelationshipId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingRelationshipId(null)
+        showSuccess('Relationship updated')
+      },
+      onError: () => showError('Failed to update relationship'),
+    })
   }
 
   return (
@@ -237,14 +271,18 @@ function EditRelationshipDialog({
 function RelationshipCard({
   relationship,
   worldId,
+  characters,
 }: {
   relationship: Relationship
   worldId: string
+  characters: Character[]
 }) {
   const { setEditingRelationshipId } = useRelationshipStore()
   const deleteRel = useDeleteRelationship(worldId)
 
   const strengthDisplay = Math.round((relationship.intensity ?? 0.5) * 10)
+  const char1Name = characters.find((c) => c.id === relationship.character1Id)?.name ?? 'Unknown'
+  const char2Name = characters.find((c) => c.id === relationship.character2Id)?.name ?? 'Unknown'
 
   return (
     <Card className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/5">
@@ -254,7 +292,7 @@ function RelationshipCard({
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">
-            {relationship.character1Id} &harr; {relationship.character2Id}
+            {char1Name} &harr; {char2Name}
           </CardTitle>
           <div className="flex items-center gap-2 mt-1">
             {relationship.type && (
@@ -370,12 +408,14 @@ function EmptyState() {
 export default function RelationshipsPage() {
   const { id: worldId } = useParams<{ id: string }>()
   const { data, isLoading, error } = useRelationships(worldId)
+  const { data: charsData } = useCharacters(worldId)
   const {
     editingRelationshipId,
     setCreateDialogOpen,
   } = useRelationshipStore()
 
   const relationships = data?.data ?? []
+  const characters = charsData?.data ?? []
   const editingRelationship = relationships.find((r) => r.id === editingRelationshipId)
 
   return (
@@ -408,13 +448,13 @@ export default function RelationshipsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {relationships.map((rel) => (
-            <RelationshipCard key={rel.id} relationship={rel} worldId={worldId} />
+            <RelationshipCard key={rel.id} relationship={rel} worldId={worldId} characters={characters} />
           ))}
         </div>
       )}
 
       {/* Dialogs */}
-      <CreateRelationshipDialog worldId={worldId} />
+      <CreateRelationshipDialog worldId={worldId} characters={characters} />
       {editingRelationship && (
         <EditRelationshipDialog worldId={worldId} relationship={editingRelationship} />
       )}

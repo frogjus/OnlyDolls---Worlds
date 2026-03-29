@@ -6,51 +6,75 @@ import type { UpdateRelationshipPayload } from '@/types'
 type Params = { params: Promise<{ id: string; relationshipId: string }> }
 
 export async function GET(_request: Request, { params }: Params) {
-  const { id, relationshipId } = await params
-  const [, errorResponse] = await requireWorldAuth(id)
-  if (errorResponse) return errorResponse
+  try {
+    const { id, relationshipId } = await params
+    const [, errorResponse] = await requireWorldAuth(id)
+    if (errorResponse) return errorResponse
 
-  const relationship = await relationshipQueries.getById(relationshipId, id)
-  if (!relationship) {
+    const relationship = await relationshipQueries.getById(relationshipId, id)
+    if (!relationship) {
+      return NextResponse.json(
+        { error: 'Relationship not found', code: 'NOT_FOUND' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ data: relationship })
+  } catch (error) {
+    console.error('[Relationships GET]', error)
     return NextResponse.json(
-      { error: 'Relationship not found', code: 'NOT_FOUND' },
-      { status: 404 }
+      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
     )
   }
-
-  return NextResponse.json({ data: relationship })
 }
 
 export async function PATCH(request: Request, { params }: Params) {
-  const { id, relationshipId } = await params
-  const [, errorResponse] = await requireWorldAuth(id)
-  if (errorResponse) return errorResponse
+  try {
+    const { id, relationshipId } = await params
+    const [, errorResponse] = await requireWorldAuth(id)
+    if (errorResponse) return errorResponse
 
-  const body = (await request.json()) as UpdateRelationshipPayload
-  const result = await relationshipQueries.update(relationshipId, id, body)
-  if (result.count === 0) {
+    const body = (await request.json()) as UpdateRelationshipPayload
+    const result = await relationshipQueries.update(relationshipId, id, body)
+    if (result.count === 0) {
+      return NextResponse.json(
+        { error: 'Relationship not found', code: 'NOT_FOUND' },
+        { status: 404 }
+      )
+    }
+
+    const updated = await relationshipQueries.getById(relationshipId, id)
+    return NextResponse.json({ data: updated })
+  } catch (error) {
+    console.error('[Relationships PATCH]', error)
     return NextResponse.json(
-      { error: 'Relationship not found', code: 'NOT_FOUND' },
-      { status: 404 }
+      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
     )
   }
-
-  const updated = await relationshipQueries.getById(relationshipId, id)
-  return NextResponse.json({ data: updated })
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
-  const { id, relationshipId } = await params
-  const [, errorResponse] = await requireWorldAuth(id)
-  if (errorResponse) return errorResponse
+  try {
+    const { id, relationshipId } = await params
+    const [, errorResponse] = await requireWorldAuth(id)
+    if (errorResponse) return errorResponse
 
-  const result = await relationshipQueries.softDelete(relationshipId, id)
-  if (result.count === 0) {
+    const result = await relationshipQueries.softDelete(relationshipId, id)
+    if (result.count === 0) {
+      return NextResponse.json(
+        { error: 'Relationship not found', code: 'NOT_FOUND' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ data: { deleted: true } })
+  } catch (error) {
+    console.error('[Relationships DELETE]', error)
     return NextResponse.json(
-      { error: 'Relationship not found', code: 'NOT_FOUND' },
-      { status: 404 }
+      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
     )
   }
-
-  return NextResponse.json({ data: { deleted: true } })
 }

@@ -18,6 +18,7 @@ import {
   useDeleteLocation,
 } from '@/lib/hooks/use-locations'
 import { useLocationStore } from '@/stores/location-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -57,7 +58,9 @@ function CreateLocationDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Location created')
       },
+      onError: () => showError('Failed to create location'),
     })
   }
 
@@ -148,7 +151,13 @@ function EditLocationDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingLocationId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingLocationId(null)
+        showSuccess('Location updated')
+      },
+      onError: () => showError('Failed to update location'),
+    })
   }
 
   return (
@@ -268,7 +277,11 @@ function LocationCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteLocation.mutate(location.id)
+                if (!window.confirm('Delete this location? This cannot be undone.')) return
+                deleteLocation.mutate(location.id, {
+                  onSuccess: () => showSuccess('Location deleted'),
+                  onError: () => showError('Failed to delete location'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

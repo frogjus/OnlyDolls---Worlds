@@ -8,17 +8,26 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 
-import type { Arc, CreateArcPayload, UpdateArcPayload } from '@/types'
+import type { Arc, ArcPhase, CreateArcPayload, UpdateArcPayload, CreateArcPhasePayload, UpdateArcPhasePayload } from '@/types'
 import {
   useArcs,
   useCreateArc,
   useUpdateArc,
   useDeleteArc,
 } from '@/lib/hooks/use-arcs'
+import {
+  useArcPhases,
+  useCreateArcPhase,
+  useUpdateArcPhase,
+  useDeleteArcPhase,
+} from '@/lib/hooks/use-arc-phases'
 import { useArcStore } from '@/stores/arc-store'
 import { EmptyState } from '@/components/empty-states/empty-state'
+import { showSuccess, showError } from '@/lib/toast'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,7 +66,9 @@ function CreateArcDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Arc created')
       },
+      onError: () => showError('Failed to create arc'),
     })
   }
 
@@ -148,7 +159,13 @@ function EditArcDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingArcId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingArcId(null)
+        showSuccess('Arc updated')
+      },
+      onError: () => showError('Failed to update arc'),
+    })
   }
 
   return (
@@ -213,6 +230,156 @@ function EditArcDialog({
 // Arc Card
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Arc Phase Section (expandable per-arc)
+// ---------------------------------------------------------------------------
+
+function ArcPhaseSection({ worldId, arcId }: { worldId: string; arcId: string }) {
+  const { data, isLoading } = useArcPhases(worldId, arcId)
+  const createPhase = useCreateArcPhase(worldId, arcId)
+  const updatePhase = useUpdateArcPhase(worldId, arcId)
+  const deletePhase = useDeleteArcPhase(worldId, arcId)
+  const [showCreate, setShowCreate] = useState(false)
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null)
+  const [form, setForm] = useState<CreateArcPhasePayload>({ name: '' })
+  const [editForm, setEditForm] = useState<UpdateArcPhasePayload & { id: string }>({ id: '', name: '' })
+
+  const phases = data?.data ?? []
+
+  function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.name.trim()) return
+    createPhase.mutate(form, {
+      onSuccess: () => {
+        setShowCreate(false)
+        setForm({ name: '' })
+        showSuccess('Phase created')
+      },
+      onError: () => showError('Failed to create phase'),
+    })
+  }
+
+  function startEdit(phase: ArcPhase) {
+    setEditingPhaseId(phase.id)
+    setEditForm({
+      id: phase.id,
+      name: phase.name,
+      description: phase.description ?? '',
+      position: phase.position,
+      state: phase.state ?? '',
+    })
+  }
+
+  function handleUpdate(e: React.FormEvent) {
+    e.preventDefault()
+    updatePhase.mutate(editForm, {
+      onSuccess: () => {
+        setEditingPhaseId(null)
+        showSuccess('Phase updated')
+      },
+      onError: () => showError('Failed to update phase'),
+    })
+  }
+
+  if (isLoading) return <Skeleton className="h-8 w-full" />
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          Phases ({phases.length})
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 text-xs"
+          onClick={() => setShowCreate(!showCreate)}
+        >
+          <Plus className="mr-1 h-3 w-3" />
+          Add Phase
+        </Button>
+      </div>
+
+      {showCreate && (
+        <form onSubmit={handleCreate} className="flex gap-2">
+          <Input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Phase name"
+            className="h-7 text-xs"
+            autoFocus
+          />
+          <Button type="submit" size="sm" className="h-7 text-xs" disabled={createPhase.isPending || !form.name.trim()}>
+            Add
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowCreate(false)}>
+            Cancel
+          </Button>
+        </form>
+      )}
+
+      {phases.length > 0 && (
+        <ul className="space-y-1">
+          {phases
+            .sort((a, b) => a.position - b.position)
+            .map((phase) => (
+            <li key={phase.id} className="flex items-center gap-2 text-xs text-muted-foreground rounded px-1.5 py-1 hover:bg-accent/50">
+              {editingPhaseId === phase.id ? (
+                <form onSubmit={handleUpdate} className="flex flex-1 gap-2">
+                  <Input
+                    value={editForm.name ?? ''}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="h-6 text-xs flex-1"
+                    autoFocus
+                  />
+                  <Button type="submit" size="sm" className="h-6 text-xs" disabled={updatePhase.isPending}>
+                    Save
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEditingPhaseId(null)}>
+                    Cancel
+                  </Button>
+                </form>
+              ) : (
+                <>
+                  <span className="flex-1 truncate">{phase.name}</span>
+                  {phase.state && (
+                    <Badge variant="outline" className="text-[10px] h-4">{phase.state}</Badge>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => startEdit(phase)}
+                    className="hover:text-foreground"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm('Delete this phase?')) return
+                      deletePhase.mutate(phase.id, {
+                        onSuccess: () => showSuccess('Phase deleted'),
+                        onError: () => showError('Failed to delete phase'),
+                      })
+                    }}
+                    className="hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Arc Card
+// ---------------------------------------------------------------------------
+
 function ArcCard({
   arc,
   worldId,
@@ -222,6 +389,7 @@ function ArcCard({
 }) {
   const { setEditingArcId } = useArcStore()
   const deleteArc = useDeleteArc(worldId)
+  const [phasesExpanded, setPhasesExpanded] = useState(false)
 
   return (
     <Card className="group cursor-pointer transition-shadow hover:shadow-md">
@@ -258,7 +426,11 @@ function ArcCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteArc.mutate(arc.id)
+                if (!window.confirm('Delete this arc? This cannot be undone.')) return
+                deleteArc.mutate(arc.id, {
+                  onSuccess: () => showSuccess('Arc deleted'),
+                  onError: () => showError('Failed to delete arc'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -267,7 +439,7 @@ function ArcCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         {arc.description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
             {arc.description}
@@ -275,6 +447,24 @@ function ArcCard({
         ) : (
           <p className="text-sm text-muted-foreground italic">No description</p>
         )}
+        <div className="border-t pt-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setPhasesExpanded(!phasesExpanded)
+            }}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {phasesExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            Phases
+          </button>
+          {phasesExpanded && (
+            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+              <ArcPhaseSection worldId={worldId} arcId={arc.id} />
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
