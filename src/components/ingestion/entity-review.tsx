@@ -31,15 +31,29 @@ const ENTITY_TYPE_CONFIG: Record<
   faction: { icon: Users, label: 'Faction', color: 'bg-red-100 text-red-800' },
 }
 
-function ConfidenceBadge({ confidence }: { confidence: number }) {
+function ConfidenceBar({ confidence }: { confidence: number }) {
   const percent = Math.round(confidence * 100)
-  let variant: 'default' | 'secondary' = 'default'
-  if (percent < 70) variant = 'secondary'
-
   return (
-    <Badge variant={variant} className="text-[10px]">
-      {percent}%
-    </Badge>
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full transition-all ${
+            percent >= 80
+              ? 'bg-green-500'
+              : percent >= 60
+                ? 'bg-amber-500'
+                : 'bg-red-500'
+          }`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <Badge
+        variant={percent >= 70 ? 'default' : 'secondary'}
+        className="text-[10px]"
+      >
+        {percent}%
+      </Badge>
+    </div>
   )
 }
 
@@ -155,11 +169,13 @@ export function EntityReview({
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${config.color}`}>
                     {config.label}
                   </span>
-                  <ConfidenceBadge confidence={entity.confidence} />
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                   {entity.description}
                 </p>
+                <div className="mt-1.5">
+                  <ConfidenceBar confidence={entity.confidence} />
+                </div>
               </div>
 
               <div className="mt-1 shrink-0">

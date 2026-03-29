@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface CharacterStoreState {
   createDialogOpen: boolean
@@ -9,11 +10,19 @@ interface CharacterStoreState {
   setSelectedCharacterId: (id: string | null) => void
 }
 
-export const useCharacterStore = create<CharacterStoreState>((set) => ({
-  createDialogOpen: false,
-  editingCharacterId: null,
-  selectedCharacterId: null,
-  setCreateDialogOpen: (open) => set({ createDialogOpen: open }),
-  setEditingCharacterId: (id) => set({ editingCharacterId: id }),
-  setSelectedCharacterId: (id) => set({ selectedCharacterId: id }),
-}))
+export const useCharacterStore = create<CharacterStoreState>()(
+  persist(
+    (set) => ({
+      createDialogOpen: false,
+      editingCharacterId: null,
+      selectedCharacterId: null,
+      setCreateDialogOpen: (open) => set({ createDialogOpen: open }),
+      setEditingCharacterId: (id) => set({ editingCharacterId: id }),
+      setSelectedCharacterId: (id) => set({ selectedCharacterId: id }),
+    }),
+    {
+      name: 'storyforge-character',
+      partialize: (state) => ({ selectedCharacterId: state.selectedCharacterId }),
+    }
+  )
+)

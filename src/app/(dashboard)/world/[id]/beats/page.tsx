@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import type { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Plus, Star, X } from 'lucide-react'
+import { Plus, Star, X, List, LayoutGrid, Maximize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -23,6 +23,7 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { useBeatUI } from '@/stores/beat-store'
+import type { BeatDensity } from '@/stores/beat-store'
 import {
   useBeats,
   useCharacters,
@@ -38,6 +39,12 @@ import { BeatMinimap } from '@/components/beats/beat-minimap'
 
 const STATUSES: BeatStatus[] = ['todo', 'in_progress', 'done']
 
+const DENSITY_OPTIONS: { value: BeatDensity; icon: typeof List; label: string }[] = [
+  { value: 'minimal', icon: List, label: 'Minimal' },
+  { value: 'standard', icon: LayoutGrid, label: 'Standard' },
+  { value: 'detailed', icon: Maximize2, label: 'Detailed' },
+]
+
 export default function BeatsPage() {
   const { id: worldId } = useParams<{ id: string }>()
   const { data: beats, isLoading } = useBeats(worldId)
@@ -46,10 +53,12 @@ export default function BeatsPage() {
   const reorderBeats = useReorderBeats(worldId)
 
   const {
+    density,
     createDialogOpen,
     editingBeatId,
     filterStarRating,
     filterCharacterId,
+    setDensity,
     setCreateDialogOpen,
     setEditingBeatId,
     setFilterStarRating,
@@ -160,6 +169,7 @@ export default function BeatsPage() {
   const handleEdit = (id: string) => setEditingBeatId(id)
   const handleDelete = (id: string) => deleteBeat.mutate(id)
   const hasFilters = filterStarRating != null || filterCharacterId != null
+  const isEmpty = !isLoading && localBeats.length === 0
 
   if (isLoading) {
     return (
@@ -182,11 +192,56 @@ export default function BeatsPage() {
     )
   }
 
+  if (isEmpty) {
+    return (
+      <div className="flex h-full flex-col p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Beats</h1>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold">No beats yet</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Start building your story structure by adding your first beat
+            </p>
+          </div>
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="size-4" />
+            Add First Beat
+          </Button>
+        </div>
+
+        <BeatFormDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          worldId={worldId}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Beats</h1>
+
+          {/* Density toggle */}
+          <div className="flex items-center rounded-md border border-border/50">
+            {DENSITY_OPTIONS.map(({ value, icon: Icon, label }) => (
+              <Button
+                key={value}
+                variant={density === value ? 'secondary' : 'ghost'}
+                size="icon-xs"
+                onClick={() => setDensity(value)}
+                title={label}
+                className="rounded-none first:rounded-l-md last:rounded-r-md"
+              >
+                <Icon className="size-3.5" />
+              </Button>
+            ))}
+          </div>
+
           <div className="flex items-center gap-2">
             <Select
               value={filterStarRating?.toString() ?? ''}
@@ -253,8 +308,10 @@ export default function BeatsPage() {
               key={status}
               status={status}
               beats={grouped[status]}
+              density={density}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onAdd={() => setCreateDialogOpen(true)}
             />
           ))}
         </div>
@@ -263,6 +320,7 @@ export default function BeatsPage() {
           {activeBeat && (
             <BeatCard
               beat={activeBeat}
+              density={density}
               onEdit={() => {}}
               onDelete={() => {}}
               overlay
@@ -287,6 +345,7 @@ export default function BeatsPage() {
 
       <BeatMinimap
         columns={grouped}
+        density={density}
         scrollContainerRef={scrollContainerRef}
       />
     </div>

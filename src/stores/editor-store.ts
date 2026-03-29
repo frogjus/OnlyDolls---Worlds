@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface EditorUIState {
   mode: 'prose' | 'screenplay'
@@ -16,18 +17,26 @@ interface EditorUIState {
   exitFocusMode: () => void
 }
 
-export const useEditorUI = create<EditorUIState>((set) => ({
-  mode: 'prose',
-  wordCount: 0,
-  activeManuscriptId: null,
-  isDirty: false,
-  sidebarCollapsed: false,
-  focusMode: false,
-  setMode: (mode) => set({ mode }),
-  setWordCount: (count) => set({ wordCount: count }),
-  setActiveManuscriptId: (id) => set({ activeManuscriptId: id }),
-  setIsDirty: (dirty) => set({ isDirty: dirty }),
-  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-  toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
-  exitFocusMode: () => set({ focusMode: false }),
-}))
+export const useEditorUI = create<EditorUIState>()(
+  persist(
+    (set) => ({
+      mode: 'prose',
+      wordCount: 0,
+      activeManuscriptId: null,
+      isDirty: false,
+      sidebarCollapsed: false,
+      focusMode: false,
+      setMode: (mode) => set({ mode }),
+      setWordCount: (count) => set({ wordCount: count }),
+      setActiveManuscriptId: (id) => set({ activeManuscriptId: id }),
+      setIsDirty: (dirty) => set({ isDirty: dirty }),
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
+      exitFocusMode: () => set({ focusMode: false }),
+    }),
+    {
+      name: 'storyforge-editor-ui',
+      partialize: (state) => ({ mode: state.mode, focusMode: state.focusMode }),
+    }
+  )
+)

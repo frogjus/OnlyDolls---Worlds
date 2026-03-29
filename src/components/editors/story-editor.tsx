@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import type { JSONContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -14,9 +15,11 @@ import Dropcursor from '@tiptap/extension-dropcursor'
 import Gapcursor from '@tiptap/extension-gapcursor'
 import Placeholder from '@tiptap/extension-placeholder'
 import { cn } from '@/lib/utils'
+import { useEditorUI } from '@/stores/editor-store'
 import { EditorToolbar } from './editor-toolbar'
 import { BeatAnchorNode } from './extensions/beat-anchor'
 import './editor.css'
+import './focus-mode.css'
 
 type EditorMode = 'prose' | 'screenplay'
 
@@ -37,6 +40,8 @@ function StoryEditor({
   className,
   placeholder = 'Start writing...',
 }: StoryEditorProps) {
+  const { focusMode, exitFocusMode } = useEditorUI()
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -74,10 +79,22 @@ function StoryEditor({
     },
   })
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && focusMode) {
+        exitFocusMode()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [focusMode, exitFocusMode])
+
   return (
-    <div className={cn('flex flex-col rounded-md border', className)}>
+    <div className={cn('flex flex-col rounded-md border', className, focusMode && 'editor-focus-mode')}>
       <EditorToolbar editor={editor} />
-      <EditorContent editor={editor} />
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   )
 }

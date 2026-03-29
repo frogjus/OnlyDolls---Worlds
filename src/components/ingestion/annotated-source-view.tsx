@@ -3,12 +3,18 @@
 import { useMemo } from 'react'
 import type { SourceEntity } from '@/lib/hooks/use-source-detail'
 
+// Consistent entity highlight palette — underline style to preserve text flow
 const ENTITY_COLORS: Record<SourceEntity['type'], string> = {
-  character: 'bg-blue-100 text-blue-900 hover:bg-blue-200',
-  location: 'bg-green-100 text-green-900 hover:bg-green-200',
-  event: 'bg-purple-100 text-purple-900 hover:bg-purple-200',
-  item: 'bg-amber-100 text-amber-900 hover:bg-amber-200',
-  faction: 'bg-red-100 text-red-900 hover:bg-red-200',
+  character:
+    'bg-blue-50 text-blue-900 decoration-blue-400 hover:bg-blue-100',
+  location:
+    'bg-green-50 text-green-900 decoration-green-400 hover:bg-green-100',
+  event:
+    'bg-purple-50 text-purple-900 decoration-purple-400 hover:bg-purple-100',
+  item:
+    'bg-amber-50 text-amber-900 decoration-amber-400 hover:bg-amber-100',
+  faction:
+    'bg-red-50 text-red-900 decoration-red-400 hover:bg-red-100',
 }
 
 interface TextSegment {
@@ -109,9 +115,10 @@ export function AnnotatedSourceView({
               key={i}
               type="button"
               onClick={() => onSelectEntity(segment.entity!)}
-              className={`inline cursor-pointer rounded px-0.5 transition-colors ${
+              className={`inline cursor-pointer rounded px-0.5 underline decoration-2 underline-offset-2 transition-colors ${
                 ENTITY_COLORS[segment.entity.type]
               } ${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+              style={{ transitionDuration: 'var(--duration-fast)' }}
             >
               {segment.text}
             </button>

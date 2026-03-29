@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect } from 'react'
 import { User, MapPin, Zap, Package, Users, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useLayoutStore } from '@/stores/layout-store'
 import type { SourceEntity } from '@/lib/hooks/use-source-detail'
 
 const ENTITY_CONFIG: Record<
@@ -52,6 +54,15 @@ export function EntityDetailPanel({
   worldId,
   onClose,
 }: EntityDetailPanelProps) {
+  const { setInspectorOpen } = useLayoutStore()
+
+  // Open inspector when an entity is selected, close when deselected
+  useEffect(() => {
+    if (entity) {
+      setInspectorOpen(true)
+    }
+  }, [entity, setInspectorOpen])
+
   if (!entity) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-6 text-center">
