@@ -226,12 +226,12 @@ function ObjectCard({
 
   return (
     <Card
-      className="group cursor-pointer transition-shadow hover:shadow-md"
+      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5"
       onClick={() => setSelectedObjectId(object.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Gem className="h-5 w-5 text-muted-foreground" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+          <Gem className="h-5 w-5 text-amber-400" />
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{object.name}</CardTitle>
@@ -357,7 +357,7 @@ export default function ObjectsPage() {
               : 'Significant items, artifacts, and props in your story world.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Object
         </Button>

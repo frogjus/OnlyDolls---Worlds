@@ -267,10 +267,10 @@ function SourceCard({
 
   return (
     <Link href={`/world/${worldId}/sources/${source.id}`}>
-      <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+      <Card className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5">
         <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-            <FileText className="h-5 w-5 text-muted-foreground" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+            <FileText className="h-5 w-5 text-teal-400" />
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base truncate">{source.title}</CardTitle>
@@ -388,12 +388,12 @@ function SourceSkeletons() {
 
 function EmptyState({ worldId }: { worldId: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-16 text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-muted">
-        <BookOpen className="size-8 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-16 text-center">
+      <div className="flex size-16 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <BookOpen className="size-8 text-teal-400/70" />
       </div>
-      <h3 className="mt-6 text-xl font-semibold">Bring your story to life</h3>
-      <p className="mt-2 max-w-md text-sm text-muted-foreground">
+      <h3 className="mt-6 text-xl font-bold text-slate-100">Bring your story to life</h3>
+      <p className="mt-2 max-w-md text-sm text-slate-400">
         Upload a manuscript, screenplay, or reference material to start building
         your story world. We&apos;ll analyze the content and extract characters,
         locations, events, and more.

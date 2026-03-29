@@ -313,12 +313,12 @@ function FactionCard({
 
   return (
     <Card
-      className="group cursor-pointer transition-shadow hover:shadow-md"
+      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/5"
       onClick={() => setSelectedFactionId(faction.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Shield className="h-5 w-5 text-muted-foreground" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+          <Shield className="h-5 w-5 text-violet-400" />
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{faction.name}</CardTitle>
@@ -367,10 +367,11 @@ function FactionCard({
           <p className="text-sm text-muted-foreground italic">No description</p>
         )}
         {goals.length > 0 && (
-          <ul className="mt-2 space-y-0.5">
+          <ul className="mt-2 space-y-1">
             {goals.map((goal, i) => (
-              <li key={i} className="text-xs text-muted-foreground">
-                - {goal}
+              <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-violet-400/50" />
+                {goal}
               </li>
             ))}
           </ul>
@@ -448,7 +449,7 @@ export default function FactionsPage() {
               : 'Factions, organizations, and power dynamics.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Faction
         </Button>
