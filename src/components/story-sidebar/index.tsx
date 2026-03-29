@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
@@ -55,7 +55,12 @@ function getSectionsKey(worldId: string) {
   return `storyforge-sidebar-sections-${worldId}`
 }
 
+function getSynopsisDraftKey(worldId: string) {
+  return `storyforge-synopsis-draft-${worldId}`
+}
+
 function loadSections(worldId: string): SectionState {
+  if (typeof window === 'undefined') return DEFAULT_SECTIONS
   try {
     const raw = localStorage.getItem(getSectionsKey(worldId))
     if (raw) return { ...DEFAULT_SECTIONS, ...JSON.parse(raw) }
@@ -63,6 +68,24 @@ function loadSections(worldId: string): SectionState {
     // ignore bad data
   }
   return DEFAULT_SECTIONS
+}
+
+function loadSynopsisDraft(worldId: string): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem(getSynopsisDraftKey(worldId))
+  } catch {
+    return null
+  }
+}
+
+const emptySubscribe = () => () => {}
+function useHasMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
 }
 
 function SectionHeader({ icon, label, open, onToggle }: SectionHeaderProps) {
@@ -85,12 +108,13 @@ function SectionHeader({ icon, label, open, onToggle }: SectionHeaderProps) {
 }
 
 export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps) {
+  const mounted = useHasMounted()
   const { data: stats } = useWorldStats(worldId)
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const isCollapsed = collapsed ?? internalCollapsed
   const toggle = onToggle ?? (() => setInternalCollapsed((v) => !v))
 
-  // --- Section collapse persistence ---
+  // --- Section collapse persistence (hydration-safe) ---
   const [sections, setSections] = useState<SectionState>(DEFAULT_SECTIONS)
 
   useEffect(() => {
@@ -108,28 +132,49 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
     [worldId]
   )
 
-  // --- Synopsis: fetch from API, save on blur ---
+  // --- Synopsis: fetch from API, cache draft to localStorage, save on blur ---
   const [synopsis, setSynopsis] = useState('')
   const [synopsisSaving, setSynopsisSaving] = useState(false)
   const lastSavedRef = useRef('')
 
   useEffect(() => {
     let cancelled = false
+    // Load localStorage draft immediately for fast restore
+    const draft = loadSynopsisDraft(worldId)
+    if (draft !== null) {
+      setSynopsis(draft)
+    }
+    // Then fetch authoritative value from API
     fetch(`/api/worlds/${worldId}`)
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return
         const desc = json.data?.description ?? ''
-        setSynopsis(desc)
         lastSavedRef.current = desc
+        // Only overwrite if user hasn't made local edits (draft matches or is absent)
+        if (draft === null || draft === desc) {
+          setSynopsis(desc)
+        }
       })
       .catch(() => {
-        // world fetch failed — leave empty
+        // world fetch failed — keep draft if available
       })
     return () => {
       cancelled = true
     }
   }, [worldId])
+
+  const handleSynopsisChange = useCallback(
+    (value: string) => {
+      setSynopsis(value)
+      try {
+        localStorage.setItem(getSynopsisDraftKey(worldId), value)
+      } catch {
+        // storage full — ignore
+      }
+    },
+    [worldId]
+  )
 
   const saveSynopsis = useCallback(async () => {
     const trimmed = synopsis.trim()
@@ -143,6 +188,10 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
       })
       if (!res.ok) throw new Error('save failed')
       lastSavedRef.current = synopsis
+      // Clear draft from localStorage after successful save
+      try {
+        localStorage.removeItem(getSynopsisDraftKey(worldId))
+      } catch { /* ignore */ }
       showSuccess('Synopsis saved')
     } catch {
       showError('Failed to save synopsis')
@@ -180,11 +229,11 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             <SectionHeader
               icon={<BookOpen className="h-3.5 w-3.5" />}
               label="Synopsis"
-              open={sections.synopsis}
+              open={mounted ? sections.synopsis : DEFAULT_SECTIONS.synopsis}
               onToggle={() => toggleSection('synopsis')}
             />
             <AnimatePresence initial={false}>
-              {sections.synopsis && (
+              {(mounted ? sections.synopsis : DEFAULT_SECTIONS.synopsis) && (
                 <motion.div
                   variants={sectionCollapse}
                   initial="closed"
@@ -196,7 +245,7 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
                     <SynopsisPanel
                       synopsis={synopsis}
                       saving={synopsisSaving}
-                      onSynopsisChange={setSynopsis}
+                      onSynopsisChange={handleSynopsisChange}
                       onBlur={saveSynopsis}
                     />
                   </div>
@@ -209,11 +258,11 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             <SectionHeader
               icon={<BarChart3 className="h-3.5 w-3.5" />}
               label="Stats"
-              open={sections.stats}
+              open={mounted ? sections.stats : DEFAULT_SECTIONS.stats}
               onToggle={() => toggleSection('stats')}
             />
             <AnimatePresence initial={false}>
-              {sections.stats && (
+              {(mounted ? sections.stats : DEFAULT_SECTIONS.stats) && (
                 <motion.div
                   variants={sectionCollapse}
                   initial="closed"
@@ -238,11 +287,11 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             <SectionHeader
               icon={<StickyNote className="h-3.5 w-3.5" />}
               label="Scene Notes"
-              open={sections.notes}
+              open={mounted ? sections.notes : DEFAULT_SECTIONS.notes}
               onToggle={() => toggleSection('notes')}
             />
             <AnimatePresence initial={false}>
-              {sections.notes && (
+              {(mounted ? sections.notes : DEFAULT_SECTIONS.notes) && (
                 <motion.div
                   variants={sectionCollapse}
                   initial="closed"
@@ -262,11 +311,11 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             <SectionHeader
               icon={<Users className="h-3.5 w-3.5" />}
               label="Characters"
-              open={sections.characters}
+              open={mounted ? sections.characters : DEFAULT_SECTIONS.characters}
               onToggle={() => toggleSection('characters')}
             />
             <AnimatePresence initial={false}>
-              {sections.characters && (
+              {(mounted ? sections.characters : DEFAULT_SECTIONS.characters) && (
                 <motion.div
                   variants={sectionCollapse}
                   initial="closed"
