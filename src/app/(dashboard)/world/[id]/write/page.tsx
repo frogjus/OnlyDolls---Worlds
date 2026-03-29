@@ -16,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { StoryEditor } from '@/components/editors/story-editor'
-import { StorySidebar } from '@/components/story-sidebar'
 import { useEditorUI } from '@/stores/editor-store'
 import { showSuccess, showError } from '@/lib/toast'
 import {
@@ -46,12 +45,10 @@ export default function WritePage() {
     mode,
     activeManuscriptId,
     isDirty,
-    sidebarCollapsed,
     setMode,
     setWordCount,
     setActiveManuscriptId,
     setIsDirty,
-    toggleSidebar,
     toggleFocusMode,
   } = useEditorUI()
 
@@ -220,11 +217,6 @@ export default function WritePage() {
             <Skeleton className="h-3/4 w-3/4" />
           </div>
         )}
-        <StorySidebar
-          worldId={worldId}
-          collapsed={sidebarCollapsed}
-          onToggle={toggleSidebar}
-        />
       </div>
     </div>
   )
