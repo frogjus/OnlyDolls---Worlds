@@ -15,10 +15,15 @@ export function QuickstartWizard() {
   const createWorld = useCreateWorld()
 
   const [worldName, setWorldName] = useState('')
+  const [validationError, setValidationError] = useState('')
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!worldName.trim()) return
+    if (!worldName.trim()) {
+      setValidationError('World name is required')
+      return
+    }
+    setValidationError('')
     createWorld.mutate(
       { name: worldName.trim() },
       {
@@ -44,15 +49,18 @@ export function QuickstartWizard() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            {createWorld.error && (
+            {(createWorld.error || validationError) && (
               <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                {createWorld.error.message || 'Something went wrong.'}
+                {validationError || createWorld.error?.message || 'Something went wrong.'}
               </div>
             )}
             <Input
               placeholder="e.g. The Iron Kingdoms"
               value={worldName}
-              onChange={(e) => setWorldName(e.target.value)}
+              onChange={(e) => {
+                setWorldName(e.target.value)
+                if (validationError) setValidationError('')
+              }}
               autoFocus
               required
             />

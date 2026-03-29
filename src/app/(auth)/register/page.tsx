@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import { showError } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -38,32 +39,42 @@ export default function RegisterPage() {
 
     setLoading(true)
 
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    })
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      })
 
-    if (!res.ok) {
-      const body = await res.json()
-      setError(body.error ?? 'Registration failed')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const msg = body.error ?? 'Registration failed'
+        setError(msg)
+        showError(msg)
+        setLoading(false)
+        return
+      }
+
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        const msg = 'Account created but sign-in failed. Please log in manually.'
+        setError(msg)
+        showError(msg)
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/worlds'
+    } catch {
+      setError('Something went wrong. Please try again.')
+      showError('Something went wrong. Please try again.')
       setLoading(false)
-      return
     }
-
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    if (result?.error) {
-      setError('Account created but sign-in failed. Please log in manually.')
-      setLoading(false)
-      return
-    }
-
-    window.location.href = '/worlds'
   }
 
   return (

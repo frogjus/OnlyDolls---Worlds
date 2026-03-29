@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Globe, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,12 +33,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useWorldStore } from '@/stores/world-store'
 import { useWorlds, useCreateWorld, useDeleteWorld } from '@/lib/hooks/use-worlds'
 import { useOnboardingStore } from '@/stores/onboarding-store'
 import { QuickstartWizard } from '@/components/onboarding/quickstart-wizard'
 
 export default function WorldsPage() {
+  const router = useRouter()
   const { data, isLoading } = useWorlds()
   const createWorld = useCreateWorld()
   const deleteWorld = useDeleteWorld()
@@ -48,6 +51,8 @@ export default function WorldsPage() {
   const [description, setDescription] = useState('')
   const [genre, setGenre] = useState('')
   const [logline, setLogline] = useState('')
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const worlds = data?.data ?? []
 
@@ -74,9 +79,10 @@ export default function WorldsPage() {
     createWorld.mutate(
       { name: name.trim(), description: description.trim() || undefined, genre: genre.trim() || undefined, logline: logline.trim() || undefined },
       {
-        onSuccess: () => {
+        onSuccess: (res) => {
           resetForm()
           setCreateDialogOpen(false)
+          router.push(`/world/${res.data.id}/sources`)
         },
       },
     )
@@ -179,7 +185,8 @@ export default function WorldsPage() {
                           variant="destructive"
                           onClick={(e) => {
                             e.preventDefault()
-                            deleteWorld.mutate(world.id)
+                            setPendingDeleteId(world.id)
+                            setDeleteConfirmOpen(true)
                           }}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -206,6 +213,23 @@ export default function WorldsPage() {
           ))}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete world"
+        description="Are you sure you want to delete this world? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            deleteWorld.mutate(pendingDeleteId)
+            setPendingDeleteId(null)
+          }
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
 
       {/* Create dialog */}
       <Dialog

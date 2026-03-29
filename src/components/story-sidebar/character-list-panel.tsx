@@ -20,14 +20,15 @@ export function CharacterListPanel({ characters: propCharacters, onCharacterClic
   const worldId = params?.id ?? ''
   const { data, isLoading } = useCharacters(worldId)
   const { selectedCharacterId, setSelectedCharacterId } = useCharacterStore()
-  const { setInspectorOpen } = useLayoutStore()
+  const { selectEntity } = useLayoutStore()
   const [filter, setFilter] = useState('')
 
   const characters = data?.data?.map((c) => ({ id: c.id, name: c.name })) ?? propCharacters ?? []
 
   function handleClick(id: string) {
+    const char = characters.find((c) => c.id === id)
     setSelectedCharacterId(id)
-    setInspectorOpen(true)
+    selectEntity({ type: 'character', id, name: char?.name ?? 'Unknown' })
     onCharacterClick?.(id)
   }
 

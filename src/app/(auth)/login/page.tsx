@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import { showError } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -25,19 +26,26 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError('Invalid email or password')
+      if (result?.error) {
+        setError('Invalid email or password')
+        showError('Invalid email or password')
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/worlds'
+    } catch {
+      setError('Something went wrong. Please try again.')
+      showError('Something went wrong. Please try again.')
       setLoading(false)
-      return
     }
-
-    window.location.href = '/worlds'
   }
 
   return (

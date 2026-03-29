@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Wand2, Check, X, Loader2, RotateCcw } from 'lucide-react'
+import { Wand2, Check, X, Loader2, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { showError } from '@/lib/toast'
 
 interface AIWandPanelProps {
   worldId: string
@@ -34,7 +35,11 @@ export function AIWandPanel({
   const [confidence, setConfidence] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
 
+  const hasSynopsis = !!synopsis?.trim()
+
   const generate = useCallback(async () => {
+    if (!hasSynopsis) return
+
     setIsGenerating(true)
     setError(null)
     setSuggestion(null)
@@ -65,18 +70,17 @@ export function AIWandPanel({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Generation failed'
       setError(message)
+      showError(message)
     } finally {
       setIsGenerating(false)
     }
-  }, [worldId, synopsis, selectedText, generationType])
+  }, [worldId, synopsis, selectedText, generationType, hasSynopsis])
 
   useEffect(() => {
-    if (!synopsis) {
-      setError('Synopsis is required. Fill in the Story Sidebar synopsis to enable AI suggestions.')
-      return
+    if (hasSynopsis) {
+      generate()
     }
-    generate()
-  }, [generate, synopsis])
+  }, [generate, hasSynopsis])
 
   const handleAccept = useCallback(() => {
     if (suggestion) {
@@ -95,7 +99,26 @@ export function AIWandPanel({
       </div>
 
       <div className="p-4">
-        {isGenerating && (
+        {/* Synopsis required — instructional message */}
+        {!hasSynopsis && (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <AlertTriangle className="size-8 text-amber-500" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                Synopsis required
+              </p>
+              <p className="text-sm text-muted-foreground">
+                The AI Wand needs context about your story to generate suggestions.
+                Open the <strong>Story Sidebar</strong> and fill in the <strong>synopsis</strong> field first.
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                The more context you provide, the better the suggestions will be.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {hasSynopsis && isGenerating && (
           <div className="flex items-center gap-3 py-8">
             <Loader2 className="size-5 animate-spin text-primary" />
             <span className="text-sm text-muted-foreground">
@@ -104,13 +127,13 @@ export function AIWandPanel({
           </div>
         )}
 
-        {error && !isGenerating && (
+        {hasSynopsis && error && !isGenerating && (
           <div className="py-4">
             <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
-        {suggestion && !isGenerating && (
+        {hasSynopsis && suggestion && !isGenerating && (
           <div className="space-y-3">
             <div className="max-h-[300px] overflow-y-auto rounded-md bg-muted/50 p-3">
               <p className="whitespace-pre-wrap text-sm">{suggestion}</p>
@@ -133,7 +156,7 @@ export function AIWandPanel({
             <X className="mr-1 size-3.5" />
             Dismiss
           </Button>
-          {suggestion && !isGenerating && (
+          {hasSynopsis && suggestion && !isGenerating && (
             <>
               <Button
                 variant="outline"

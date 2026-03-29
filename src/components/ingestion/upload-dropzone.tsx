@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useRef } from 'react'
-import { Upload, FileText, X, Loader2, FileUp } from 'lucide-react'
+import { Upload, FileText, X, FileUp, AlertCircle, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface UploadDropzoneProps {
@@ -245,7 +245,13 @@ export function UploadDropzone({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              {uploadProgress < 90 ? 'Uploading...' : 'Analyzing content...'}
+              {uploadProgress < 30
+                ? 'Uploading file...'
+                : uploadProgress < 70
+                  ? 'Parsing content...'
+                  : uploadProgress < 90
+                    ? 'Extracting entities...'
+                    : 'Finalizing analysis...'}
             </span>
             <span className="tabular-nums">{Math.round(uploadProgress)}%</span>
           </div>
@@ -264,7 +270,36 @@ export function UploadDropzone({
 
       {/* Error */}
       {uploadError && (
-        <p className="text-sm text-destructive">{uploadError}</p>
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-destructive">Upload failed</p>
+            <p className="mt-0.5 text-xs text-destructive/80">{uploadError}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => {
+              setUploadError(null)
+              setUploadProgress(0)
+            }}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Retry button after error */}
+      {uploadError && selectedFile && !isUploading && (
+        <Button
+          onClick={handleUpload}
+          variant="outline"
+          className="w-full"
+          size="lg"
+        >
+          <RotateCcw className="mr-2 size-4" />
+          Retry Upload
+        </Button>
       )}
 
       {/* Upload button */}

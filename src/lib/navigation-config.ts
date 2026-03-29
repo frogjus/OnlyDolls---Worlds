@@ -1,7 +1,6 @@
 import {
   Upload,
   FileText,
-  Eye,
   PenTool,
   LayoutGrid,
   PenLine,
@@ -51,7 +50,6 @@ export const workspaceGroups: WorkspaceGroup[] = [
     icon: Upload,
     views: [
       { slug: 'sources', label: 'Sources', icon: FileText },
-      { slug: 'sources/viewer', label: 'Source Viewer', icon: Eye },
     ],
   },
   {

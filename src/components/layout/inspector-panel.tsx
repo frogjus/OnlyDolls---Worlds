@@ -2,19 +2,74 @@
 
 import { useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Info, X } from 'lucide-react'
+import { Info, X, User, LayoutGrid, MapPin, CalendarDays, Shield, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useLayoutStore } from '@/stores/layout-store'
+import { Separator } from '@/components/ui/separator'
+import { useLayoutStore, type SelectedEntity } from '@/stores/layout-store'
+
+const ENTITY_ICONS = {
+  character: User,
+  beat: LayoutGrid,
+  location: MapPin,
+  event: CalendarDays,
+  faction: Shield,
+  arc: TrendingUp,
+} as const
+
+function EntityDetails({ entity }: { entity: SelectedEntity }) {
+  const Icon = ENTITY_ICONS[entity.type]
+  return (
+    <motion.div
+      className="p-4 space-y-4"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      key={entity.id}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold truncate">{entity.name}</h3>
+          <p className="text-xs text-muted-foreground capitalize">{entity.type}</p>
+        </div>
+      </div>
+      <Separator />
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">ID</span>
+          <span className="font-mono truncate ml-2 max-w-[160px]">{entity.id}</span>
+        </div>
+        {entity.meta &&
+          Object.entries(entity.meta).map(([key, value]) => (
+            <div key={key} className="flex justify-between text-xs">
+              <span className="text-muted-foreground capitalize">{key}</span>
+              <span className="truncate ml-2 max-w-[160px]">{value}</span>
+            </div>
+          ))}
+      </div>
+    </motion.div>
+  )
+}
 
 export function InspectorPanel() {
-  const { inspectorOpen, inspectorWidth, toggleInspector, setInspectorOpen, setInspectorWidth } =
+  const { inspectorOpen, inspectorWidth, selectedEntity, toggleInspector, setInspectorOpen, setInspectorWidth } =
     useLayoutStore()
   const isResizing = useRef(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+        // Don't steal Cmd+I (italic) from editable elements
+        const target = e.target
+        if (target instanceof HTMLElement) {
+          const tag = target.tagName.toLowerCase()
+          if (tag === 'input' || tag === 'textarea' || target.isContentEditable) {
+            return
+          }
+        }
         e.preventDefault()
         toggleInspector()
       }
@@ -85,17 +140,21 @@ export function InspectorPanel() {
 
           {/* Content */}
           <ScrollArea className="flex-1">
-            <motion.div
-              className="flex h-full items-center justify-center p-6"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Info className="h-8 w-8" />
-                <p className="text-sm text-center">Select an item to see details</p>
-              </div>
-            </motion.div>
+            {selectedEntity ? (
+              <EntityDetails entity={selectedEntity} />
+            ) : (
+              <motion.div
+                className="flex h-full items-center justify-center p-6"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+              >
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Info className="h-8 w-8" />
+                  <p className="text-sm text-center">Select an item to see details</p>
+                </div>
+              </motion.div>
+            )}
           </ScrollArea>
         </motion.aside>
       )}

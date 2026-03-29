@@ -18,6 +18,7 @@ import {
   useDeleteFaction,
 } from '@/lib/hooks/use-factions'
 import { useFactionStore } from '@/stores/faction-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -72,7 +73,9 @@ function CreateFactionDialog({ worldId }: { worldId: string }) {
         setCreateDialogOpen(false)
         setForm({ name: '' })
         setGoalInput('')
+        showSuccess('Faction created')
       },
+      onError: () => showError('Failed to create faction'),
     })
   }
 
@@ -206,7 +209,13 @@ function EditFactionDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingFactionId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingFactionId(null)
+        showSuccess('Faction updated')
+      },
+      onError: () => showError('Failed to update faction'),
+    })
   }
 
   return (
@@ -349,7 +358,11 @@ function FactionCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteFaction.mutate(faction.id)
+                if (!window.confirm('Delete this faction? This cannot be undone.')) return
+                deleteFaction.mutate(faction.id, {
+                  onSuccess: () => showSuccess('Faction deleted'),
+                  onError: () => showError('Failed to delete faction'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

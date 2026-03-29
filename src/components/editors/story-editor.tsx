@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils'
 import { useEditorUI } from '@/stores/editor-store'
 import { EditorToolbar } from './editor-toolbar'
 import { BeatAnchorNode } from './extensions/beat-anchor'
+import { ScreenplayMode } from './extensions/screenplay-mode'
+import { EntityHighlighter } from './extensions/entity-highlighter'
+import { AIWandExtension } from './extensions/ai-wand'
 import './editor.css'
 import './focus-mode.css'
 
@@ -30,6 +33,7 @@ interface StoryEditorProps {
   editable?: boolean
   className?: string
   placeholder?: string
+  worldId?: string
 }
 
 function StoryEditor({
@@ -39,6 +43,7 @@ function StoryEditor({
   editable = true,
   className,
   placeholder = 'Start writing...',
+  worldId,
 }: StoryEditorProps) {
   const { focusMode, exitFocusMode } = useEditorUI()
 
@@ -62,6 +67,13 @@ function StoryEditor({
       Gapcursor,
       Placeholder.configure({ placeholder }),
       BeatAnchorNode,
+      // Screenplay nodes are always registered so the schema can parse them;
+      // auto-format plugins only activate for screenplay node types.
+      ScreenplayMode.configure({ enabled: mode === 'screenplay' }),
+      // Entity highlighting — works when a registry is provided externally
+      EntityHighlighter.configure({ worldId: worldId ?? '' }),
+      // AI Wand — keyboard shortcut Mod-Shift-A to open, Escape to close
+      AIWandExtension,
     ],
     content: content ?? undefined,
     editable,

@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { BookOpen, Globe, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -72,6 +73,7 @@ export function Sidebar() {
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                onClick={() => signOut({ callbackUrl: '/login' })}
               />
             }
           >

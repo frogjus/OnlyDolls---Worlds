@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { showSuccess, showError } from '@/lib/toast'
 
 interface ConfirmEntity {
   name: string
@@ -37,13 +38,24 @@ export function useEntityConfirm(worldId: string) {
           body: JSON.stringify({ entities }),
         },
       ),
-    onSuccess: () => {
+    onSuccess: (result) => {
       // Invalidate all entity lists that may have new records
       qc.invalidateQueries({ queryKey: ['characters', worldId] })
       qc.invalidateQueries({ queryKey: ['locations', worldId] })
       qc.invalidateQueries({ queryKey: ['events', worldId] })
       qc.invalidateQueries({ queryKey: ['objects', worldId] })
       qc.invalidateQueries({ queryKey: ['factions', worldId] })
+      qc.invalidateQueries({ queryKey: ['sources', worldId] })
+
+      const { totalCreated, totalErrors } = result.data
+      if (totalErrors > 0) {
+        showSuccess(`${totalCreated} entities created, ${totalErrors} failed`)
+      } else {
+        showSuccess(`${totalCreated} entities confirmed`)
+      }
+    },
+    onError: (err: Error) => {
+      showError('Failed to confirm entities: ' + err.message)
     },
   })
 }

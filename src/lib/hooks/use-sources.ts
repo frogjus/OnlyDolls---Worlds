@@ -6,6 +6,7 @@ import type {
   CreateSourceMaterialPayload,
   UpdateSourceMaterialPayload,
 } from '@/types'
+import { showSuccess, showError } from '@/lib/toast'
 
 function sourceKeys(worldId: string) {
   return {
@@ -46,7 +47,13 @@ export function useCreateSource(worldId: string) {
           body: JSON.stringify(payload),
         },
       ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: sourceKeys(worldId).all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sourceKeys(worldId).all })
+      showSuccess('Source created')
+    },
+    onError: (err: Error) => {
+      showError('Failed to create source: ' + err.message)
+    },
   })
 }
 
@@ -62,7 +69,13 @@ export function useUpdateSource(worldId: string) {
           body: JSON.stringify(payload),
         },
       ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: sourceKeys(worldId).all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sourceKeys(worldId).all })
+      showSuccess('Source updated')
+    },
+    onError: (err: Error) => {
+      showError('Failed to update source: ' + err.message)
+    },
   })
 }
 
@@ -74,6 +87,12 @@ export function useDeleteSource(worldId: string) {
         `/api/worlds/${worldId}/sources/${id}`,
         { method: 'DELETE' },
       ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: sourceKeys(worldId).all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sourceKeys(worldId).all })
+      showSuccess('Source deleted')
+    },
+    onError: (err: Error) => {
+      showError('Failed to delete source: ' + err.message)
+    },
   })
 }

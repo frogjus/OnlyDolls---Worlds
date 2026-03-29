@@ -18,6 +18,7 @@ import {
   useDeleteEvent,
 } from '@/lib/hooks/use-events'
 import { useEventStore } from '@/stores/event-store'
+import { showSuccess, showError } from '@/lib/toast'
 import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
@@ -57,7 +58,9 @@ function CreateEventDialog({ worldId }: { worldId: string }) {
       onSuccess: () => {
         setCreateDialogOpen(false)
         setForm({ name: '' })
+        showSuccess('Event created')
       },
+      onError: () => showError('Failed to create event'),
     })
   }
 
@@ -166,7 +169,13 @@ function EditEventDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate(form, { onSuccess: () => setEditingEventId(null) })
+    update.mutate(form, {
+      onSuccess: () => {
+        setEditingEventId(null)
+        showSuccess('Event updated')
+      },
+      onError: () => showError('Failed to update event'),
+    })
   }
 
   return (
@@ -304,7 +313,11 @@ function EventCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteEvent.mutate(event.id)
+                if (!window.confirm('Delete this event? This cannot be undone.')) return
+                deleteEvent.mutate(event.id, {
+                  onSuccess: () => showSuccess('Event deleted'),
+                  onError: () => showError('Failed to delete event'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

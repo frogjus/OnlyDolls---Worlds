@@ -24,6 +24,11 @@ export const manuscriptQueries = {
       where: { id, storyWorldId, ...notDeleted },
       include: {
         author: { select: { id: true, name: true } },
+        sections: {
+          where: notDeleted,
+          orderBy: { position: 'asc' },
+          select: { id: true, title: true, type: true, position: true, content: true, wordCount: true, status: true },
+        },
         _count: { select: { sections: true } },
       },
     })

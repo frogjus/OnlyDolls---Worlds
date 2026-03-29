@@ -93,7 +93,7 @@ export function BeatFormDialog({
       starRating: starRating || undefined,
       notes: notes.trim() || undefined,
       characterId: characterId ?? undefined,
-      status: defaultStatus,
+      status: (isEditing && beat ? beat.status as BeatStatus : defaultStatus),
     }
 
     if (isEditing && beat) {
