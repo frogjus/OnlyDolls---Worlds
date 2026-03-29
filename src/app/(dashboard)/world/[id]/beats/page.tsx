@@ -36,6 +36,7 @@ import { BeatColumn } from '@/components/beats/beat-column'
 import { BeatCard } from '@/components/beats/beat-card'
 import { BeatFormDialog } from '@/components/beats/beat-form-dialog'
 import { BeatMinimap } from '@/components/beats/beat-minimap'
+import { showSuccess, showError } from '@/lib/toast'
 
 const STATUSES: BeatStatus[] = ['todo', 'in_progress', 'done']
 
@@ -135,10 +136,22 @@ export default function BeatsPage() {
     const activeId = active.id as string
     const overId = over.id as string
 
+    // Determine target status from drop target (column or beat within column)
+    const targetStatus = STATUSES.includes(overId as BeatStatus)
+      ? (overId as BeatStatus)
+      : (localBeats.find((b) => b.id === overId)?.status as BeatStatus | undefined) ?? null
+
     let finalBeats: BeatWithCharacter[] = []
 
     setLocalBeats((prev) => {
       let updated = [...prev]
+
+      // Ensure status is applied even if handleDragOver didn't fire
+      if (targetStatus) {
+        updated = updated.map((b) =>
+          b.id === activeId ? { ...b, status: targetStatus } : b,
+        )
+      }
 
       if (activeId !== overId && !STATUSES.includes(overId as BeatStatus)) {
         const ab = updated.find((b) => b.id === activeId)
@@ -162,12 +175,17 @@ export default function BeatsPage() {
         .map((b, i) => ({ id: b.id, position: i, status })),
     )
     if (updates.length > 0) {
-      reorderBeats.mutate({ beats: updates })
+      reorderBeats.mutate({ beats: updates }, {
+        onError: () => showError('Failed to save beat changes'),
+      })
     }
   }
 
   const handleEdit = (id: string) => setEditingBeatId(id)
-  const handleDelete = (id: string) => deleteBeat.mutate(id)
+  const handleDelete = (id: string) => deleteBeat.mutate(id, {
+    onSuccess: () => showSuccess('Beat deleted'),
+    onError: () => showError('Failed to delete beat'),
+  })
   const hasFilters = filterStarRating != null || filterCharacterId != null
   const isEmpty = !isLoading && localBeats.length === 0
 
