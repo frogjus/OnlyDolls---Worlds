@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useWorldStats } from '@/lib/hooks/use-world-stats'
 import { SynopsisPanel } from './synopsis-panel'
 import { StatsPanel } from './stats-panel'
 import { SceneNotes } from './scene-notes'
@@ -48,6 +49,7 @@ function SectionHeader({ icon, label, open, onToggle }: SectionHeaderProps) {
 }
 
 export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps) {
+  const { data: stats } = useWorldStats(worldId)
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const isCollapsed = collapsed ?? internalCollapsed
   const toggle = onToggle ?? (() => setInternalCollapsed((v) => !v))
@@ -128,7 +130,12 @@ export function StorySidebar({ worldId, collapsed, onToggle }: StorySidebarProps
             >
               <div className="overflow-hidden">
                 <div className="pb-2">
-                  <StatsPanel wordCount={0} beatsDone={0} beatsTotal={0} characterCount={0} />
+                  <StatsPanel
+                    wordCount={stats?.wordCount ?? 0}
+                    beatsDone={stats?.beatsDone ?? 0}
+                    beatsTotal={stats?.beatsTotal ?? 0}
+                    characterCount={stats?.characterCount ?? 0}
+                  />
                 </div>
               </div>
             </div>
