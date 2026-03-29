@@ -19,6 +19,8 @@ import {
   useDeleteCharacter,
 } from '@/lib/hooks/use-characters'
 import { useCharacterStore } from '@/stores/character-store'
+import { useLayoutStore } from '@/stores/layout-store'
+import { showSuccess, showError } from '@/lib/toast'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -286,6 +288,7 @@ function CharacterCard({
   worldId: string
 }) {
   const { setEditingCharacterId, setSelectedCharacterId } = useCharacterStore()
+  const { setInspectorOpen } = useLayoutStore()
   const deleteChar = useDeleteCharacter(worldId)
 
   const initials = character.name
@@ -298,7 +301,10 @@ function CharacterCard({
   return (
     <Card
       className="group cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => setSelectedCharacterId(character.id)}
+      onClick={() => {
+        setSelectedCharacterId(character.id)
+        setInspectorOpen(true)
+      }}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <Avatar className="h-10 w-10 shrink-0">
@@ -333,7 +339,11 @@ function CharacterCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteChar.mutate(character.id)
+                if (!window.confirm('Delete this character? This cannot be undone.')) return
+                deleteChar.mutate(character.id, {
+                  onSuccess: () => showSuccess('Character deleted'),
+                  onError: () => showError('Failed to delete character'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />

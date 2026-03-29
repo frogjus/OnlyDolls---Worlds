@@ -18,6 +18,7 @@ import {
   useDeleteRelationship,
 } from '@/lib/hooks/use-relationships'
 import { useRelationshipStore } from '@/stores/relationship-store'
+import { showSuccess, showError } from '@/lib/toast'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -287,7 +288,11 @@ function RelationshipCard({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
-                deleteRel.mutate(relationship.id)
+                if (!window.confirm('Delete this relationship? This cannot be undone.')) return
+                deleteRel.mutate(relationship.id, {
+                  onSuccess: () => showSuccess('Relationship deleted'),
+                  onError: () => showError('Failed to delete relationship'),
+                })
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -344,9 +349,9 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
       <Heart className="h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-semibold">No relationships yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create your first relationship to map character connections.
+      <h3 className="mt-4 text-lg font-semibold">No relationships mapped yet</h3>
+      <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+        Add characters first, then map their connections.
       </p>
       <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
