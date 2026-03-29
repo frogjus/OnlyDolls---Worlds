@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/helpers'
 import { verifyWorldOwnership } from '@/lib/db/queries'
 import { eventQueries } from '@/lib/db/event-queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { UpdateEventPayload } from '@/types'
 
 type Params = { params: Promise<{ id: string; eventId: string }> }
@@ -51,6 +52,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updated = await eventQueries.getById(eventId, id)
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: updated })
 }
 

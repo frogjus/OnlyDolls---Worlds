@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
 import { locationQueries } from '@/lib/db/location-queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { CreateLocationPayload } from '@/types'
 
 export async function GET(
@@ -41,5 +42,6 @@ export async function POST(
     properties: body.properties ?? undefined,
   })
 
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: location }, { status: 201 })
 }

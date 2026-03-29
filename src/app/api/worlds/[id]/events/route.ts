@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/helpers'
 import { verifyWorldOwnership } from '@/lib/db/queries'
 import { eventQueries } from '@/lib/db/event-queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { CreateEventPayload } from '@/types'
 
 export async function GET(
@@ -56,5 +57,6 @@ export async function POST(
     locationId: body.locationId,
   })
 
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: event }, { status: 201 })
 }

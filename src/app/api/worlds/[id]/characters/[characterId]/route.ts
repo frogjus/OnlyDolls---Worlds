@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/helpers'
 import { characterQueries, verifyWorldOwnership } from '@/lib/db/queries'
+import { syncWorldToMemory } from '@/lib/supermemory/sync'
 import type { UpdateCharacterPayload } from '@/types'
 
 type Params = { params: Promise<{ id: string; characterId: string }> }
@@ -50,6 +51,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updated = await characterQueries.getById(characterId, id)
+  syncWorldToMemory(id).catch(console.error)
   return NextResponse.json({ data: updated })
 }
 

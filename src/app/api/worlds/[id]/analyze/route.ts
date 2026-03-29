@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
 import { analyzeEntities, analyzeConsistency } from '@/lib/ai/analysis'
+import { searchWorldMemory } from '@/lib/supermemory/sync'
 import type { AIOperationType, AIContext } from '@/lib/ai/types'
 
 interface AnalyzeRequestBody {
@@ -35,9 +36,20 @@ export async function POST(
     )
   }
 
+  // Search SuperMemory for relevant world context to enrich analysis
+  let memoryContext: string[] = []
+  try {
+    const searchQuery = body.text ?? body.facts?.join(' ') ?? body.type
+    const memories = await searchWorldMemory(id, searchQuery, 5)
+    memoryContext = memories.map((m) => m.content)
+  } catch {
+    // Non-blocking — proceed without memory context
+  }
+
   const context: AIContext = {
     worldId: id,
     ...body.context,
+    memoryContext,
   }
 
   try {
