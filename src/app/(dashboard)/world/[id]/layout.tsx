@@ -1,5 +1,7 @@
 import { WorldNav } from '@/components/layout/world-nav'
 import { StorySidebar } from '@/components/layout/story-sidebar'
+import { WorkspaceSidebar } from '@/components/layout/workspace-sidebar'
+import { InspectorPanel } from '@/components/layout/inspector-panel'
 
 export default async function WorldLayout({
   children,
@@ -10,14 +12,15 @@ export default async function WorldLayout({
 }) {
   const { id } = await params
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <h1 className="text-lg font-semibold">World</h1>
-      </div>
-      <WorldNav />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-auto">{children}</div>
-        <StorySidebar worldId={id} />
+    <div className="flex h-full flex-1 overflow-hidden">
+      <WorkspaceSidebar />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <WorldNav />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-auto">{children}</div>
+          <StorySidebar worldId={id} />
+          <InspectorPanel />
+        </div>
       </div>
     </div>
   )
