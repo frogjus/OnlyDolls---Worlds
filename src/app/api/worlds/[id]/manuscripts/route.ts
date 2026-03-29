@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
-import { manuscriptQueries } from '@/lib/db/manuscript-queries'
+import { manuscriptQueries, sectionQueries } from '@/lib/db/manuscript-queries'
 import type { CreateManuscriptPayload } from '@/types'
 
 export async function GET(
@@ -40,5 +40,16 @@ export async function POST(
     targetWordCount: body.targetWordCount,
   })
 
-  return NextResponse.json({ data: manuscript }, { status: 201 })
+  // Auto-create a default section so the editor has somewhere to store content
+  await sectionQueries.create({
+    manuscriptId: manuscript.id,
+    title: 'Chapter 1',
+    type: 'chapter',
+    position: 1,
+  })
+
+  // Re-fetch to include the new section
+  const full = await manuscriptQueries.getById(manuscript.id, id)
+
+  return NextResponse.json({ data: full }, { status: 201 })
 }

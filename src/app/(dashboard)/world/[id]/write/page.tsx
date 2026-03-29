@@ -53,17 +53,24 @@ export default function WritePage() {
   } = useEditorUI()
 
   const { data: manuscripts, isLoading } = useManuscripts(worldId)
-  const { data: activeManuscript } = useManuscript(worldId, activeManuscriptId)
+  const { data: activeManuscriptData } = useManuscript(worldId, activeManuscriptId)
   const createManuscript = useCreateManuscript(worldId)
   const saveContent = useSaveContent(worldId)
 
   const contentRef = useRef<JSONContent | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const activeIdRef = useRef(activeManuscriptId)
   activeIdRef.current = activeManuscriptId
 
   const saveRef = useRef(saveContent)
   saveRef.current = saveContent
+
+  // Track the active section ID from the fetched manuscript data
+  const activeSectionIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    activeSectionIdRef.current = activeManuscriptData?.activeSectionId ?? null
+  }, [activeManuscriptData?.activeSectionId])
 
   useEffect(() => {
     if (!activeManuscriptId && manuscripts?.length) {
@@ -71,11 +78,14 @@ export default function WritePage() {
     }
   }, [manuscripts, activeManuscriptId, setActiveManuscriptId])
 
+  // Bug 3: Cancel pending save when switching manuscripts
   useEffect(() => {
     return () => {
+      // Cancel any in-flight save and debounce timer on unmount or manuscript switch
       if (timerRef.current) clearTimeout(timerRef.current)
+      if (abortRef.current) abortRef.current.abort()
     }
-  }, [])
+  }, [activeManuscriptId])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,15 +109,29 @@ export default function WritePage() {
 
       if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => {
-        if (contentRef.current && activeIdRef.current) {
+        const manuscriptId = activeIdRef.current
+        const sectionId = activeSectionIdRef.current
+        if (contentRef.current && manuscriptId && sectionId) {
+          // Cancel any previous in-flight save before starting a new one
+          if (abortRef.current) abortRef.current.abort()
+          const controller = new AbortController()
+          abortRef.current = controller
+
           saveRef.current.mutate(
-            { id: activeIdRef.current, content: contentRef.current },
+            {
+              manuscriptId,
+              sectionId,
+              content: contentRef.current,
+              signal: controller.signal,
+            },
             {
               onSuccess: () => {
                 setIsDirty(false)
                 showSuccess('Draft saved')
               },
-              onError: () => {
+              onError: (err) => {
+                // Don't show error for aborted saves
+                if (err instanceof DOMException && err.name === 'AbortError') return
                 showError('Failed to save')
               },
             },
@@ -206,12 +230,13 @@ export default function WritePage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden shadow-[inset_0_2px_12px_rgba(0,0,0,0.3)]">
-        {activeManuscript ? (
+        {activeManuscriptData ? (
           <StoryEditor
             key={activeManuscriptId}
-            content={activeManuscript.content}
+            content={activeManuscriptData.content}
             onUpdate={handleUpdate}
             mode={mode}
+            worldId={worldId}
             className={cn('flex-1 border-0 rounded-none')}
           />
         ) : (
