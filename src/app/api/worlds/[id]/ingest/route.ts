@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
 import { IngestionPipeline } from '@/lib/ingestion/pipeline'
+import { sourceQueries } from '@/lib/db/source-queries'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = [
@@ -75,10 +76,30 @@ export async function POST(
       mimeType,
     })
 
+    // Persist a SourceMaterial record so the file appears in the sources list
+    const source = await sourceQueries.create({
+      title: file.name.replace(/\.[^.]+$/, ''),
+      type: extension === 'fountain' ? 'screenplay' : 'text',
+      content,
+      metadata: {
+        originalFileName: file.name,
+        mimeType,
+        fileSize: file.size,
+        jobId: result.jobId,
+        entities: result.extractedEntities,
+        sections: result.parsedContent.sections.map((s) => ({
+          heading: s.heading,
+          type: s.type,
+        })),
+      },
+      storyWorldId: id,
+    })
+
     return NextResponse.json(
       {
         data: {
           jobId: result.jobId,
+          sourceId: source.id,
           status: result.status,
           entityCount: result.extractedEntities.length,
           sectionCount: result.parsedContent.sections.length,
