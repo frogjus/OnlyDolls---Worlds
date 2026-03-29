@@ -43,10 +43,17 @@ export default function SourceDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="flex h-full items-center justify-center p-6">
+      <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center text-sm text-destructive">
           Failed to load source material. Please try again.
         </div>
+        <Link
+          href={`/world/${worldId}/sources`}
+          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Sources
+        </Link>
       </div>
     )
   }
@@ -60,6 +67,7 @@ export default function SourceDetailPage() {
         <Link
           href={`/world/${worldId}/sources`}
           className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
+          title="Back to Sources"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>

@@ -5,6 +5,8 @@ import { CheckCircle2, Loader2 } from 'lucide-react'
 import { UploadDropzone } from './upload-dropzone'
 import { EntityReview } from './entity-review'
 import { useEntityConfirm } from '@/lib/hooks/use-entity-confirm'
+import { useSourceStore } from '@/stores/source-store'
+import { showSuccess, showError } from '@/lib/toast'
 
 type FlowState = 'upload' | 'extracting' | 'reviewing' | 'confirmed'
 
@@ -26,18 +28,36 @@ export function IngestionFlow({ worldId, onComplete }: IngestionFlowProps) {
   const [entities, setEntities] = useState<ExtractedEntityItem[]>([])
   const [createdCount, setCreatedCount] = useState(0)
   const confirmMutation = useEntityConfirm(worldId)
+  const { setIngestionStep } = useSourceStore()
+
+  const handleUploadStart = useCallback(() => {
+    setIngestionStep('uploading')
+  }, [setIngestionStep])
 
   const handleUploadComplete = useCallback(
     (result: { entities?: ExtractedEntityItem[] }) => {
+      showSuccess('File uploaded — starting analysis...')
+      setIngestionStep('analyzing')
       const extracted = result.entities ?? []
       if (extracted.length > 0) {
         setEntities(extracted)
         setState('reviewing')
+        setIngestionStep('reviewing')
+        showSuccess('Analysis complete — review extracted entities')
       } else {
         setState('upload')
+        setIngestionStep('idle')
       }
     },
-    []
+    [setIngestionStep]
+  )
+
+  const handleUploadError = useCallback(
+    (errorMsg: string) => {
+      showError('Ingestion failed: ' + errorMsg)
+      setIngestionStep('error')
+    },
+    [setIngestionStep]
   )
 
   const handleConfirm = useCallback(
@@ -46,24 +66,32 @@ export function IngestionFlow({ worldId, onComplete }: IngestionFlowProps) {
         onSuccess: (result) => {
           setCreatedCount(result.data.totalCreated)
           setState('confirmed')
+          setIngestionStep('complete')
+          showSuccess('Entities confirmed and added to world')
           onComplete?.(result.data.created)
+        },
+        onError: (err) => {
+          showError('Failed to confirm entities: ' + err.message)
+          setIngestionStep('error')
         },
       })
     },
-    [confirmMutation, onComplete]
+    [confirmMutation, onComplete, setIngestionStep]
   )
 
   const handleCancel = useCallback(() => {
     setEntities([])
     setState('upload')
-  }, [])
+    setIngestionStep('idle')
+  }, [setIngestionStep])
 
   const handleReset = useCallback(() => {
     setEntities([])
     setCreatedCount(0)
     confirmMutation.reset()
     setState('upload')
-  }, [confirmMutation])
+    setIngestionStep('idle')
+  }, [confirmMutation, setIngestionStep])
 
   if (state === 'confirmed') {
     return (
@@ -110,6 +138,8 @@ export function IngestionFlow({ worldId, onComplete }: IngestionFlowProps) {
     <UploadDropzone
       worldId={worldId}
       onUploadComplete={handleUploadComplete}
+      onError={handleUploadError}
+      onUploadStart={handleUploadStart}
     />
   )
 }
