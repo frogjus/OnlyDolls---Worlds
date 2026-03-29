@@ -126,7 +126,7 @@ function nodeSize(importance: number): number {
 function initials(name: string): string {
   return name
     .split(/\s+/)
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .join('')
     .toUpperCase()
     .slice(0, 2)
