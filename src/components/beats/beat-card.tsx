@@ -59,9 +59,9 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
       <motion.div
         ref={overlay ? undefined : setNodeRef}
         style={overlay ? { borderLeft: style.borderLeft } : style}
-        className={`flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 ring-1 ring-foreground/10 ${
+        className={`flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 ring-1 ring-border ${
           isDragging ? 'opacity-50' : ''
-        } ${overlay ? 'shadow-lg ring-2 ring-primary/30' : ''}`}
+        } ${overlay ? 'shadow-[var(--od-shadow-elevated)] ring-2 ring-primary/30' : 'hover:ring-primary/20'}`}
         whileHover={overlay ? undefined : { y: -1, transition: { duration: 0.15 } }}
         {...(overlay ? {} : attributes)}
       >
@@ -132,9 +132,9 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
     <motion.div
       ref={overlay ? undefined : setNodeRef}
       style={overlay ? { borderLeft: style.borderLeft } : style}
-      className={`rounded-lg bg-card p-3 ring-1 ring-foreground/10 transition-shadow ${
+      className={`rounded-lg bg-card p-3 ring-1 ring-border transition-shadow ${
         isDragging ? 'opacity-50' : ''
-      } ${overlay ? 'shadow-lg ring-2 ring-primary/30' : 'hover:ring-foreground/20'}`}
+      } ${overlay ? 'shadow-[var(--od-shadow-elevated)] ring-2 ring-primary/30' : 'hover:ring-primary/20'}`}
       whileHover={overlay ? undefined : {
         y: -2,
         transition: { duration: 0.15, ease: [0, 0, 0.2, 1] },
@@ -165,7 +165,7 @@ export function BeatCard({ beat, density, onEdit, onDelete, overlay }: BeatCardP
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h4 className="truncate text-sm font-medium">{beat.name}</h4>
+              <h4 className="truncate text-sm font-semibold tracking-tight text-foreground">{beat.name}</h4>
               {!overlay && (
                 <PenLine className="size-3 shrink-0 text-muted-foreground/50" />
               )}

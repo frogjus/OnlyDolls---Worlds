@@ -38,7 +38,7 @@ export function BeatColumn({ status, beats, density, onEdit, onDelete, onAdd }: 
     <div className="flex flex-1 flex-col">
       <div className="mb-3 flex items-center gap-2">
         <div className={`size-2 rounded-full ${STATUS_COLORS[status]}`} />
-        <h3 className="text-sm font-medium">{STATUS_LABELS[status]}</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-foreground">{STATUS_LABELS[status]}</h3>
         <motion.span
           key={beats.length}
           initial={{ scale: 1.3, opacity: 0.5 }}
@@ -54,8 +54,8 @@ export function BeatColumn({ status, beats, density, onEdit, onDelete, onAdd }: 
         ref={setNodeRef}
         className={`flex min-h-[200px] flex-1 flex-col gap-2 rounded-lg border p-2 transition-colors ${
           isOver
-            ? 'border-primary/50 bg-primary/5 border-dashed'
-            : 'border-dashed border-border/50'
+            ? 'border-primary/50 bg-primary/5 border-dashed shadow-[0_0_20px_rgba(20,184,166,0.08)]'
+            : 'border-dashed border-border'
         }`}
         animate={isOver ? { scale: 1.01 } : { scale: 1 }}
         transition={{ duration: 0.15 }}
