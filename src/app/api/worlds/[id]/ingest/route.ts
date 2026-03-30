@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
-import { IngestionPipeline } from '@/lib/ingestion/pipeline'
+import { analyzeDocument } from '@/lib/ai/document-analyzer'
+import { parseByExtension } from '@/lib/ingestion/binary-parsers'
 import { sourceQueries } from '@/lib/db/source-queries'
+import { characterQueries } from '@/lib/db/queries'
+import { locationQueries } from '@/lib/db/location-queries'
+import { themeQueries } from '@/lib/db/theme-queries'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = [
-  'text/plain',
-  'text/markdown',
-  'text/x-fountain',
-  'application/octet-stream',
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+const ALLOWED_EXTENSIONS = [
+  'txt', 'md', 'markdown', 'fountain',
+  'pdf', 'docx', 'doc', 'rtf', 'epub',
 ]
-const ALLOWED_EXTENSIONS = ['txt', 'md', 'markdown', 'fountain']
+
+type ContentType = 'production' | 'reference'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const [, err] = await requireWorldAuth(id)
+  const [user, err] = await requireWorldAuth(id)
   if (err) return err
 
   let formData: FormData
@@ -40,7 +43,7 @@ export async function POST(
 
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
-      { error: 'File exceeds maximum size of 10MB', code: 'FILE_TOO_LARGE' },
+      { error: 'File exceeds maximum size of 50MB', code: 'FILE_TOO_LARGE' },
       { status: 400 }
     )
   }
@@ -56,54 +59,76 @@ export async function POST(
     )
   }
 
-  const mimeType = ALLOWED_TYPES.includes(file.type) ? file.type : 'text/plain'
-
-  let content: string
-  try {
-    content = await file.text()
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to read file content', code: 'FILE_READ_ERROR' },
-      { status: 400 }
-    )
-  }
+  const contentType: ContentType =
+    (formData.get('contentType') as ContentType) || 'production'
 
   try {
-    const pipeline = new IngestionPipeline(id)
-    const result = await pipeline.process({
-      name: file.name,
-      content,
-      mimeType,
-    })
+    // Parse binary formats into text
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const content = await parseByExtension(buffer, extension)
 
-    // Persist a SourceMaterial record so the file appears in the sources list
+    // Multi-pass AI analysis
+    const analysis = await analyzeDocument(content)
+
+    // Persist source material
     const source = await sourceQueries.create({
       title: file.name.replace(/\.[^.]+$/, ''),
       type: extension === 'fountain' ? 'screenplay' : 'text',
       content,
       metadata: {
         originalFileName: file.name,
-        mimeType,
         fileSize: file.size,
-        jobId: result.jobId,
-        entities: result.extractedEntities,
-        sections: result.parsedContent.sections.map((s) => ({
-          heading: s.heading,
-          type: s.type,
-        })),
+        contentType,
+        summary: analysis.summary,
+        characterCount: analysis.characters.length,
+        locationCount: analysis.locations.length,
+        themeCount: analysis.themes.length,
+        relationshipCount: analysis.relationships.length,
       },
       storyWorldId: id,
     })
 
+    // Auto-populate entities into the world
+    const createdCharacters = await Promise.all(
+      analysis.characters.map((c) =>
+        characterQueries.create({
+          name: c.name,
+          description: c.description,
+          storyWorldId: id,
+        })
+      )
+    )
+
+    const createdLocations = await Promise.all(
+      analysis.locations.map((l) =>
+        locationQueries.create({
+          name: l.name,
+          description: l.description,
+          storyWorldId: id,
+        })
+      )
+    )
+
+    const createdThemes = await Promise.all(
+      analysis.themes.map((t) =>
+        themeQueries.create({
+          name: t.name,
+          description: t.description,
+          storyWorldId: id,
+        })
+      )
+    )
+
     return NextResponse.json(
       {
         data: {
-          jobId: result.jobId,
           sourceId: source.id,
-          status: result.status,
-          entityCount: result.extractedEntities.length,
-          sectionCount: result.parsedContent.sections.length,
-          entities: result.extractedEntities,
+          summary: analysis.summary,
+          characters: createdCharacters.map((c) => ({ id: c.id, name: c.name })),
+          locations: createdLocations.map((l) => ({ id: l.id, name: l.name })),
+          themes: createdThemes.map((t) => ({ id: t.id, name: t.name })),
+          relationships: analysis.relationships,
         },
       },
       { status: 201 }
