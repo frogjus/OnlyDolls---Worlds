@@ -5,8 +5,11 @@
   max-width: 8.5in;
   margin: 0 auto;
   padding: 1in 1in 0.5in 1.5in;
-  background: white;
-  color: black;
+  background: var(--od-bg-raised);
+  color: var(--od-text-primary);
+  border-left: 1px solid var(--od-border-default);
+  border-right: 1px solid var(--od-border-default);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
 }
 
 /* Slugline: bold, uppercase, full width */
@@ -75,6 +78,21 @@
 
 /* Page break indicator (every ~55 lines) */
 .screenplay-page-break {
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--od-border-emphasis);
   margin: 0.5em 0;
+}
+
+/* Screenplay character names get teal accent */
+.screenplay-character {
+  color: var(--od-teal-300);
+}
+
+/* Parentheticals slightly muted */
+.screenplay-parenthetical {
+  color: var(--od-text-secondary);
+}
+
+/* Sluglines get emphasis */
+.screenplay-slugline {
+  color: var(--od-text-primary);
 }

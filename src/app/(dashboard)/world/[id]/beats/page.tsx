@@ -192,17 +192,17 @@ export default function BeatsPage() {
   if (isLoading) {
     return (
       <div className="flex h-full flex-col gap-4 p-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-8 w-24" />
+        <div className="flex items-center justify-between rounded-lg bg-card px-4 py-3 border border-border">
+          <Skeleton className="h-8 w-32 bg-muted" />
+          <Skeleton className="h-8 w-24 bg-muted" />
         </div>
         <div className="flex flex-1 gap-4">
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex flex-1 flex-col gap-2">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-6 w-24 bg-muted" />
+              <Skeleton className="h-24 w-full bg-card border border-border rounded-lg" />
+              <Skeleton className="h-24 w-full bg-card border border-border rounded-lg" />
+              <Skeleton className="h-24 w-full bg-card border border-border rounded-lg" />
             </div>
           ))}
         </div>
@@ -214,16 +214,17 @@ export default function BeatsPage() {
     return (
       <div className="flex h-full flex-col p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold"><span className="border-b-2 border-teal-500/70 pb-1">Beats</span></h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Beats</h1>
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <div className="text-center">
-            <h2 className="text-lg font-semibold">No beats yet</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Start building your story structure by adding your first beat
-            </p>
+        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center mt-6">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+            <LayoutGrid className="h-10 w-10 text-teal-300/70" />
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)} className="bg-teal-600 hover:bg-teal-500 text-white">
+          <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No beats yet</h3>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+            Start building your story structure by adding your first beat
+          </p>
+          <Button onClick={() => setCreateDialogOpen(true)} className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200">
             <Plus className="size-4" />
             Add First Beat
           </Button>
@@ -240,12 +241,12 @@ export default function BeatsPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
-      <div className="flex items-center justify-between rounded-lg bg-slate-900/50 px-4 py-3 border border-white/5">
+      <div className="flex items-center justify-between rounded-lg bg-card px-4 py-3 border border-border">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold"><span className="border-b-2 border-teal-500/70 pb-1">Beats</span></h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Beats</h1>
 
           {/* Density toggle */}
-          <div className="flex items-center rounded-md border border-teal-500/20 bg-slate-900/60">
+          <div className="flex items-center rounded-md border border-border bg-muted">
             {DENSITY_OPTIONS.map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
@@ -253,7 +254,7 @@ export default function BeatsPage() {
                 size="icon-xs"
                 onClick={() => setDensity(value)}
                 title={label}
-                className="rounded-none first:rounded-l-md last:rounded-r-md"
+                className={`rounded-none first:rounded-l-md last:rounded-r-md ${density === value ? 'bg-primary/15 text-teal-300' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <Icon className="size-3.5" />
               </Button>
@@ -307,7 +308,7 @@ export default function BeatsPage() {
           </div>
         </div>
 
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)} className="bg-teal-600 hover:bg-teal-500 text-white">
+        <Button size="sm" onClick={() => setCreateDialogOpen(true)} className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200">
           <Plus className="size-4" />
           New Beat
         </Button>

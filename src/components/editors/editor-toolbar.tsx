@@ -38,7 +38,7 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
   const wordCount = editor.storage.characterCount?.words() ?? 0
 
   return (
-    <div className="flex items-center gap-0.5 border-b border-slate-700/50 bg-[#0b1120] px-2 py-1">
+    <div className="flex items-center gap-0.5 border-b border-border bg-card px-2 py-1">
       {/* Inline formatting */}
       <ToolbarButton
         editor={editor}
@@ -69,7 +69,7 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
         label="Strikethrough"
       />
 
-      <Separator orientation="vertical" className="mx-1.5 h-5 bg-slate-700/40" />
+      <Separator orientation="vertical" className="mx-1.5 h-5 bg-border" />
 
       {/* Headings */}
       <ToolbarButton
@@ -94,7 +94,7 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
         label="Heading 3"
       />
 
-      <Separator orientation="vertical" className="mx-1.5 h-5 bg-slate-700/40" />
+      <Separator orientation="vertical" className="mx-1.5 h-5 bg-border" />
 
       {/* Lists & blockquote */}
       <ToolbarButton
@@ -119,7 +119,7 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
         label="Blockquote"
       />
 
-      <Separator orientation="vertical" className="mx-1.5 h-5 bg-slate-700/40" />
+      <Separator orientation="vertical" className="mx-1.5 h-5 bg-border" />
 
       {/* History */}
       <ToolbarButton
@@ -144,18 +144,18 @@ function EditorToolbar({ editor }: EditorToolbarProps) {
         <span className="text-xs text-teal-400/60">
           {wordCount} {wordCount === 1 ? 'word' : 'words'}
         </span>
-        <Separator orientation="vertical" className="h-4 bg-slate-700/40" />
-        <span className="flex items-center gap-1 text-xs text-slate-500">
+        <Separator orientation="vertical" className="h-4 bg-border" />
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
           {mode === 'prose' ? <BookOpen className="size-3" /> : <Clapperboard className="size-3" />}
           {mode === 'prose' ? 'Prose' : 'Screenplay'}
         </span>
-        <Separator orientation="vertical" className="h-4 bg-slate-700/40" />
+        <Separator orientation="vertical" className="h-4 bg-border" />
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleFocusMode}
           aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
-          className="size-7 text-slate-500 hover:text-teal-400 hover:bg-teal-500/10"
+          className="size-7 text-muted-foreground hover:text-teal-300 hover:bg-primary/10"
           title={focusMode ? 'Exit focus mode (Escape)' : 'Focus mode (Ctrl+Shift+F)'}
         >
           {focusMode ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
@@ -186,7 +186,7 @@ function ToolbarButton({
       onClick={action}
       disabled={disabled}
       aria-label={label}
-      className={cn('size-8 text-slate-500 hover:text-teal-400 hover:bg-teal-500/10', isActive && 'bg-teal-500/15 text-teal-400')}
+      className={cn('size-8 text-muted-foreground hover:text-teal-300 hover:bg-primary/10', isActive && 'bg-primary/15 text-teal-300')}
     >
       {icon}
     </Button>

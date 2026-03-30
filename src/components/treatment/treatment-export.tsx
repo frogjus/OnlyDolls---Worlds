@@ -42,9 +42,10 @@ export function TreatmentExport({ sections, title }: TreatmentExportProps) {
         variant="outline"
         onClick={copyAsMarkdown}
         disabled={sections.length === 0}
+        className="border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200"
       >
         {copied ? (
-          <Check className="size-3.5" />
+          <Check className="size-3.5 text-teal-400" />
         ) : (
           <Copy className="size-3.5" />
         )}
@@ -55,6 +56,7 @@ export function TreatmentExport({ sections, title }: TreatmentExportProps) {
         variant="outline"
         onClick={downloadAsText}
         disabled={sections.length === 0}
+        className="border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200"
       >
         <Download className="size-3.5" />
         Download as Text

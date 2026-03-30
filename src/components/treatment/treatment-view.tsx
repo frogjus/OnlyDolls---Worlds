@@ -35,11 +35,11 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
 
   if (!beats || beats.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-lg font-medium text-muted-foreground">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+        <p className="font-heading text-lg font-semibold tracking-tight text-foreground">
           No beats yet
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
           Add beats to your story to auto-generate a treatment.
         </p>
       </div>
@@ -80,7 +80,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
           return (
             <h2
               key={`act-${i}`}
-              className="border-b-2 border-teal-500/50 pb-2 text-xl font-bold tracking-tight"
+              className="border-b border-primary/30 pb-2 font-heading text-xl font-semibold tracking-tight text-foreground"
             >
               {section.heading}
             </h2>
@@ -113,7 +113,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
                       <Button
                         size="xs"
                         onClick={() => saveEdit(section.beatId!)}
-                        className="bg-teal-600 hover:bg-teal-500 text-white"
+                        className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm transition-all duration-200"
                       >
                         <Check className="size-3" />
                         Save
@@ -122,7 +122,7 @@ export function TreatmentView({ worldId }: TreatmentViewProps) {
                         size="xs"
                         variant="ghost"
                         onClick={cancelEdit}
-                        className="text-slate-400 hover:text-slate-300"
+                        className="text-muted-foreground hover:text-foreground"
                       >
                         <X className="size-3" />
                         Cancel
