@@ -5,8 +5,8 @@ export default function SystemsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Systems</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-h2 text-foreground">Systems</h1>
+        <p className="mt-1 text-sm text-[var(--od-text-secondary)]">
           Magic systems, world rules, and custom calendars.
         </p>
       </div>
