@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
-import { analyzeDocument } from '@/lib/ai/document-analyzer'
+import { quickExtract } from '@/lib/ai/quick-extract'
 import { parseByExtension } from '@/lib/ingestion/binary-parsers'
 import { sourceQueries } from '@/lib/db/source-queries'
 import { characterQueries } from '@/lib/db/queries'
@@ -68,8 +68,8 @@ export async function POST(
     const buffer = Buffer.from(arrayBuffer)
     const content = await parseByExtension(buffer, extension)
 
-    // Multi-pass AI analysis
-    const analysis = await analyzeDocument(content)
+    // Single-pass AI extraction (avoids Vercel timeout)
+    const analysis = await quickExtract(content)
 
     // Persist source material
     const source = await sourceQueries.create({
