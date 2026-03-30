@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { workspaceGroups } from '@/lib/navigation-config'
+import { getVisibleGroups } from '@/lib/navigation-config'
 import { useWorkspaceStore } from '@/stores/workspace-store'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
@@ -65,7 +65,7 @@ export function WorkspaceSidebar() {
           >
             <TooltipProvider>
               <div className="flex flex-1 flex-col gap-1 py-2">
-                {workspaceGroups.map((group, idx) => {
+                {getVisibleGroups().map((group, idx) => {
                   const GroupIcon = group.icon
                   const hasActive = group.views.some((v) => isActive(v.slug))
                   return (
@@ -119,7 +119,7 @@ export function WorkspaceSidebar() {
           >
             <ScrollArea className="flex-1">
               <div className="flex flex-col gap-0.5 p-2">
-                {workspaceGroups.map((group) => {
+                {getVisibleGroups().map((group) => {
                   const GroupIcon = group.icon
                   const isCollapsed = collapsedSections[group.id] ?? false
                   return (

@@ -27,8 +27,14 @@ export interface UploadResult {
   entities?: ExtractedEntityItem[]
 }
 
-const ACCEPTED_EXTENSIONS = ['.txt', '.md', '.docx', '.pdf', '.fdx', '.fountain', '.epub']
-const MAX_FILE_SIZE_MB = 10
+const ACCEPTED_EXTENSIONS = [
+  '.txt', '.md', '.pdf', '.docx', '.doc', '.rtf',
+  '.fountain', '.fdx', '.epub',
+  '.pptx',
+  '.mp4', '.avi', '.mov', '.mkv', '.webm',
+  '.mp3', '.wav', '.m4a', '.ogg', '.flac',
+]
+const MAX_FILE_SIZE_MB = 50
 
 export function UploadDropzone({
   worldId,
