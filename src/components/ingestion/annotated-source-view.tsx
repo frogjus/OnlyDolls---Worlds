@@ -3,18 +3,18 @@
 import { useMemo } from 'react'
 import type { SourceEntity } from '@/lib/hooks/use-source-detail'
 
-// Consistent entity highlight palette — underline style to preserve text flow
+// Dark dystopian entity highlight palette — translucent backgrounds with vivid text
 const ENTITY_COLORS: Record<SourceEntity['type'], string> = {
   character:
-    'bg-blue-50 text-blue-900 decoration-blue-400 hover:bg-blue-100',
+    'bg-[rgba(6,182,212,0.12)] text-[var(--od-cyan-400)] decoration-[var(--od-cyan-500)] hover:bg-[rgba(6,182,212,0.2)]',
   location:
-    'bg-green-50 text-green-900 decoration-green-400 hover:bg-green-100',
+    'bg-[rgba(34,197,94,0.12)] text-emerald-400 decoration-emerald-500 hover:bg-[rgba(34,197,94,0.2)]',
   event:
-    'bg-purple-50 text-purple-900 decoration-purple-400 hover:bg-purple-100',
+    'bg-[rgba(124,58,237,0.12)] text-[var(--od-violet-400)] decoration-[var(--od-violet-500)] hover:bg-[rgba(124,58,237,0.2)]',
   item:
-    'bg-amber-50 text-amber-900 decoration-amber-400 hover:bg-amber-100',
+    'bg-[rgba(245,158,11,0.12)] text-amber-400 decoration-amber-500 hover:bg-[rgba(245,158,11,0.2)]',
   faction:
-    'bg-red-50 text-red-900 decoration-red-400 hover:bg-red-100',
+    'bg-[rgba(239,68,68,0.12)] text-rose-400 decoration-rose-500 hover:bg-[rgba(239,68,68,0.2)]',
 }
 
 interface TextSegment {
@@ -99,8 +99,14 @@ export function AnnotatedSourceView({
   )
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <div className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-sm leading-relaxed">
+    <div
+      className="h-full overflow-y-auto p-6"
+      style={{ background: 'var(--od-bg-base)' }}
+    >
+      <div
+        className="max-w-none whitespace-pre-wrap font-mono text-sm leading-relaxed"
+        style={{ color: 'var(--od-text-secondary)' }}
+      >
         {segments.map((segment, i) => {
           if (!segment.entity) {
             return <span key={i}>{segment.text}</span>
@@ -117,7 +123,7 @@ export function AnnotatedSourceView({
               onClick={() => onSelectEntity(segment.entity!)}
               className={`inline cursor-pointer rounded px-0.5 underline decoration-2 underline-offset-2 transition-colors ${
                 ENTITY_COLORS[segment.entity.type]
-              } ${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+              } ${isSelected ? 'ring-2 ring-[var(--od-teal-500)] ring-offset-1 ring-offset-[var(--od-bg-base)]' : ''}`}
               style={{ transitionDuration: 'var(--duration-fast)' }}
             >
               {segment.text}
