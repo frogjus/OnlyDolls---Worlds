@@ -140,12 +140,12 @@ function VizShell({
       data-slot="viz-shell"
       tabIndex={-1}
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-lg border border-border bg-background outline-none',
-        isFullscreen && 'rounded-none border-none'
+        'flex h-full flex-col overflow-hidden rounded-lg border border-[var(--od-border-emphasis)] bg-card shadow-[var(--od-shadow-card)] outline-none',
+        isFullscreen && 'rounded-none border-none shadow-none'
       )}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-1.5">
-        <h2 className="text-sm font-medium text-foreground">{title}</h2>
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--od-border-default)] px-3 py-1.5">
+        <h2 className="font-heading text-sm font-medium tracking-tight text-foreground">{title}</h2>
       </div>
 
       <VizToolbar

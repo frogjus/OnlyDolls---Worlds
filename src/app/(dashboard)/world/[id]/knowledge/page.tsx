@@ -5,8 +5,8 @@ export default function KnowledgePage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Knowledge</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-h2 text-foreground">Knowledge</h1>
+        <p className="mt-1 text-sm text-[var(--od-text-secondary)]">
           Audience knowledge tracker — who knows what when.
         </p>
       </div>

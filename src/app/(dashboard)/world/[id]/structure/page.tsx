@@ -378,14 +378,14 @@ function ActCard({
 
   return (
     <Card
-      className={`group cursor-pointer transition-shadow hover:shadow-md ${
-        isSelected ? 'ring-2 ring-primary' : ''
+      className={`group cursor-pointer card-interactive border-[var(--od-border-default)] bg-card shadow-[var(--od-shadow-card)] ${
+        isSelected ? 'ring-2 ring-primary shadow-[var(--od-glow-teal-sm)]' : ''
       }`}
       onClick={() => setSelectedActId(act.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-base truncate">{act.name}</CardTitle>
+          <CardTitle className="font-heading text-base tracking-tight truncate">{act.name}</CardTitle>
           <Badge variant="outline" className="mt-1 text-xs">
             Position: {act.position}
           </Badge>
@@ -448,10 +448,10 @@ function SequenceCard({
   const deleteSeq = useDeleteSequence(worldId)
 
   return (
-    <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+    <Card className="group cursor-pointer card-interactive border-[var(--od-border-default)] bg-card shadow-[var(--od-shadow-card)]">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-sm truncate">{sequence.name}</CardTitle>
+          <CardTitle className="font-heading text-sm tracking-tight truncate">{sequence.name}</CardTitle>
           <Badge variant="outline" className="mt-1 text-xs">
             Position: {sequence.position}
           </Badge>
@@ -507,13 +507,19 @@ function StructureSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="border-[var(--od-border-default)] bg-card shadow-[var(--od-shadow-card)]">
           <CardHeader className="space-y-0 pb-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-5 w-20 mt-1" />
+            <div className="relative h-4 w-32 overflow-hidden rounded bg-muted">
+              <div className="absolute inset-0 shimmer-sweep" />
+            </div>
+            <div className="relative mt-1 h-5 w-20 overflow-hidden rounded-full bg-muted">
+              <div className="absolute inset-0 shimmer-sweep" />
+            </div>
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-4 w-full" />
+            <div className="relative h-4 w-full overflow-hidden rounded bg-muted">
+              <div className="absolute inset-0 shimmer-sweep" />
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -528,13 +534,15 @@ function StructureSkeletons() {
 function EmptyActState() {
   const { setCreateActDialogOpen } = useStructureStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-      <Layers className="h-10 w-10 text-muted-foreground/50" />
-      <h3 className="mt-3 text-base font-semibold">No acts yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--od-border-emphasis)] bg-card p-10 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted shadow-[var(--od-glow-teal-sm)]">
+        <Layers className="h-8 w-8 text-primary/60" />
+      </div>
+      <h3 className="mt-4 font-heading text-base font-semibold tracking-tight text-foreground">No acts yet</h3>
+      <p className="mt-1.5 text-sm text-[var(--od-text-secondary)]">
         Create acts to structure your narrative.
       </p>
-      <Button className="mt-3" size="sm" onClick={() => setCreateActDialogOpen(true)}>
+      <Button className="mt-4 bg-primary text-primary-foreground hover:bg-[var(--od-teal-600)] glow-teal-hover transition-all" size="sm" onClick={() => setCreateActDialogOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
         New Act
       </Button>
@@ -545,19 +553,21 @@ function EmptyActState() {
 function EmptySequenceState() {
   const { setCreateSequenceDialogOpen, selectedActId } = useStructureStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-      <Layers className="h-10 w-10 text-muted-foreground/50" />
-      <h3 className="mt-3 text-base font-semibold">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--od-border-emphasis)] bg-card p-10 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted shadow-[var(--od-glow-teal-sm)]">
+        <Layers className="h-8 w-8 text-primary/60" />
+      </div>
+      <h3 className="mt-4 font-heading text-base font-semibold tracking-tight text-foreground">
         {selectedActId ? 'No sequences in this act' : 'Select an act'}
       </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1.5 text-sm text-[var(--od-text-secondary)]">
         {selectedActId
           ? 'Add sequences to break this act into smaller units.'
           : 'Click on an act to see its sequences.'}
       </p>
       {selectedActId && (
         <Button
-          className="mt-3"
+          className="mt-4 bg-primary text-primary-foreground hover:bg-[var(--od-teal-600)] glow-teal-hover transition-all"
           size="sm"
           onClick={() => setCreateSequenceDialogOpen(true)}
         >
@@ -601,10 +611,10 @@ export default function StructurePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Layers className="h-6 w-6 text-muted-foreground" />
+          <Layers className="h-6 w-6 text-primary/60" />
           <div>
-            <h1 className="text-2xl font-bold">Structure</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-h2 text-foreground">Structure</h1>
+            <p className="mt-1 text-sm text-[var(--od-text-secondary)]">
               Acts and sequences that form your narrative structure.
             </p>
           </div>
@@ -614,8 +624,8 @@ export default function StructurePage() {
       {/* Acts Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Acts</h2>
-          <Button size="sm" onClick={() => setCreateActDialogOpen(true)}>
+          <h2 className="text-h3 text-foreground">Acts</h2>
+          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-[var(--od-teal-600)] glow-teal-hover transition-all" onClick={() => setCreateActDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New Act
           </Button>
@@ -623,7 +633,7 @@ export default function StructurePage() {
         {actsLoading ? (
           <StructureSkeletons />
         ) : actsError ? (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-lg border border-[var(--od-border-emphasis)] bg-destructive/10 p-4 text-sm text-destructive/80">
             Failed to load acts. Please try again.
           </div>
         ) : acts.length === 0 ? (
@@ -645,16 +655,16 @@ export default function StructurePage() {
       {/* Sequences Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-h3 text-foreground">
             Sequences
             {selectedActId && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
+              <span className="ml-2 text-sm font-normal text-[var(--od-text-secondary)]">
                 (filtered by selected act)
               </span>
             )}
           </h2>
           {selectedActId && (
-            <Button size="sm" onClick={() => setCreateSequenceDialogOpen(true)}>
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-[var(--od-teal-600)] glow-teal-hover transition-all" onClick={() => setCreateSequenceDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Sequence
             </Button>
@@ -663,7 +673,7 @@ export default function StructurePage() {
         {seqLoading ? (
           <StructureSkeletons />
         ) : seqError ? (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-lg border border-[var(--od-border-emphasis)] bg-destructive/10 p-4 text-sm text-destructive/80">
             Failed to load sequences. Please try again.
           </div>
         ) : filteredSequences.length === 0 ? (

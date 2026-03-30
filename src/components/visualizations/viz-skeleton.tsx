@@ -35,7 +35,8 @@ function GraphSkeleton() {
           y1={graphCircles[from].cy}
           x2={graphCircles[to].cx}
           y2={graphCircles[to].cy}
-          className="animate-pulse stroke-muted"
+          className="animate-pulse"
+          stroke="var(--od-border-emphasis)"
           strokeWidth={1.5}
         />
       ))}
@@ -45,7 +46,10 @@ function GraphSkeleton() {
           cx={c.cx}
           cy={c.cy}
           r={c.r}
-          className="animate-pulse fill-muted"
+          className="animate-pulse"
+          fill="var(--od-bg-raised)"
+          stroke="rgba(20,184,166,0.1)"
+          strokeWidth={1}
           style={{ animationDelay: `${i * 100}ms` }}
         />
       ))}
@@ -60,8 +64,8 @@ function TimelineSkeleton() {
   ]
   return (
     <svg className="h-full w-full" preserveAspectRatio="xMidYMid meet">
-      <line x1="3%" y1="30%" x2="97%" y2="30%" className="stroke-muted" strokeWidth={2} />
-      <line x1="3%" y1="70%" x2="97%" y2="70%" className="stroke-muted" strokeWidth={2} />
+      <line x1="3%" y1="30%" x2="97%" y2="30%" stroke="var(--od-border-emphasis)" strokeWidth={2} />
+      <line x1="3%" y1="70%" x2="97%" y2="70%" stroke="var(--od-border-emphasis)" strokeWidth={2} />
       {rects.map((r, i) => (
         <rect
           key={`top-${i}`}
@@ -70,7 +74,10 @@ function TimelineSkeleton() {
           width={r.w}
           height="16%"
           rx={6}
-          className="animate-pulse fill-muted"
+          className="animate-pulse"
+          fill="var(--od-bg-raised)"
+          stroke="rgba(20,184,166,0.08)"
+          strokeWidth={1}
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}
@@ -82,7 +89,10 @@ function TimelineSkeleton() {
           width={r.w}
           height="16%"
           rx={6}
-          className="animate-pulse fill-muted"
+          className="animate-pulse"
+          fill="var(--od-bg-raised)"
+          stroke="rgba(20,184,166,0.08)"
+          strokeWidth={1}
           style={{ animationDelay: `${(i + 6) * 120}ms` }}
         />
       ))}
@@ -97,8 +107,8 @@ function ChartSkeleton() {
   ]
   return (
     <svg className="h-full w-full" preserveAspectRatio="xMidYMid meet">
-      <line x1="10%" y1="10%" x2="10%" y2="90%" className="stroke-muted" strokeWidth={2} />
-      <line x1="10%" y1="90%" x2="95%" y2="90%" className="stroke-muted" strokeWidth={2} />
+      <line x1="10%" y1="10%" x2="10%" y2="90%" stroke="var(--od-border-emphasis)" strokeWidth={2} />
+      <line x1="10%" y1="90%" x2="95%" y2="90%" stroke="var(--od-border-emphasis)" strokeWidth={2} />
       {bars.map((b, i) => (
         <rect
           key={i}
@@ -107,7 +117,10 @@ function ChartSkeleton() {
           width="10%"
           height={b.h}
           rx={4}
-          className="animate-pulse fill-muted"
+          className="animate-pulse"
+          fill="var(--od-bg-raised)"
+          stroke="rgba(20,184,166,0.08)"
+          strokeWidth={1}
           style={{ animationDelay: `${i * 150}ms` }}
         />
       ))}
@@ -123,15 +136,19 @@ function BoardSkeleton() {
       {Array.from({ length: columns }).map((_, col) => (
         <div key={col} className="flex flex-1 flex-col gap-3">
           <div
-            className="h-8 animate-pulse rounded-md bg-muted"
+            className="relative h-8 overflow-hidden rounded-md bg-[var(--od-bg-raised)]"
             style={{ animationDelay: `${col * 100}ms` }}
-          />
+          >
+            <div className="absolute inset-0 shimmer-sweep" />
+          </div>
           {Array.from({ length: cardsPerCol }).map((_, card) => (
             <div
               key={card}
-              className="h-24 animate-pulse rounded-lg bg-muted"
+              className="relative h-24 overflow-hidden rounded-lg border border-[var(--od-border-default)] bg-card"
               style={{ animationDelay: `${(col * cardsPerCol + card) * 80}ms` }}
-            />
+            >
+              <div className="absolute inset-0 shimmer-sweep" />
+            </div>
           ))}
         </div>
       ))}
@@ -149,9 +166,11 @@ function EditorSkeleton() {
       {widths.map((w, i) => (
         <div
           key={i}
-          className="h-4 animate-pulse rounded bg-muted"
-          style={{ width: w, animationDelay: `${i * 60}ms` }}
-        />
+          className="relative h-4 overflow-hidden rounded bg-[var(--od-bg-raised)]"
+          style={{ width: w }}
+        >
+          <div className="absolute inset-0 shimmer-sweep" style={{ animationDelay: `${i * 60}ms` }} />
+        </div>
       ))}
     </div>
   )
@@ -162,22 +181,26 @@ function DiffSkeleton() {
   const rightWidths = ['70%', '85%', '55%', '90%', '65%', '45%', '80%']
   return (
     <div className="flex h-full gap-2 p-4">
-      <div className="flex flex-1 flex-col gap-2.5 rounded-lg border border-border p-4">
+      <div className="flex flex-1 flex-col gap-2.5 rounded-lg border border-[var(--od-border-default)] bg-card p-4">
         {leftWidths.map((w, i) => (
           <div
             key={i}
-            className="h-4 animate-pulse rounded bg-muted"
-            style={{ width: w, animationDelay: `${i * 80}ms` }}
-          />
+            className="relative h-4 overflow-hidden rounded bg-[var(--od-bg-raised)]"
+            style={{ width: w }}
+          >
+            <div className="absolute inset-0 shimmer-sweep" style={{ animationDelay: `${i * 80}ms` }} />
+          </div>
         ))}
       </div>
-      <div className="flex flex-1 flex-col gap-2.5 rounded-lg border border-border p-4">
+      <div className="flex flex-1 flex-col gap-2.5 rounded-lg border border-[var(--od-border-default)] bg-card p-4">
         {rightWidths.map((w, i) => (
           <div
             key={i}
-            className="h-4 animate-pulse rounded bg-muted"
-            style={{ width: w, animationDelay: `${(i + 7) * 80}ms` }}
-          />
+            className="relative h-4 overflow-hidden rounded bg-[var(--od-bg-raised)]"
+            style={{ width: w }}
+          >
+            <div className="absolute inset-0 shimmer-sweep" style={{ animationDelay: `${(i + 7) * 80}ms` }} />
+          </div>
         ))}
       </div>
     </div>
