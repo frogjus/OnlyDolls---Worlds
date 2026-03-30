@@ -17,16 +17,16 @@ export const gentleSpring: Transition = {
 // ─── Page Transitions ────────────────────────────────────────────────
 
 export const pageTransition: Variants = {
-  initial: { opacity: 0, y: 8 },
+  initial: { opacity: 0, y: 6 },
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0, 0, 0.2, 1] },
+    transition: { duration: 0.2, ease: [0, 0, 0.2, 1] },
   },
   exit: {
     opacity: 0,
     y: -4,
-    transition: { duration: 0.15, ease: [0.4, 0, 1, 1] },
+    transition: { duration: 0.12, ease: [0.4, 0, 1, 1] },
   },
 }
 

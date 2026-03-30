@@ -44,17 +44,17 @@ export function WorldNav() {
   const { view, group } = resolveSlug(slug)
 
   return (
-    <div className="flex h-10 items-center border-b px-4">
-      <div className="flex items-center gap-1 text-sm">
-        <span className="text-muted-foreground truncate max-w-[160px]">
+    <div className="flex h-11 items-center border-b border-[var(--od-border-default)] bg-secondary px-4">
+      <div className="flex items-center gap-1.5 text-sm">
+        <span className="font-body text-muted-foreground truncate max-w-[160px]">
           {worldName ?? 'World'}
         </span>
         {group && view && (
           <>
-            <ChevronRight className="size-3 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">{group.label}</span>
-            <ChevronRight className="size-3 text-muted-foreground shrink-0" />
-            <span className="font-medium">{view.label}</span>
+            <ChevronRight className="size-3 text-[var(--od-text-disabled)] shrink-0" />
+            <span className="font-body text-muted-foreground">{group.label}</span>
+            <ChevronRight className="size-3 text-[var(--od-text-disabled)] shrink-0" />
+            <span className="font-heading font-medium text-foreground">{view.label}</span>
           </>
         )}
       </div>

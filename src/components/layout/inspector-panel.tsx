@@ -28,11 +28,11 @@ function EntityDetails({ entity }: { entity: SelectedEntity }) {
       key={entity.id}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-[0_0_10px_rgba(20,184,166,0.08)]">
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold truncate">{entity.name}</h3>
+          <h3 className="text-sm font-semibold font-heading truncate text-foreground">{entity.name}</h3>
           <p className="text-xs text-muted-foreground capitalize">{entity.type}</p>
         </div>
       </div>
@@ -40,13 +40,13 @@ function EntityDetails({ entity }: { entity: SelectedEntity }) {
       <div className="space-y-2">
         <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">ID</span>
-          <span className="font-mono truncate ml-2 max-w-[160px]">{entity.id}</span>
+          <span className="font-mono text-[var(--od-text-secondary)] truncate ml-2 max-w-[160px]">{entity.id}</span>
         </div>
         {entity.meta &&
           Object.entries(entity.meta).map(([key, value]) => (
             <div key={key} className="flex justify-between text-xs">
               <span className="text-muted-foreground capitalize">{key}</span>
-              <span className="truncate ml-2 max-w-[160px]">{value}</span>
+              <span className="text-[var(--od-text-secondary)] truncate ml-2 max-w-[160px]">{value}</span>
             </div>
           ))}
       </div>
@@ -108,7 +108,7 @@ export function InspectorPanel() {
     <AnimatePresence>
       {inspectorOpen && (
         <motion.aside
-          className="relative flex flex-col border-l bg-card overflow-hidden"
+          className="relative flex flex-col border-l border-[var(--od-border-emphasis)] bg-card overflow-hidden"
           style={{ minWidth: 280, maxWidth: 500 }}
           initial={{ width: 0, opacity: 0 }}
           animate={{ width: inspectorWidth, opacity: 1 }}
@@ -118,7 +118,7 @@ export function InspectorPanel() {
           {/* Resize handle */}
           <div
             onMouseDown={handleMouseDown}
-            className="absolute inset-y-0 left-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
+            className="absolute inset-y-0 left-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/40 transition-colors"
           />
 
           {/* Header */}
@@ -128,7 +128,7 @@ export function InspectorPanel() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.2 }}
           >
-            <span className="text-sm font-semibold">Inspector</span>
+            <span className="text-sm font-semibold font-heading tracking-tight text-foreground">Inspector</span>
             <Button
               variant="ghost"
               size="icon-xs"
