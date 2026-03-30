@@ -45,7 +45,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
         initial="initial"
         animate="animate"
         exit="exit"
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-auto bg-background"
       >
         <FrozenRouter>{children}</FrozenRouter>
       </motion.div>

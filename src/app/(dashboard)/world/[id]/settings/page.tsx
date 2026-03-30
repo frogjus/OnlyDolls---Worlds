@@ -83,9 +83,13 @@ export default function WorldSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 rounded-xl" />
+      <div className="p-6 space-y-6 animate-in fade-in duration-300">
+        <div className="relative h-8 w-48 overflow-hidden rounded bg-muted">
+          <div className="absolute inset-0 shimmer-sweep" />
+        </div>
+        <div className="relative h-64 overflow-hidden rounded-xl border border-[var(--od-border-default)] bg-card">
+          <div className="absolute inset-0 shimmer-sweep" />
+        </div>
       </div>
     )
   }
@@ -93,7 +97,7 @@ export default function WorldSettingsPage() {
   if (error || !world) {
     return (
       <div className="p-6">
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-[var(--od-border-emphasis)] bg-destructive/10 p-4 text-sm text-destructive/80">
           Failed to load world settings. Please try again.
         </div>
       </div>
@@ -104,8 +108,8 @@ export default function WorldSettingsPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Settings className="h-6 w-6 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <Settings className="h-6 w-6 text-primary/60" />
+        <h1 className="text-h2 text-foreground">Settings</h1>
       </div>
 
       {/* Form */}
@@ -153,13 +157,13 @@ export default function WorldSettingsPage() {
             </div>
 
             {successMsg && (
-              <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-400">
+              <div className="rounded-lg border border-[var(--od-border-teal)] bg-primary/10 p-3 text-sm text-[var(--od-teal-300)]">
                 {successMsg}
               </div>
             )}
 
             {updateMutation.isError && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="rounded-lg border border-[var(--od-border-emphasis)] bg-destructive/10 p-3 text-sm text-destructive/80">
                 Failed to save settings. Please try again.
               </div>
             )}

@@ -48,7 +48,7 @@ export function WorkspaceSidebar() {
 
   return (
     <motion.div
-      className="flex h-full flex-col border-r bg-muted/30 overflow-hidden"
+      className="flex h-full flex-col border-r border-sidebar-border bg-sidebar overflow-hidden"
       variants={sidebarSlide}
       animate={sidebarCollapsed ? 'collapsed' : 'expanded'}
       initial={false}
@@ -80,8 +80,8 @@ export function WorkspaceSidebar() {
                           className={cn(
                             'mx-auto flex size-8 items-center justify-center rounded-md transition-colors',
                             hasActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                              ? 'bg-sidebar-accent text-primary shadow-[0_0_10px_rgba(20,184,166,0.1)]'
+                              : 'text-muted-foreground hover:bg-[rgba(255,255,255,0.03)] hover:text-foreground'
                           )}
                           render={
                             <Link href={`/world/${worldId}/${group.views[0].slug}`} />
@@ -98,7 +98,7 @@ export function WorkspaceSidebar() {
               <div className="border-t p-1">
                 <Tooltip>
                   <TooltipTrigger
-                    className="mx-auto flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="mx-auto flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-[rgba(255,255,255,0.03)] hover:text-foreground transition-colors"
                     render={<button onClick={toggleSidebar} />}
                   >
                     <PanelLeft className="size-4" />
@@ -126,7 +126,7 @@ export function WorkspaceSidebar() {
                     <div key={group.id}>
                       <button
                         onClick={() => toggleSection(group.id)}
-                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.03)] hover:text-foreground"
                       >
                         <GroupIcon className="size-4" />
                         <span className="flex-1 text-left">{group.label}</span>
@@ -157,8 +157,8 @@ export function WorkspaceSidebar() {
                                     className={cn(
                                       'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-all duration-150',
                                       active
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-0.5'
+                                        ? 'bg-sidebar-accent text-primary font-medium'
+                                        : 'text-muted-foreground hover:bg-[rgba(255,255,255,0.03)] hover:text-foreground hover:translate-x-0.5'
                                     )}
                                   >
                                     <ViewIcon className="size-3.5" />
@@ -180,7 +180,7 @@ export function WorkspaceSidebar() {
                 variant="ghost"
                 size="sm"
                 onClick={toggleSidebar}
-                className="w-full justify-start gap-2 text-muted-foreground"
+                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground hover:bg-transparent"
               >
                 <PanelLeftClose className="size-4" />
                 <span className="text-xs">Collapse</span>

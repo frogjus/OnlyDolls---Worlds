@@ -2,6 +2,8 @@
   outline: none;
   min-height: 500px;
   padding: 2rem;
+  color: var(--od-text-primary);
+  caret-color: var(--od-teal-400);
 }
 
 .storyforge-editor:focus {
@@ -22,34 +24,43 @@
 }
 
 .prose-mode h1 {
+  font-family: var(--font-heading);
   font-size: 2rem;
   font-weight: 700;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--od-text-primary);
 }
 
 .prose-mode h2 {
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 600;
   margin-top: 1.25em;
   margin-bottom: 0.5em;
   line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--od-text-primary);
 }
 
 .prose-mode h3 {
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
   margin-top: 1em;
   margin-bottom: 0.5em;
   line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--od-text-primary);
 }
 
 .prose-mode blockquote {
-  border-left: 3px solid hsl(var(--border));
+  border-left: 3px solid var(--od-border-teal);
   padding-left: 1rem;
   font-style: italic;
-  color: hsl(var(--muted-foreground));
+  color: var(--od-text-secondary);
 }
 
 .prose-mode ul {
@@ -62,6 +73,11 @@
   list-style: decimal;
 }
 
+/* Selection styling */
+.storyforge-editor ::selection {
+  background: rgba(20, 184, 166, 0.25);
+}
+
 /* ProseMirror focus */
 .ProseMirror:focus {
   outline: none;
@@ -70,7 +86,7 @@
 /* Placeholder */
 .ProseMirror .is-empty::before {
   content: attr(data-placeholder);
-  color: hsl(var(--muted-foreground));
+  color: var(--od-text-muted);
   float: left;
   height: 0;
   pointer-events: none;

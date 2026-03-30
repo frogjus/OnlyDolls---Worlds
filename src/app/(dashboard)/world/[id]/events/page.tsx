@@ -19,7 +19,6 @@ import {
 } from '@/lib/hooks/use-events'
 import { useEventStore } from '@/stores/event-store'
 import { showSuccess, showError } from '@/lib/toast'
-import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -270,11 +269,11 @@ function EventCard({
 
   return (
     <Card
-      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/5"
+      className="group card-interactive cursor-pointer bg-card border-border"
       onClick={() => setSelectedEventId(event.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <CalendarClock className="h-5 w-5 text-cyan-400" />
         </div>
         <div className="flex-1 min-w-0">
@@ -294,7 +293,7 @@ function EventCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -332,7 +331,7 @@ function EventCard({
             {event.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
       </CardContent>
     </Card>
@@ -347,7 +346,7 @@ function EventSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -372,12 +371,22 @@ function EventSkeletons() {
 function EventsEmptyState() {
   const { setCreateDialogOpen } = useEventStore()
   return (
-    <EmptyState
-      icon={CalendarClock}
-      title="No events yet"
-      description="Create chronological events to build your story's fabula timeline — the ground truth of what happens in your world."
-      primaryAction={{ label: 'New Event', onClick: () => setCreateDialogOpen(true) }}
-    />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <CalendarClock className="h-10 w-10 text-teal-300/70" />
+      </div>
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No events yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        Create chronological events to build your story&apos;s fabula timeline — the ground truth of what happens in your world.
+      </p>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        New Event
+      </Button>
+    </div>
   )
 }
 
@@ -400,14 +409,17 @@ export default function EventsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Events</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Events</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {events.length > 0
               ? `${events.length} event${events.length === 1 ? '' : 's'}`
               : 'Chronological events that make up your story world.'}
           </p>
         </div>
-        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Event
         </Button>
@@ -416,7 +428,7 @@ export default function EventsPage() {
       {isLoading ? (
         <EventSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load events. Please try again.
         </div>
       ) : events.length === 0 ? (

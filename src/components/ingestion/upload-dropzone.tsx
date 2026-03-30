@@ -164,17 +164,20 @@ export function UploadDropzone({
 
   return (
     <div className="space-y-4">
-      {/* Large drop target */}
+      {/* Full-width dark drop target with dashed teal border */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all ${
           isDragOver
-            ? 'scale-[1.01] border-teal-400 bg-teal-500/5 shadow-[0_0_30px_rgba(20,184,166,0.15)]'
-            : 'border-slate-600/50 bg-slate-900/40 hover:border-teal-500/50 hover:bg-slate-900/60'
+            ? 'scale-[1.01] border-[var(--od-teal-400)] shadow-[var(--od-glow-teal-lg)]'
+            : 'border-[var(--od-border-emphasis)] hover:border-[rgba(20,184,166,0.4)]'
         }`}
         style={{
+          background: isDragOver
+            ? 'rgba(20, 184, 166, 0.04)'
+            : 'var(--od-bg-raised)',
           transitionDuration: 'var(--duration-normal)',
           transitionTimingFunction: 'var(--ease-out)',
         }}
@@ -190,21 +193,25 @@ export function UploadDropzone({
       >
         <div
           className={`mb-4 flex size-14 items-center justify-center rounded-full transition-all ${
-            isDragOver
-              ? 'scale-110 bg-teal-500/10 text-teal-400'
-              : 'bg-slate-800 text-teal-400/60'
+            isDragOver ? 'scale-110' : ''
           }`}
           style={{
+            background: isDragOver
+              ? 'rgba(20, 184, 166, 0.12)'
+              : 'var(--od-bg-surface)',
+            color: isDragOver
+              ? 'var(--od-teal-300)'
+              : 'var(--od-teal-500)',
             transitionDuration: 'var(--duration-normal)',
             transitionTimingFunction: 'var(--ease-out)',
           }}
         >
           <FileUp className="size-7" />
         </div>
-        <p className="mb-1 text-base font-medium">
+        <p className="mb-1 text-base font-medium font-[family-name:var(--font-heading)]" style={{ color: 'var(--od-text-primary)' }}>
           {isDragOver ? 'Drop your file here' : 'Drop a file here or click to browse'}
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm" style={{ color: 'var(--od-text-muted)' }}>
           {ACCEPTED_EXTENSIONS.join(', ')} — max {MAX_FILE_SIZE_MB}MB
         </p>
         <input
@@ -216,13 +223,21 @@ export function UploadDropzone({
         />
       </div>
 
-      {/* Selected file */}
+      {/* Selected file chip */}
       {selectedFile && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3">
-          <FileText className="size-5 shrink-0 text-muted-foreground" />
+        <div
+          className="flex items-center gap-3 rounded-lg p-3"
+          style={{
+            background: 'var(--od-bg-raised)',
+            border: '1px solid var(--od-border-default)',
+          }}
+        >
+          <FileText className="size-5 shrink-0" style={{ color: 'var(--od-teal-500)' }} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{selectedFile.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="truncate text-sm font-medium" style={{ color: 'var(--od-text-primary)' }}>
+              {selectedFile.name}
+            </p>
+            <p className="text-xs" style={{ color: 'var(--od-text-muted)' }}>
               {(selectedFile.size / 1024).toFixed(1)} KB
             </p>
           </div>
@@ -240,11 +255,11 @@ export function UploadDropzone({
         </div>
       )}
 
-      {/* Progress bar */}
+      {/* Progress bar with teal fill */}
       {isUploading && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
+          <div className="flex items-center justify-between text-xs">
+            <span style={{ color: 'var(--od-text-secondary)' }}>
               {uploadProgress < 30
                 ? 'Uploading file...'
                 : uploadProgress < 70
@@ -253,13 +268,20 @@ export function UploadDropzone({
                     ? 'Extracting entities...'
                     : 'Finalizing analysis...'}
             </span>
-            <span className="tabular-nums">{Math.round(uploadProgress)}%</span>
+            <span className="tabular-nums" style={{ color: 'var(--od-teal-300)' }}>
+              {Math.round(uploadProgress)}%
+            </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+          <div
+            className="h-2 w-full overflow-hidden rounded-full"
+            style={{ background: 'var(--od-bg-surface)' }}
+          >
             <div
-              className="h-full rounded-full bg-teal-500 transition-all"
+              className="h-full rounded-full transition-all"
               style={{
                 width: `${uploadProgress}%`,
+                background: 'linear-gradient(90deg, var(--od-teal-600), var(--od-teal-400))',
+                boxShadow: 'var(--od-glow-teal-sm)',
                 transitionDuration: 'var(--duration-normal)',
                 transitionTimingFunction: 'var(--ease-out)',
               }}
@@ -270,11 +292,19 @@ export function UploadDropzone({
 
       {/* Error */}
       {uploadError && (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+        <div
+          className="flex items-start gap-3 rounded-lg p-3"
+          style={{
+            background: 'var(--od-destructive-muted, rgba(239,68,68,0.08))',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+          }}
+        >
           <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-destructive">Upload failed</p>
-            <p className="mt-0.5 text-xs text-destructive/80">{uploadError}</p>
+            <p className="mt-0.5 text-xs" style={{ color: 'rgba(239, 68, 68, 0.7)' }}>
+              {uploadError}
+            </p>
           </div>
           <Button
             variant="ghost"

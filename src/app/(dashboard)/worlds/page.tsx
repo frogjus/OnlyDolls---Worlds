@@ -89,15 +89,24 @@ export default function WorldsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-6 lg:p-8">
+      {/* Page header */}
+      <div className="mb-8 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Story Worlds</h1>
-          <p className="text-muted-foreground">
+          <h1
+            className="text-h1"
+            style={{ color: 'var(--od-text-primary)' }}
+          >
+            Story Worlds
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--od-text-secondary)' }}>
             Manage your narrative universes
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          onClick={() => setCreateDialogOpen(true)}
+          className="bg-[var(--od-teal-500)] font-medium text-[var(--od-bg-base)] hover:bg-[var(--od-teal-600)]"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create World
         </Button>
@@ -105,64 +114,112 @@ export default function WorldsPage() {
 
       {/* Loading skeletons */}
       {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-3/4" />
+            <div
+              key={i}
+              className="overflow-hidden rounded-xl border"
+              style={{
+                background: 'var(--od-bg-surface)',
+                borderColor: 'var(--od-border-default)',
+              }}
+            >
+              <Skeleton className="h-40 w-full rounded-none" />
+              <div className="p-4">
+                <Skeleton className="mb-2 h-5 w-3/4" />
                 <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-1/3" />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && worlds.length === 0 && (
-        <Card className="border-dashed border-border/50">
-          <CardHeader className="items-center py-12 text-center">
-            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Globe className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle className="text-muted-foreground">
-              No worlds yet
-            </CardTitle>
-            <CardDescription>
-              Create your first story world to get started
-            </CardDescription>
-            <Button
-              className="mt-4"
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create World
-            </Button>
-          </CardHeader>
-        </Card>
+        <div
+          className="flex flex-col items-center rounded-xl border border-dashed px-6 py-16 text-center"
+          style={{ borderColor: 'var(--od-border-emphasis)', background: 'var(--od-bg-raised)' }}
+        >
+          <div
+            className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ background: 'rgba(20,184,166,0.1)' }}
+          >
+            <Globe className="h-7 w-7" style={{ color: 'var(--od-teal-400)' }} />
+          </div>
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--od-text-secondary)' }}
+          >
+            No worlds yet
+          </h2>
+          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--od-text-muted)' }}>
+            Create your first story world to get started
+          </p>
+          <Button
+            className="mt-5 bg-[var(--od-teal-500)] font-medium text-[var(--od-bg-base)] hover:bg-[var(--od-teal-600)]"
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create World
+          </Button>
+        </div>
       )}
 
-      {/* World grid */}
+      {/* World grid — editorial poster cards */}
       {!isLoading && worlds.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {worlds.map((world) => (
             <Link
               key={world.id}
               href={`/world/${world.id}/beats`}
-              className="group/link"
+              className="group/card block"
             >
-              <Card className="border-border/50 transition-all duration-200 hover:border-primary/30 hover:shadow-[0_0_20px_-5px] hover:shadow-primary/10">
-                <CardHeader>
-                  <CardTitle>{world.name}</CardTitle>
-                  <CardAction>
+              <div
+                className="card-interactive overflow-hidden rounded-xl border transition-all duration-200"
+                style={{
+                  background: 'var(--od-bg-surface)',
+                  borderColor: 'var(--od-border-default)',
+                  boxShadow: 'var(--od-shadow-card)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--od-border-teal)'
+                  e.currentTarget.style.boxShadow = 'var(--od-glow-teal-md)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--od-border-default)'
+                  e.currentTarget.style.boxShadow = 'var(--od-shadow-card)'
+                }}
+              >
+                {/* Poster image area */}
+                <div
+                  className="relative flex h-36 items-center justify-center"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--od-bg-raised) 0%, var(--od-bg-surface) 100%)',
+                    borderBottom: '1px solid var(--od-border-default)',
+                  }}
+                >
+                  <Globe
+                    className="h-10 w-10 transition-transform duration-200 group-hover/card:scale-110"
+                    style={{ color: 'var(--od-text-disabled)' }}
+                  />
+                </div>
+
+                {/* Card content */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3
+                      className="text-base font-semibold leading-tight"
+                      style={{ fontFamily: 'var(--font-heading)', color: 'var(--od-text-primary)' }}
+                    >
+                      {world.name}
+                    </h3>
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         render={
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            className="shrink-0 opacity-0 transition-opacity group-hover/card:opacity-100"
                             onClick={(e) => e.preventDefault()}
                           />
                         }
@@ -174,7 +231,6 @@ export default function WorldsPage() {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.preventDefault()
-                            // TODO: wire up edit dialog in a follow-up
                           }}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
@@ -194,21 +250,38 @@ export default function WorldsPage() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </CardAction>
+                  </div>
+
                   {world.description && (
-                    <CardDescription className="line-clamp-2">
+                    <p
+                      className="mt-1.5 line-clamp-2 text-sm leading-relaxed"
+                      style={{ color: 'var(--od-text-secondary)' }}
+                    >
                       {world.description}
-                    </CardDescription>
+                    </p>
                   )}
-                </CardHeader>
-                <CardContent className="flex items-center gap-2">
-                  {world.genre && <Badge variant="secondary">{world.genre}</Badge>}
-                  <span className="text-xs text-muted-foreground">
-                    Updated{' '}
-                    {new Date(world.updatedAt).toLocaleDateString()}
-                  </span>
-                </CardContent>
-              </Card>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    {world.genre && (
+                      <Badge
+                        variant="secondary"
+                        className="border text-xs"
+                        style={{
+                          background: 'rgba(20,184,166,0.1)',
+                          borderColor: 'rgba(20,184,166,0.2)',
+                          color: 'var(--od-teal-300)',
+                        }}
+                      >
+                        {world.genre}
+                      </Badge>
+                    )}
+                    <span className="text-xs" style={{ color: 'var(--od-text-muted)' }}>
+                      Updated{' '}
+                      {new Date(world.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
@@ -236,51 +309,76 @@ export default function WorldsPage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="border sm:max-w-md"
+          style={{
+            background: 'var(--od-bg-surface)',
+            borderColor: 'var(--od-border-default)',
+            boxShadow: 'var(--od-shadow-elevated)',
+          }}
+        >
           <form onSubmit={handleCreate}>
             <DialogHeader>
-              <DialogTitle>Create Story World</DialogTitle>
-              <DialogDescription>
+              <DialogTitle style={{ fontFamily: 'var(--font-heading)' }}>
+                Create Story World
+              </DialogTitle>
+              <DialogDescription style={{ color: 'var(--od-text-secondary)' }}>
                 Start a new narrative universe
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="text-xs font-medium" style={{ color: 'var(--od-text-secondary)' }}>
+                  Name *
+                </Label>
                 <Input
                   id="name"
                   placeholder="My Story World"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  className="border bg-[var(--od-bg-input)] text-[var(--od-text-primary)] placeholder:text-[var(--od-text-disabled)] focus-visible:ring-[var(--od-teal-500)]"
+                  style={{ borderColor: 'var(--od-border-emphasis)' }}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="genre">Genre</Label>
+                <Label htmlFor="genre" className="text-xs font-medium" style={{ color: 'var(--od-text-secondary)' }}>
+                  Genre
+                </Label>
                 <Input
                   id="genre"
                   placeholder="Fantasy, Sci-Fi, Drama..."
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
+                  className="border bg-[var(--od-bg-input)] text-[var(--od-text-primary)] placeholder:text-[var(--od-text-disabled)] focus-visible:ring-[var(--od-teal-500)]"
+                  style={{ borderColor: 'var(--od-border-emphasis)' }}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="logline">Logline</Label>
+                <Label htmlFor="logline" className="text-xs font-medium" style={{ color: 'var(--od-text-secondary)' }}>
+                  Logline
+                </Label>
                 <Input
                   id="logline"
                   placeholder="A one-sentence pitch"
                   value={logline}
                   onChange={(e) => setLogline(e.target.value)}
+                  className="border bg-[var(--od-bg-input)] text-[var(--od-text-primary)] placeholder:text-[var(--od-text-disabled)] focus-visible:ring-[var(--od-teal-500)]"
+                  style={{ borderColor: 'var(--od-border-emphasis)' }}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-xs font-medium" style={{ color: 'var(--od-text-secondary)' }}>
+                  Description
+                </Label>
                 <Textarea
                   id="description"
                   placeholder="What is this world about?"
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className="border bg-[var(--od-bg-input)] text-[var(--od-text-primary)] placeholder:text-[var(--od-text-disabled)] focus-visible:ring-[var(--od-teal-500)]"
+                  style={{ borderColor: 'var(--od-border-emphasis)' }}
                 />
               </div>
             </div>
@@ -288,6 +386,7 @@ export default function WorldsPage() {
               <Button
                 type="submit"
                 disabled={!name.trim() || createWorld.isPending}
+                className="bg-[var(--od-teal-500)] font-medium text-[var(--od-bg-base)] hover:bg-[var(--od-teal-600)]"
               >
                 {createWorld.isPending ? 'Creating...' : 'Create World'}
               </Button>

@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react'
 import { Check, X, User, MapPin, Zap, Package, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface ExtractedEntityItem {
   name: string
@@ -22,37 +21,69 @@ interface EntityReviewProps {
 
 const ENTITY_TYPE_CONFIG: Record<
   ExtractedEntityItem['type'],
-  { icon: typeof User; label: string; color: string }
+  { icon: typeof User; label: string; color: string; bg: string }
 > = {
-  character: { icon: User, label: 'Character', color: 'bg-blue-100 text-blue-800' },
-  location: { icon: MapPin, label: 'Location', color: 'bg-green-100 text-green-800' },
-  event: { icon: Zap, label: 'Event', color: 'bg-amber-100 text-amber-800' },
-  item: { icon: Package, label: 'Item', color: 'bg-purple-100 text-purple-800' },
-  faction: { icon: Users, label: 'Faction', color: 'bg-red-100 text-red-800' },
+  character: {
+    icon: User,
+    label: 'Character',
+    color: 'text-[var(--od-cyan-400)]',
+    bg: 'bg-[rgba(6,182,212,0.15)]',
+  },
+  location: {
+    icon: MapPin,
+    label: 'Location',
+    color: 'text-emerald-400',
+    bg: 'bg-[rgba(34,197,94,0.15)]',
+  },
+  event: {
+    icon: Zap,
+    label: 'Event',
+    color: 'text-[var(--od-violet-400)]',
+    bg: 'bg-[rgba(124,58,237,0.15)]',
+  },
+  item: {
+    icon: Package,
+    label: 'Item',
+    color: 'text-amber-400',
+    bg: 'bg-[rgba(245,158,11,0.15)]',
+  },
+  faction: {
+    icon: Users,
+    label: 'Faction',
+    color: 'text-rose-400',
+    bg: 'bg-[rgba(239,68,68,0.15)]',
+  },
 }
 
 function ConfidenceBar({ confidence }: { confidence: number }) {
   const percent = Math.round(confidence * 100)
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+      <div
+        className="h-1.5 w-20 overflow-hidden rounded-full"
+        style={{ background: 'var(--od-bg-surface)' }}
+      >
         <div
-          className={`h-full rounded-full transition-all ${
-            percent >= 80
-              ? 'bg-green-500'
-              : percent >= 60
-                ? 'bg-amber-500'
-                : 'bg-red-500'
-          }`}
-          style={{ width: `${percent}%` }}
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${percent}%`,
+            background:
+              percent >= 80
+                ? 'linear-gradient(90deg, var(--od-teal-600), var(--od-teal-400))'
+                : percent >= 60
+                  ? 'linear-gradient(90deg, #d97706, #fbbf24)'
+                  : 'linear-gradient(90deg, #dc2626, #f87171)',
+          }}
         />
       </div>
-      <Badge
-        variant={percent >= 70 ? 'default' : 'secondary'}
-        className="text-[10px]"
+      <span
+        className="text-[10px] font-medium tabular-nums"
+        style={{
+          color: percent >= 70 ? 'var(--od-teal-300)' : 'var(--od-text-muted)',
+        }}
       >
         {percent}%
-      </Badge>
+      </span>
     </div>
   )
 }
@@ -111,8 +142,14 @@ export function EntityReview({
 
   if (entities.length === 0) {
     return (
-      <div className="rounded-lg border p-8 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div
+        className="rounded-lg p-8 text-center"
+        style={{
+          background: 'var(--od-bg-raised)',
+          border: '1px solid var(--od-border-default)',
+        }}
+      >
+        <p className="text-sm" style={{ color: 'var(--od-text-muted)' }}>
           No entities were extracted from this content.
         </p>
         <Button variant="outline" onClick={onCancel} className="mt-4">
@@ -126,10 +163,13 @@ export function EntityReview({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">
+          <h3
+            className="text-sm font-semibold font-[family-name:var(--font-heading)]"
+            style={{ color: 'var(--od-text-primary)' }}
+          >
             Review Extracted Entities
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: 'var(--od-text-muted)' }}>
             {selectedCount} of {entities.length} selected for import
           </p>
         </div>
@@ -153,24 +193,38 @@ export function EntityReview({
             <button
               key={`${entity.type}-${entity.name}-${index}`}
               onClick={() => toggleEntity(index)}
-              className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+              className={`card-interactive flex w-full items-start gap-3 rounded-lg p-3 text-left transition-all ${
                 isSelected
-                  ? 'border-primary/50 bg-primary/5'
-                  : 'border-transparent bg-muted/30 opacity-60'
+                  ? 'border border-[rgba(20,184,166,0.3)]'
+                  : 'border border-transparent opacity-60'
               }`}
+              style={{
+                background: isSelected
+                  ? 'rgba(20, 184, 166, 0.05)'
+                  : 'var(--od-bg-raised)',
+              }}
             >
-              <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                <Icon className="size-4" />
+              <div
+                className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full ${config.bg}`}
+              >
+                <Icon className={`size-4 ${config.color}`} />
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{entity.name}</span>
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${config.color}`}>
+                  <span className="text-sm font-medium" style={{ color: 'var(--od-text-primary)' }}>
+                    {entity.name}
+                  </span>
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${config.bg} ${config.color}`}
+                  >
                     {config.label}
                   </span>
                 </div>
-                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                <p
+                  className="mt-0.5 line-clamp-2 text-xs"
+                  style={{ color: 'var(--od-text-muted)' }}
+                >
                   {entity.description}
                 </p>
                 <div className="mt-1.5">
@@ -180,9 +234,9 @@ export function EntityReview({
 
               <div className="mt-1 shrink-0">
                 {isSelected ? (
-                  <Check className="size-5 text-primary" />
+                  <Check className="size-5" style={{ color: 'var(--od-teal-400)' }} />
                 ) : (
-                  <X className="size-5 text-muted-foreground/40" />
+                  <X className="size-5" style={{ color: 'var(--od-text-disabled)' }} />
                 )}
               </div>
             </button>
@@ -190,7 +244,10 @@ export function EntityReview({
         })}
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <div
+        className="flex justify-end gap-2 pt-4"
+        style={{ borderTop: '1px solid var(--od-border-default)' }}
+      >
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>

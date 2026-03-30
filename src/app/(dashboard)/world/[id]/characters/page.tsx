@@ -317,15 +317,15 @@ function CharacterCard({
 
   return (
     <Card
-      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5"
+      className="group card-interactive cursor-pointer bg-card border-border"
       onClick={() => {
         setSelectedCharacterId(character.id)
         setInspectorOpen(true)
       }}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-teal-500/30">
-          <AvatarFallback className="bg-slate-800 text-teal-300 text-xs">{initials}</AvatarFallback>
+        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-primary/30">
+          <AvatarFallback className="bg-muted text-teal-300 text-xs">{initials}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{character.name}</CardTitle>
@@ -337,7 +337,7 @@ function CharacterCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -375,7 +375,7 @@ function CharacterCard({
             {character.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
         {character.aliases.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
@@ -399,7 +399,7 @@ function CharacterSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -424,15 +424,18 @@ function CharacterSkeletons() {
 function EmptyState() {
   const { setCreateDialogOpen } = useCharacterStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-14 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
-        <Users className="h-10 w-10 text-teal-400/70" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Users className="h-10 w-10 text-teal-300/70" />
       </div>
-      <h3 className="mt-6 text-lg font-bold text-slate-100">No characters yet</h3>
-      <p className="mt-2 text-sm text-slate-400">
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No characters yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
         Create your first character to start building your story world.
       </p>
-      <Button className="mt-6 bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
         <Plus className="mr-2 h-4 w-4" />
         New Character
       </Button>
@@ -492,14 +495,17 @@ export default function CharactersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Characters</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Characters</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {characters.length > 0
               ? `${characters.length} character${characters.length === 1 ? '' : 's'}`
               : 'Character profiles, relationships, and voice analysis.'}
           </p>
         </div>
-        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Character
         </Button>
@@ -507,7 +513,7 @@ export default function CharactersPage() {
 
       {/* Relationship Graph (collapsible) */}
       {graphData && (
-        <div className="rounded-lg border border-slate-700/50 bg-slate-900/40">
+        <div className="rounded-lg border border-border bg-muted">
           <button
             onClick={() => setGraphExpanded(!graphExpanded)}
             className="flex w-full items-center gap-2 p-4 text-left hover:bg-accent/50 transition-colors"
@@ -524,7 +530,7 @@ export default function CharactersPage() {
             </span>
           </button>
           {graphExpanded && (
-            <div className="h-[500px] border-t">
+            <div className="h-[500px] border-t border-border">
               <CharacterGraph data={graphData} readOnly />
             </div>
           )}
@@ -535,7 +541,7 @@ export default function CharactersPage() {
       {isLoading ? (
         <CharacterSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load characters. Please try again.
         </div>
       ) : characters.length === 0 ? (

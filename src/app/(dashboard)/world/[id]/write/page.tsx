@@ -152,16 +152,16 @@ export default function WritePage() {
   if (isLoading) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-slate-700/50 bg-slate-900/30 px-4 py-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="ml-auto h-8 w-48" />
+        <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
+          <Skeleton className="h-8 w-24 bg-muted" />
+          <Skeleton className="h-8 w-24 bg-muted" />
+          <Skeleton className="ml-auto h-8 w-48 bg-muted" />
         </div>
         <div className="flex flex-1">
           <div className="flex-1 p-6">
-            <Skeleton className="h-full w-full" />
+            <Skeleton className="h-full w-full bg-muted" />
           </div>
-          <Skeleton className="h-full w-72" />
+          <Skeleton className="h-full w-72 bg-card" />
         </div>
       </div>
     )
@@ -169,26 +169,33 @@ export default function WritePage() {
 
   if (!manuscripts?.length) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4">
-        <FileText className="size-12 text-teal-500/40" />
-        <p className="text-lg text-muted-foreground">No manuscript yet</p>
-        <Button onClick={handleCreate} disabled={createManuscript.isPending} className="bg-teal-600 hover:bg-teal-500 text-white">
-          <Plus className="size-4" />
-          Create Manuscript
-        </Button>
+      <div className="flex h-full flex-col items-center justify-center p-14">
+        <div className="flex flex-col items-center rounded-xl border border-border bg-muted p-14 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+            <FileText className="h-10 w-10 text-teal-300/70" />
+          </div>
+          <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No manuscript yet</h3>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+            Create your first manuscript to start writing
+          </p>
+          <Button onClick={handleCreate} disabled={createManuscript.isPending} className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200">
+            <Plus className="size-4" />
+            Create Manuscript
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-slate-700/50 bg-slate-900/30 px-4 py-2">
-        <div className="flex items-center rounded-lg border border-teal-500/20 bg-slate-900/60 p-0.5">
+      <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-2">
+        <div className="flex items-center rounded-lg border border-border bg-muted p-0.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setMode('prose')}
-            className={mode === 'prose' ? 'bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 hover:text-teal-200' : 'text-slate-400 hover:text-slate-200'}
+            className={mode === 'prose' ? 'bg-primary/15 text-teal-300 hover:bg-primary/20 hover:text-teal-200' : 'text-muted-foreground hover:text-foreground'}
           >
             <BookOpen className="size-4" />
             Prose
@@ -197,7 +204,7 @@ export default function WritePage() {
             variant="ghost"
             size="sm"
             onClick={() => setMode('screenplay')}
-            className={mode === 'screenplay' ? 'bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 hover:text-teal-200' : 'text-slate-400 hover:text-slate-200'}
+            className={mode === 'screenplay' ? 'bg-primary/15 text-teal-300 hover:bg-primary/20 hover:text-teal-200' : 'text-muted-foreground hover:text-foreground'}
           >
             <Clapperboard className="size-4" />
             Screenplay
@@ -211,7 +218,7 @@ export default function WritePage() {
             value={activeManuscriptId ?? ''}
             onValueChange={setActiveManuscriptId}
           >
-            <SelectTrigger className="w-48 border-teal-500/20 bg-slate-900/60 focus:ring-teal-500/30">
+            <SelectTrigger className="w-48 border-border bg-muted focus:ring-primary/30">
               <SelectValue placeholder="Select manuscript" />
             </SelectTrigger>
             <SelectContent>

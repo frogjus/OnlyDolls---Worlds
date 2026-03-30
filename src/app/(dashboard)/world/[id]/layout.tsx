@@ -13,7 +13,7 @@ export default async function WorldLayout({
 }) {
   const { id } = await params
   return (
-    <div className="flex h-full flex-1 overflow-hidden">
+    <div className="flex h-full flex-1 overflow-hidden bg-background">
       <WorkspaceSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <WorldNav />

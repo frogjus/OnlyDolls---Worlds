@@ -14,32 +14,32 @@ const ENTITY_CONFIG: Record<
   character: {
     icon: User,
     label: 'Character',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
+    color: 'text-[var(--od-cyan-400)]',
+    bg: 'bg-[rgba(6,182,212,0.12)]',
   },
   location: {
     icon: MapPin,
     label: 'Location',
-    color: 'text-green-700',
-    bg: 'bg-green-50',
+    color: 'text-emerald-400',
+    bg: 'bg-[rgba(34,197,94,0.12)]',
   },
   event: {
     icon: Zap,
     label: 'Event',
-    color: 'text-purple-700',
-    bg: 'bg-purple-50',
+    color: 'text-[var(--od-violet-400)]',
+    bg: 'bg-[rgba(124,58,237,0.12)]',
   },
   item: {
     icon: Package,
     label: 'Item',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
+    color: 'text-amber-400',
+    bg: 'bg-[rgba(245,158,11,0.12)]',
   },
   faction: {
     icon: Users,
     label: 'Faction',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
+    color: 'text-rose-400',
+    bg: 'bg-[rgba(239,68,68,0.12)]',
   },
 }
 
@@ -65,11 +65,14 @@ export function EntityDetailPanel({
 
   if (!entity) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <User className="h-6 w-6 text-muted-foreground" />
+      <div
+        className="flex h-full flex-col items-center justify-center p-6 text-center"
+        style={{ background: 'var(--od-bg-raised)' }}
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--od-bg-surface)]">
+          <User className="h-6 w-6" style={{ color: 'var(--od-text-muted)' }} />
         </div>
-        <p className="mt-4 text-sm font-medium text-muted-foreground">
+        <p className="mt-4 text-sm font-medium" style={{ color: 'var(--od-text-muted)' }}>
           Select a highlighted entity in the text to view details
         </p>
       </div>
@@ -89,9 +92,12 @@ export function EntityDetailPanel({
         : null
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" style={{ background: 'var(--od-bg-raised)' }}>
       {/* Header */}
-      <div className="flex items-start justify-between border-b p-4">
+      <div
+        className="flex items-start justify-between p-4"
+        style={{ borderBottom: '1px solid var(--od-border-default)' }}
+      >
         <div className="flex items-start gap-3">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${config.bg}`}
@@ -99,8 +105,13 @@ export function EntityDetailPanel({
             <Icon className={`h-5 w-5 ${config.color}`} />
           </div>
           <div>
-            <h3 className="text-base font-semibold">{entity.name}</h3>
-            <Badge variant="secondary" className="mt-1 text-xs">
+            <h3 className="text-base font-semibold font-[family-name:var(--font-heading)]" style={{ color: 'var(--od-text-primary)' }}>
+              {entity.name}
+            </h3>
+            <Badge
+              variant="secondary"
+              className={`mt-1 text-xs ${config.bg} ${config.color} border-0`}
+            >
               {config.label}
             </Badge>
           </div>
@@ -111,34 +122,41 @@ export function EntityDetailPanel({
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {/* Description */}
         <div>
-          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h4 className="text-caption" style={{ color: 'var(--od-text-muted)' }}>
             Description
           </h4>
-          <p className="mt-1 text-sm">{entity.description || 'No description available.'}</p>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--od-text-secondary)' }}>
+            {entity.description || 'No description available.'}
+          </p>
         </div>
 
         {/* Confidence */}
         <div>
-          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h4 className="text-caption" style={{ color: 'var(--od-text-muted)' }}>
             Extraction Confidence
           </h4>
           <div className="mt-2 flex items-center gap-3">
-            <div className="h-2 flex-1 rounded-full bg-muted">
+            <div className="h-2 flex-1 rounded-full" style={{ background: 'var(--od-bg-surface)' }}>
               <div
-                className={`h-2 rounded-full transition-all ${
-                  confidencePercent >= 80
-                    ? 'bg-green-500'
-                    : confidencePercent >= 60
-                      ? 'bg-amber-500'
-                      : 'bg-red-500'
-                }`}
-                style={{ width: `${confidencePercent}%` }}
+                className="h-2 rounded-full transition-all"
+                style={{
+                  width: `${confidencePercent}%`,
+                  background:
+                    confidencePercent >= 80
+                      ? 'linear-gradient(90deg, var(--od-teal-600), var(--od-teal-400))'
+                      : confidencePercent >= 60
+                        ? 'linear-gradient(90deg, #d97706, #fbbf24)'
+                        : 'linear-gradient(90deg, #dc2626, #f87171)',
+                }}
               />
             </div>
-            <span className="text-sm font-medium tabular-nums">
+            <span
+              className="text-sm font-medium tabular-nums"
+              style={{ color: 'var(--od-text-primary)' }}
+            >
               {confidencePercent}%
             </span>
           </div>
@@ -146,12 +164,16 @@ export function EntityDetailPanel({
 
         {/* Status */}
         <div>
-          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h4 className="text-caption" style={{ color: 'var(--od-text-muted)' }}>
             Status
           </h4>
           <Badge
             variant={entity.confirmed ? 'default' : 'secondary'}
-            className="mt-1"
+            className={`mt-1.5 ${
+              entity.confirmed
+                ? 'bg-[rgba(20,184,166,0.15)] text-[var(--od-teal-300)] border-0'
+                : 'bg-[var(--od-bg-surface)] text-[var(--od-text-muted)] border-0'
+            }`}
           >
             {entity.confirmed ? 'Confirmed' : 'Proposed'}
           </Badge>
@@ -162,7 +184,8 @@ export function EntityDetailPanel({
           <div>
             <a
               href={entityPagePath}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-sm hover:underline"
+              style={{ color: 'var(--od-teal-400)' }}
             >
               View all {config.label.toLowerCase()}s
             </a>

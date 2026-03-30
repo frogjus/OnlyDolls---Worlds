@@ -19,7 +19,6 @@ import {
 } from '@/lib/hooks/use-objects'
 import { useObjectStore } from '@/stores/object-store'
 import { showSuccess, showError } from '@/lib/toast'
-import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -235,11 +234,11 @@ function ObjectCard({
 
   return (
     <Card
-      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5"
+      className="group card-interactive cursor-pointer bg-card border-border"
       onClick={() => setSelectedObjectId(object.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <Gem className="h-5 w-5 text-amber-400" />
         </div>
         <div className="flex-1 min-w-0">
@@ -252,7 +251,7 @@ function ObjectCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -290,7 +289,7 @@ function ObjectCard({
             {object.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
         {object.significance && (
           <p className="text-xs text-muted-foreground mt-2">
@@ -310,7 +309,7 @@ function ObjectSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -335,12 +334,22 @@ function ObjectSkeletons() {
 function ObjectsEmptyState() {
   const { setCreateDialogOpen } = useObjectStore()
   return (
-    <EmptyState
-      icon={Gem}
-      title="No objects yet"
-      description="Track significant items, artifacts, and props in your story. From Chekhov's gun to magical macguffins — every object that matters."
-      primaryAction={{ label: 'New Object', onClick: () => setCreateDialogOpen(true) }}
-    />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Gem className="h-10 w-10 text-teal-300/70" />
+      </div>
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No objects yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        Track significant items, artifacts, and props in your story. From Chekhov&apos;s gun to magical macguffins — every object that matters.
+      </p>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        New Object
+      </Button>
+    </div>
   )
 }
 
@@ -363,14 +372,17 @@ export default function ObjectsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Objects</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Objects</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {objects.length > 0
               ? `${objects.length} object${objects.length === 1 ? '' : 's'}`
               : 'Significant items, artifacts, and props in your story world.'}
           </p>
         </div>
-        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Object
         </Button>
@@ -379,7 +391,7 @@ export default function ObjectsPage() {
       {isLoading ? (
         <ObjectSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load objects. Please try again.
         </div>
       ) : objects.length === 0 ? (

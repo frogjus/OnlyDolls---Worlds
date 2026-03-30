@@ -23,22 +23,24 @@ export default function TreatmentPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
+          <div>
+            <Skeleton className="h-8 w-48 bg-muted" />
+            <Skeleton className="mt-2 h-4 w-72 bg-muted" />
+          </div>
           <div className="flex gap-1.5">
-            <Skeleton className="h-7 w-36" />
-            <Skeleton className="h-7 w-36" />
+            <Skeleton className="h-7 w-36 bg-muted" />
+            <Skeleton className="h-7 w-36 bg-muted" />
           </div>
         </div>
-        <Skeleton className="mt-1 h-4 w-72" />
-        <Separator className="my-6" />
+        <Separator className="border-border" />
         <div className="mx-auto max-w-3xl space-y-6">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-5 w-48 bg-muted" />
+              <Skeleton className="h-4 w-full bg-muted" />
+              <Skeleton className="h-4 w-3/4 bg-muted" />
             </div>
           ))}
         </div>
@@ -47,10 +49,10 @@ export default function TreatmentPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Treatment</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Treatment</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Auto-generated from your beat sheet. Click the edit icon to override
             any section.
@@ -58,7 +60,7 @@ export default function TreatmentPage() {
         </div>
         <TreatmentExport sections={sections} title="Treatment" />
       </div>
-      <Separator className="my-6" />
+      <Separator className="border-border" />
       <TreatmentView worldId={worldId} />
     </div>
   )
