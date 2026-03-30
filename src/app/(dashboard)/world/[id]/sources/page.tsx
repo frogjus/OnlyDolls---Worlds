@@ -69,7 +69,9 @@ function CreateSourceDialog({ worldId }: { worldId: string }) {
     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Source Material</DialogTitle>
+          <DialogTitle className="font-[family-name:var(--font-heading)]">
+            New Source Material
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -180,7 +182,9 @@ function EditSourceDialog({
     <Dialog open onOpenChange={(open) => !open && setEditingSourceId(null)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Source Material</DialogTitle>
+          <DialogTitle className="font-[family-name:var(--font-heading)]">
+            Edit Source Material
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -267,21 +271,42 @@ function SourceCard({
 
   return (
     <Link href={`/world/${worldId}/sources/${source.id}`}>
-      <Card className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5">
+      <Card
+        className="card-interactive group cursor-pointer border-[var(--od-border-default)] transition-all hover:border-[rgba(20,184,166,0.3)]"
+        style={{
+          background: 'var(--od-bg-surface)',
+          boxShadow: 'var(--od-shadow-card)',
+        }}
+      >
         <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
-            <FileText className="h-5 w-5 text-teal-400" />
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'rgba(20, 184, 166, 0.1)' }}
+          >
+            <FileText className="h-5 w-5" style={{ color: 'var(--od-teal-400)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-base truncate">{source.title}</CardTitle>
+            <CardTitle
+              className="text-base truncate font-[family-name:var(--font-heading)]"
+              style={{ color: 'var(--od-text-primary)' }}
+            >
+              {source.title}
+            </CardTitle>
             <div className="flex items-center gap-2 mt-1">
               {source.type && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge
+                  variant="secondary"
+                  className="text-xs border-0"
+                  style={{
+                    background: 'rgba(20, 184, 166, 0.1)',
+                    color: 'var(--od-teal-300)',
+                  }}
+                >
                   {source.type}
                 </Badge>
               )}
               {source.author && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs" style={{ color: 'var(--od-text-muted)' }}>
                   by {source.author}
                 </span>
               )}
@@ -321,15 +346,17 @@ function SourceCard({
         </CardHeader>
         <CardContent>
           {source.content ? (
-            <p className="text-sm text-muted-foreground line-clamp-3">
+            <p className="text-sm line-clamp-3" style={{ color: 'var(--od-text-muted)' }}>
               {source.content}
             </p>
           ) : source.notes ? (
-            <p className="text-sm text-muted-foreground line-clamp-3">
+            <p className="text-sm line-clamp-3" style={{ color: 'var(--od-text-muted)' }}>
               {source.notes}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground italic">No content</p>
+            <p className="text-sm italic" style={{ color: 'var(--od-text-disabled)' }}>
+              No content
+            </p>
           )}
           <div className="flex items-center gap-3 mt-2">
             {source.url && (
@@ -337,7 +364,8 @@ function SourceCard({
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                className="inline-flex items-center gap-1 text-xs hover:underline"
+                style={{ color: 'var(--od-teal-400)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="h-3 w-3" />
@@ -345,7 +373,7 @@ function SourceCard({
               </a>
             )}
             {source.createdAt && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs" style={{ color: 'var(--od-text-disabled)' }}>
                 {new Date(source.createdAt).toLocaleDateString()}
               </span>
             )}
@@ -364,7 +392,11 @@ function SourceSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card
+          key={i}
+          className="border-[var(--od-border-default)]"
+          style={{ background: 'var(--od-bg-surface)' }}
+        >
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -388,12 +420,29 @@ function SourceSkeletons() {
 
 function EmptyState({ worldId }: { worldId: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-16 text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
-        <BookOpen className="size-8 text-teal-400/70" />
+    <div
+      className="flex flex-col items-center justify-center rounded-xl p-16 text-center"
+      style={{
+        background: 'var(--od-bg-raised)',
+        border: '1px solid var(--od-border-default)',
+      }}
+    >
+      <div
+        className="flex size-16 items-center justify-center rounded-full"
+        style={{
+          background: 'rgba(20, 184, 166, 0.08)',
+          boxShadow: '0 0 25px rgba(20, 184, 166, 0.08)',
+        }}
+      >
+        <BookOpen className="size-8" style={{ color: 'var(--od-teal-500)' }} />
       </div>
-      <h3 className="mt-6 text-xl font-bold text-slate-100">Bring your story to life</h3>
-      <p className="mt-2 max-w-md text-sm text-slate-400">
+      <h3
+        className="mt-6 text-xl font-bold font-[family-name:var(--font-heading)]"
+        style={{ color: 'var(--od-text-primary)' }}
+      >
+        Bring your story to life
+      </h3>
+      <p className="mt-2 max-w-md text-sm" style={{ color: 'var(--od-text-muted)' }}>
         Upload a manuscript, screenplay, or reference material to start building
         your story world. We&apos;ll analyze the content and extract characters,
         locations, events, and more.
@@ -425,8 +474,13 @@ export default function SourcesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Sources</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1
+            className="text-h2"
+            style={{ color: 'var(--od-text-primary)' }}
+          >
+            Sources
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--od-text-muted)' }}>
             Upload and analyze your story materials
           </p>
         </div>
@@ -447,7 +501,13 @@ export default function SourcesPage() {
       {isLoading ? (
         <SourceSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div
+          className="rounded-lg p-4 text-sm text-destructive"
+          style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+          }}
+        >
           Failed to load sources. Please try again.
         </div>
       ) : sources.length === 0 ? (
@@ -455,7 +515,7 @@ export default function SourcesPage() {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground">
+            <h2 className="text-caption" style={{ color: 'var(--od-text-muted)' }}>
               {sources.length} source{sources.length === 1 ? '' : 's'}
             </h2>
           </div>

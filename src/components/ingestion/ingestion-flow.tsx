@@ -95,14 +95,27 @@ export function IngestionFlow({ worldId, onComplete }: IngestionFlowProps) {
 
   if (state === 'confirmed') {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border p-8 text-center">
-        <CheckCircle2 className="size-10 text-green-600" />
-        <p className="text-sm font-medium">
+      <div
+        className="flex flex-col items-center gap-3 rounded-xl p-8 text-center"
+        style={{
+          background: 'var(--od-bg-raised)',
+          border: '1px solid rgba(20, 184, 166, 0.2)',
+          boxShadow: 'var(--od-glow-teal-sm)',
+        }}
+      >
+        <div
+          className="flex size-12 items-center justify-center rounded-full"
+          style={{ background: 'rgba(34, 197, 94, 0.12)' }}
+        >
+          <CheckCircle2 className="size-6" style={{ color: 'var(--od-success)' }} />
+        </div>
+        <p className="text-sm font-medium" style={{ color: 'var(--od-text-primary)' }}>
           {createdCount} {createdCount === 1 ? 'entity' : 'entities'} imported successfully
         </p>
         <button
           onClick={handleReset}
-          className="text-sm text-primary underline-offset-4 hover:underline"
+          className="text-sm underline-offset-4 hover:underline"
+          style={{ color: 'var(--od-teal-400)' }}
         >
           Import more
         </button>
@@ -114,9 +127,17 @@ export function IngestionFlow({ worldId, onComplete }: IngestionFlowProps) {
     return (
       <div className="space-y-4">
         {confirmMutation.isPending && (
-          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <Loader2 className="size-4 animate-spin" />
-            <span className="text-sm">Creating entities...</span>
+          <div
+            className="flex items-center gap-2 rounded-lg p-3"
+            style={{
+              background: 'rgba(20, 184, 166, 0.06)',
+              border: '1px solid rgba(20, 184, 166, 0.15)',
+            }}
+          >
+            <Loader2 className="size-4 animate-spin" style={{ color: 'var(--od-teal-400)' }} />
+            <span className="text-sm" style={{ color: 'var(--od-text-secondary)' }}>
+              Creating entities...
+            </span>
           </div>
         )}
         {confirmMutation.isError && (
