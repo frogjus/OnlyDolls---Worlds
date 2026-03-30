@@ -19,7 +19,6 @@ import {
 } from '@/lib/hooks/use-scenes'
 import { useSceneStore } from '@/stores/scene-store'
 import { showSuccess, showError } from '@/lib/toast'
-import { EmptyState } from '@/components/empty-states/empty-state'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -235,11 +234,11 @@ function SceneCard({
 
   return (
     <Card
-      className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/5"
+      className="group card-interactive cursor-pointer bg-card border-border"
       onClick={() => setSelectedSceneId(scene.id)}
     >
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <Film className="h-5 w-5 text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
@@ -247,7 +246,7 @@ function SceneCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -285,22 +284,22 @@ function SceneCard({
             {scene.summary}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No summary</p>
+          <p className="text-sm text-muted-foreground/60 italic">No summary</p>
         )}
         <div className="mt-2 space-y-1">
           {scene.purpose && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Purpose:</span> {scene.purpose}
+              <span className="font-medium text-foreground/70">Purpose:</span> {scene.purpose}
             </p>
           )}
           {scene.tone && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Tone:</span> {scene.tone}
+              <span className="font-medium text-foreground/70">Tone:</span> {scene.tone}
             </p>
           )}
           {scene.polarity && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Polarity:</span> {scene.polarity}
+              <span className="font-medium text-foreground/70">Polarity:</span> {scene.polarity}
             </p>
           )}
         </div>
@@ -317,7 +316,7 @@ function SceneSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -342,12 +341,22 @@ function SceneSkeletons() {
 function ScenesEmptyState() {
   const { setCreateDialogOpen } = useSceneStore()
   return (
-    <EmptyState
-      icon={Film}
-      title="No scenes yet"
-      description="Structure your narrative into scenes with purpose, tone, and value changes. Each scene tracks a net shift in your story."
-      primaryAction={{ label: 'New Scene', onClick: () => setCreateDialogOpen(true) }}
-    />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Film className="h-10 w-10 text-teal-300/70" />
+      </div>
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No scenes yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        Structure your narrative into scenes with purpose, tone, and value changes. Each scene tracks a net shift in your story.
+      </p>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        New Scene
+      </Button>
+    </div>
   )
 }
 
@@ -370,14 +379,17 @@ export default function ScenesPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Scenes</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Scenes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {scenes.length > 0
               ? `${scenes.length} scene${scenes.length === 1 ? '' : 's'}`
               : 'Scenes with purpose, tone, and value changes.'}
           </p>
         </div>
-        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Scene
         </Button>
@@ -386,7 +398,7 @@ export default function ScenesPage() {
       {isLoading ? (
         <SceneSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load scenes. Please try again.
         </div>
       ) : scenes.length === 0 ? (

@@ -285,9 +285,9 @@ function RelationshipCard({
   const char2Name = characters.find((c) => c.id === relationship.character2Id)?.name ?? 'Unknown'
 
   return (
-    <Card className="group cursor-pointer border-slate-700/50 bg-slate-900/80 transition-all hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/5">
+    <Card className="group card-interactive cursor-pointer bg-card border-border">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <Heart className="h-5 w-5 text-rose-400" />
         </div>
         <div className="flex-1 min-w-0">
@@ -307,7 +307,7 @@ function RelationshipCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -345,7 +345,7 @@ function RelationshipCard({
             {relationship.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
       </CardContent>
     </Card>
@@ -360,7 +360,7 @@ function RelationshipSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -382,18 +382,21 @@ function RelationshipSkeletons() {
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+function RelationshipsEmptyState() {
   const { setCreateDialogOpen } = useRelationshipStore()
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-700/50 bg-slate-900/60 p-14 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-800/80 shadow-[0_0_25px_rgba(20,184,166,0.08)]">
-        <Heart className="h-10 w-10 text-teal-400/70" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <Heart className="h-10 w-10 text-teal-300/70" />
       </div>
-      <h3 className="mt-6 text-lg font-bold text-slate-100">No relationships mapped yet</h3>
-      <p className="mt-2 text-sm text-slate-400 max-w-sm">
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No relationships mapped yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
         Add characters first, then map their connections.
       </p>
-      <Button className="mt-6 bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
         <Plus className="mr-2 h-4 w-4" />
         New Relationship
       </Button>
@@ -423,14 +426,17 @@ export default function RelationshipsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Relationships</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Relationships</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {relationships.length > 0
               ? `${relationships.length} relationship${relationships.length === 1 ? '' : 's'}`
               : 'Character connections and dynamics.'}
           </p>
         </div>
-        <Button className="bg-teal-600 text-white hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all" onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Relationship
         </Button>
@@ -440,11 +446,11 @@ export default function RelationshipsPage() {
       {isLoading ? (
         <RelationshipSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load relationships. Please try again.
         </div>
       ) : relationships.length === 0 ? (
-        <EmptyState />
+        <RelationshipsEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {relationships.map((rel) => (

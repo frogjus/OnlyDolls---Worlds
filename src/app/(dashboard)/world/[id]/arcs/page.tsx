@@ -26,7 +26,6 @@ import {
   useDeleteArcPhase,
 } from '@/lib/hooks/use-arc-phases'
 import { useArcStore } from '@/stores/arc-store'
-import { EmptyState } from '@/components/empty-states/empty-state'
 import { showSuccess, showError } from '@/lib/toast'
 
 import { Button } from '@/components/ui/button'
@@ -227,10 +226,6 @@ function EditArcDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Arc Card
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Arc Phase Section (expandable per-arc)
 // ---------------------------------------------------------------------------
 
@@ -324,7 +319,7 @@ function ArcPhaseSection({ worldId, arcId }: { worldId: string; arcId: string })
           {phases
             .sort((a, b) => a.position - b.position)
             .map((phase) => (
-            <li key={phase.id} className="flex items-center gap-2 text-xs text-muted-foreground rounded px-1.5 py-1 hover:bg-accent/50">
+            <li key={phase.id} className="flex items-center gap-2 text-xs text-muted-foreground rounded px-1.5 py-1 hover:bg-accent/50 transition-colors">
               {editingPhaseId === phase.id ? (
                 <form onSubmit={handleUpdate} className="flex flex-1 gap-2">
                   <Input
@@ -349,7 +344,7 @@ function ArcPhaseSection({ worldId, arcId }: { worldId: string; arcId: string })
                   <button
                     type="button"
                     onClick={() => startEdit(phase)}
-                    className="hover:text-foreground"
+                    className="hover:text-foreground transition-colors"
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
@@ -362,7 +357,7 @@ function ArcPhaseSection({ worldId, arcId }: { worldId: string; arcId: string })
                         onError: () => showError('Failed to delete phase'),
                       })
                     }}
-                    className="hover:text-destructive"
+                    className="hover:text-destructive transition-colors"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -392,10 +387,10 @@ function ArcCard({
   const [phasesExpanded, setPhasesExpanded] = useState(false)
 
   return (
-    <Card className="group cursor-pointer transition-shadow hover:shadow-md">
+    <Card className="group card-interactive cursor-pointer bg-card border-border">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          <TrendingUp className="h-5 w-5 text-teal-300" />
         </div>
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{arc.name}</CardTitle>
@@ -407,7 +402,7 @@ function ArcCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
@@ -445,9 +440,9 @@ function ArcCard({
             {arc.description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No description</p>
+          <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
-        <div className="border-t pt-2">
+        <div className="border-t border-border pt-2">
           <button
             type="button"
             onClick={(e) => {
@@ -478,7 +473,7 @@ function ArcSkeletons() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -503,12 +498,22 @@ function ArcSkeletons() {
 function ArcsEmptyState() {
   const { setCreateDialogOpen } = useArcStore()
   return (
-    <EmptyState
-      icon={TrendingUp}
-      title="No arcs yet"
-      description="Track character arcs, plot arcs, and thematic throughlines as they progress across your story."
-      primaryAction={{ label: 'New Arc', onClick: () => setCreateDialogOpen(true) }}
-    />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted p-14 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-[0_0_25px_rgba(20,184,166,0.08)]">
+        <TrendingUp className="h-10 w-10 text-teal-300/70" />
+      </div>
+      <h3 className="mt-6 font-heading text-lg font-semibold tracking-tight text-foreground">No arcs yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        Track character arcs, plot arcs, and thematic throughlines as they progress across your story.
+      </p>
+      <Button
+        className="mt-6 bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        New Arc
+      </Button>
+    </div>
   )
 }
 
@@ -532,14 +537,17 @@ export default function ArcsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Arcs</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.015em] text-foreground">Arcs</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {arcs.length > 0
               ? `${arcs.length} arc${arcs.length === 1 ? '' : 's'}`
               : 'Story arcs, phases, and structure template overlays.'}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-[#0d9488] shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-200"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Arc
         </Button>
@@ -549,7 +557,7 @@ export default function ArcsPage() {
       {isLoading ? (
         <ArcSkeletons />
       ) : error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Failed to load arcs. Please try again.
         </div>
       ) : arcs.length === 0 ? (
