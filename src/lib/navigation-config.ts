@@ -34,6 +34,7 @@ export interface ViewConfig {
   label: string
   icon: LucideIcon
   tier?: 1 | 2 | 3
+  hidden?: boolean
 }
 
 export interface WorkspaceGroup {
@@ -70,8 +71,8 @@ export const workspaceGroups: WorkspaceGroup[] = [
       { slug: 'characters', label: 'Characters', icon: Users },
       { slug: 'locations', label: 'Locations', icon: MapPin },
       { slug: 'factions', label: 'Factions', icon: Shield },
-      { slug: 'wiki', label: 'Wiki', icon: BookOpen },
-      { slug: 'systems', label: 'Systems', icon: Cog },
+      { slug: 'wiki', label: 'Wiki', icon: BookOpen, hidden: true },
+      { slug: 'systems', label: 'Systems', icon: Cog, hidden: true },
       { slug: 'objects', label: 'Objects', icon: Package },
       { slug: 'themes', label: 'Themes', icon: Palette },
     ],
@@ -83,11 +84,11 @@ export const workspaceGroups: WorkspaceGroup[] = [
     views: [
       { slug: 'timeline', label: 'Timeline', icon: Clock },
       { slug: 'arcs', label: 'Arcs', icon: TrendingUp },
-      { slug: 'pacing', label: 'Pacing', icon: Activity },
-      { slug: 'foreshadowing', label: 'Foreshadowing', icon: Link },
-      { slug: 'causality', label: 'Causality', icon: GitBranch },
-      { slug: 'knowledge', label: 'Knowledge', icon: Brain },
-      { slug: 'consistency', label: 'Consistency', icon: ShieldCheck },
+      { slug: 'pacing', label: 'Pacing', icon: Activity, hidden: true },
+      { slug: 'foreshadowing', label: 'Foreshadowing', icon: Link, hidden: true },
+      { slug: 'causality', label: 'Causality', icon: GitBranch, hidden: true },
+      { slug: 'knowledge', label: 'Knowledge', icon: Brain, hidden: true },
+      { slug: 'consistency', label: 'Consistency', icon: ShieldCheck, hidden: true },
     ],
   },
   {
@@ -95,9 +96,9 @@ export const workspaceGroups: WorkspaceGroup[] = [
     label: 'Plan',
     icon: Compass,
     views: [
-      { slug: 'whatif', label: 'What-If', icon: GitFork },
-      { slug: 'canon', label: 'Canon', icon: Archive },
-      { slug: 'mindmap', label: 'Mind Map', icon: Network },
+      { slug: 'whatif', label: 'What-If', icon: GitFork, hidden: true },
+      { slug: 'canon', label: 'Canon', icon: Archive, hidden: true },
+      { slug: 'mindmap', label: 'Mind Map', icon: Network, hidden: true },
       { slug: 'settings', label: 'Settings', icon: Settings },
     ],
   },
@@ -121,6 +122,12 @@ export function getGroupByViewSlug(slug: string): WorkspaceGroup | undefined {
   return groupByView.get(slug)
 }
 
-export function getAllViews(): ViewConfig[] {
-  return workspaceGroups.flatMap((g) => g.views)
+export function getAllViews(includeHidden = false): ViewConfig[] {
+  return workspaceGroups.flatMap((g) => g.views).filter((v) => includeHidden || !v.hidden)
+}
+
+export function getVisibleGroups(): WorkspaceGroup[] {
+  return workspaceGroups
+    .map((g) => ({ ...g, views: g.views.filter((v) => !v.hidden) }))
+    .filter((g) => g.views.length > 0)
 }
