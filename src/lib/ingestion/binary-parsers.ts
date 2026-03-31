@@ -1,15 +1,13 @@
-import { PDFParse } from 'pdf-parse'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const mammoth = require('mammoth') as { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> }
+const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string }>
 
 export async function parsePDF(buffer: Buffer): Promise<string> {
-  const parser = new PDFParse({ data: new Uint8Array(buffer) })
-  const result = await parser.getText()
-  await parser.destroy()
-  return result.pages.map((p) => p.text).join('\n\n')
+  const result = await pdfParse(buffer)
+  return result.text
 }
 
 export async function parseDOCX(buffer: Buffer): Promise<string> {
+  const mammoth = await import('mammoth')
   const result = await mammoth.extractRawText({ buffer })
   return result.value
 }
@@ -24,13 +22,6 @@ export async function parseByExtension(
     case 'docx':
     case 'doc':
       return parseDOCX(buffer)
-    case 'rtf':
-    case 'epub':
-    case 'txt':
-    case 'md':
-    case 'markdown':
-    case 'fountain':
-      return buffer.toString('utf-8')
     default:
       return buffer.toString('utf-8')
   }
