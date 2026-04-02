@@ -332,31 +332,31 @@ function LocationCard({
 
       {expanded && analysis && (
         <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
-          {analysis.atmosphere && (
+          {!!analysis.atmosphere && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Atmosphere</h4>
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.atmosphere as string}</p>
             </div>
           )}
-          {analysis.narrativeFunction && (
+          {!!analysis.narrativeFunction && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Narrative Function</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.narrativeFunction as string}</p>
             </div>
           )}
-          {analysis.thematicResonance && (
+          {!!analysis.thematicResonance && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Thematic Resonance</h4>
               <p className="text-sm text-muted-foreground">{analysis.thematicResonance as string}</p>
             </div>
           )}
-          {analysis.characterAssociations && (
+          {!!analysis.characterAssociations && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Character Associations</h4>
               <p className="text-sm text-muted-foreground">{analysis.characterAssociations as string}</p>
             </div>
           )}
-          {analysis.transformation && (
+          {!!analysis.transformation && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Transformation</h4>
               <p className="text-sm text-muted-foreground">{analysis.transformation as string}</p>

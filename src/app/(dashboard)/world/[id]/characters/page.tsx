@@ -410,13 +410,13 @@ function CharacterCard({
 
       {expanded && analysis && (
         <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
-          {analysis.psychologicalProfile && (
+          {!!analysis.psychologicalProfile && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Psychological Profile</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.psychologicalProfile as string}</p>
             </div>
           )}
-          {analysis.motivation && (
+          {!!analysis.motivation && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Motivation</h4>
               <div className="space-y-2">
@@ -431,7 +431,7 @@ function CharacterCard({
               </div>
             </div>
           )}
-          {analysis.arcTrajectory && (
+          {!!analysis.arcTrajectory && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Arc Trajectory</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.arcTrajectory as string}</p>
@@ -447,7 +447,7 @@ function CharacterCard({
               </ul>
             </div>
           )}
-          {analysis.voicePattern && (
+          {!!analysis.voicePattern && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Voice Pattern</h4>
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.voicePattern as string}</p>
@@ -463,7 +463,7 @@ function CharacterCard({
               </ul>
             </div>
           )}
-          {analysis.thematicRole && (
+          {!!analysis.thematicRole && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Thematic Role</h4>
               <p className="text-sm text-muted-foreground">{analysis.thematicRole as string}</p>

@@ -380,19 +380,19 @@ function RelationshipCard({
 
       {expanded && analysis && (
         <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
-          {analysis.dynamic && (
+          {!!analysis.dynamic && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Dynamic</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.dynamic as string}</p>
             </div>
           )}
-          {analysis.evolution && (
+          {!!analysis.evolution && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Evolution</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.evolution as string}</p>
             </div>
           )}
-          {analysis.subtext && (
+          {!!analysis.subtext && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Subtext</h4>
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.subtext as string}</p>
@@ -408,13 +408,13 @@ function RelationshipCard({
               </ul>
             </div>
           )}
-          {analysis.powerDynamics && (
+          {!!analysis.powerDynamics && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Power Dynamics</h4>
               <p className="text-sm text-muted-foreground">{analysis.powerDynamics as string}</p>
             </div>
           )}
-          {analysis.thematicFunction && (
+          {!!analysis.thematicFunction && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Thematic Function</h4>
               <p className="text-sm text-muted-foreground">{analysis.thematicFunction as string}</p>

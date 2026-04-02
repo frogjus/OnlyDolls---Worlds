@@ -40,6 +40,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
@@ -305,13 +306,13 @@ function ThemeCard({
 
       {expanded && analysis && (
         <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
-          {analysis.thesis && (
+          {!!analysis.thesis && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Thesis</h4>
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.thesis as string}</p>
             </div>
           )}
-          {analysis.manifestation && (
+          {!!analysis.manifestation && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Manifestation</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.manifestation as string}</p>
@@ -327,13 +328,13 @@ function ThemeCard({
               </div>
             </div>
           )}
-          {analysis.evolution && (
+          {!!analysis.evolution && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Evolution</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.evolution as string}</p>
             </div>
           )}
-          {analysis.opposition && (
+          {!!analysis.opposition && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Opposition</h4>
               <p className="text-sm text-muted-foreground">{analysis.opposition as string}</p>
