@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { requireWorldAuth } from '@/lib/auth/helpers'
-import { quickExtract } from '@/lib/ai/quick-extract'
+import { deepAnalyze } from '@/lib/ai/deep-analyze'
 import { parseByExtension } from '@/lib/ingestion/binary-parsers'
 import { sourceQueries } from '@/lib/db/source-queries'
 import { characterQueries } from '@/lib/db/queries'
 import { locationQueries } from '@/lib/db/location-queries'
 import { themeQueries } from '@/lib/db/theme-queries'
+import { relationshipQueries } from '@/lib/db/relationship-queries'
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 const ALLOWED_EXTENSIONS = [
@@ -68,8 +69,8 @@ export async function POST(
     const buffer = Buffer.from(arrayBuffer)
     const content = await parseByExtension(buffer, extension)
 
-    // Single-pass AI extraction
-    const analysis = await quickExtract(content)
+    // Deep AI analysis
+    const analysis = await deepAnalyze(content)
 
     // Persist source material
     const source = await sourceQueries.create({
@@ -80,11 +81,11 @@ export async function POST(
         originalFileName: file.name,
         fileSize: file.size,
         contentType,
-        summary: analysis.summary,
         characterCount: analysis.characters.length,
         locationCount: analysis.locations.length,
         themeCount: analysis.themes.length,
         relationshipCount: analysis.relationships.length,
+        insights: JSON.parse(JSON.stringify(analysis.insights)),
       },
       storyWorldId: id,
     })
@@ -94,8 +95,20 @@ export async function POST(
       analysis.characters.map((c) =>
         characterQueries.create({
           name: c.name,
-          description: c.description,
+          description: c.psychologicalProfile.slice(0, 500),
+          archetype: c.role,
           storyWorldId: id,
+          metadata: {
+            analysis: {
+              psychologicalProfile: c.psychologicalProfile,
+              motivation: c.motivation,
+              arcTrajectory: c.arcTrajectory,
+              contradictions: c.contradictions,
+              voicePattern: c.voicePattern,
+              keyScenes: c.keyScenes,
+              thematicRole: c.thematicRole,
+            },
+          },
         })
       )
     )
@@ -104,8 +117,17 @@ export async function POST(
       analysis.locations.map((l) =>
         locationQueries.create({
           name: l.name,
-          description: l.description,
+          description: l.atmosphere,
           storyWorldId: id,
+          metadata: {
+            analysis: {
+              atmosphere: l.atmosphere,
+              narrativeFunction: l.narrativeFunction,
+              thematicResonance: l.thematicResonance,
+              characterAssociations: l.characterAssociations,
+              transformation: l.transformation,
+            },
+          },
         })
       )
     )
@@ -114,21 +136,60 @@ export async function POST(
       analysis.themes.map((t) =>
         themeQueries.create({
           name: t.name,
-          description: t.description,
+          description: t.thesis,
           storyWorldId: id,
+          metadata: {
+            analysis: {
+              thesis: t.thesis,
+              manifestation: t.manifestation,
+              symbolicAnchors: t.symbolicAnchors,
+              evolution: t.evolution,
+              opposition: t.opposition,
+            },
+          },
         })
       )
     )
+
+    const createdRelationships = await Promise.all(
+      analysis.relationships.map((r) => {
+        const char1 = createdCharacters.find(
+          (c) => c.name.toLowerCase() === r.characters[0].toLowerCase()
+        )
+        const char2 = createdCharacters.find(
+          (c) => c.name.toLowerCase() === r.characters[1].toLowerCase()
+        )
+        if (!char1 || !char2) return null
+        return relationshipQueries.create({
+          type: r.type,
+          description: r.dynamic,
+          character1Id: char1.id,
+          character2Id: char2.id,
+          storyWorldId: id,
+          metadata: {
+            analysis: {
+              dynamic: r.dynamic,
+              evolution: r.evolution,
+              subtext: r.subtext,
+              keyMoments: r.keyMoments,
+              powerDynamics: r.powerDynamics,
+              thematicFunction: r.thematicFunction,
+            },
+          },
+        })
+      })
+    )
+
+    const validRelationships = createdRelationships.filter(Boolean)
 
     return NextResponse.json(
       {
         data: {
           sourceId: source.id,
-          summary: analysis.summary,
           characters: createdCharacters.map((c) => ({ id: c.id, name: c.name })),
           locations: createdLocations.map((l) => ({ id: l.id, name: l.name })),
           themes: createdThemes.map((t) => ({ id: t.id, name: t.name })),
-          relationships: analysis.relationships,
+          relationships: validRelationships.map((r) => r ? { id: r.id, type: r.type } : null).filter(Boolean),
         },
       },
       { status: 201 }

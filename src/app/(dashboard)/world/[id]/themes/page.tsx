@@ -8,6 +8,8 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 
 import type { Theme, CreateThemePayload, UpdateThemePayload } from '@/types'
@@ -38,6 +40,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
@@ -200,6 +203,17 @@ function EditThemeDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Analysis helper
+// ---------------------------------------------------------------------------
+
+function getAnalysis(entity: { metadata?: unknown }): Record<string, unknown> | null {
+  const meta = entity.metadata as Record<string, unknown> | null
+  if (!meta || typeof meta !== 'object') return null
+  const analysis = meta.analysis as Record<string, unknown> | null
+  return analysis && typeof analysis === 'object' ? analysis : null
+}
+
+// ---------------------------------------------------------------------------
 // Theme Card
 // ---------------------------------------------------------------------------
 
@@ -210,14 +224,14 @@ function ThemeCard({
   theme: Theme
   worldId: string
 }) {
-  const { setEditingThemeId, setSelectedThemeId } = useThemeStore()
+  const { setEditingThemeId } = useThemeStore()
   const deleteTheme = useDeleteTheme(worldId)
+  const [expanded, setExpanded] = useState(false)
+
+  const analysis = getAnalysis(theme)
 
   return (
-    <Card
-      className="group card-interactive cursor-pointer bg-card border-border"
-      onClick={() => setSelectedThemeId(theme.id)}
-    >
+    <Card className="group bg-card border-border">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <Lightbulb className="h-5 w-5 text-cyan-400" />
@@ -225,39 +239,53 @@ function ThemeCard({
         <div className="flex-1 min-w-0">
           <CardTitle className="text-base truncate">{theme.name}</CardTitle>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                setEditingThemeId(theme.id)
-              }}
+        <div className="flex items-center gap-1">
+          {analysis && (
+            <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={() => setExpanded(!expanded)}
             >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!window.confirm('Delete this theme? This cannot be undone.')) return
-                deleteTheme.mutate(theme.id, {
-                  onSuccess: () => showSuccess('Theme deleted'),
-                  onError: () => showError('Failed to delete theme'),
-                })
-              }}
+              {expanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditingThemeId(theme.id)
+                }}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!window.confirm('Delete this theme? This cannot be undone.')) return
+                  deleteTheme.mutate(theme.id, {
+                    onSuccess: () => showSuccess('Theme deleted'),
+                    onError: () => showError('Failed to delete theme'),
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
         {theme.thesis && (
@@ -275,6 +303,45 @@ function ThemeCard({
           )
         )}
       </CardContent>
+
+      {expanded && analysis && (
+        <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
+          {!!analysis.thesis && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Thesis</h4>
+              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.thesis as string}</p>
+            </div>
+          )}
+          {!!analysis.manifestation && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Manifestation</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.manifestation as string}</p>
+            </div>
+          )}
+          {Array.isArray(analysis.symbolicAnchors) && (analysis.symbolicAnchors as string[]).length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Symbolic Anchors</h4>
+              <div className="flex flex-wrap gap-1">
+                {(analysis.symbolicAnchors as string[]).map((s, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">{s}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {!!analysis.evolution && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Evolution</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.evolution as string}</p>
+            </div>
+          )}
+          {!!analysis.opposition && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Opposition</h4>
+              <p className="text-sm text-muted-foreground">{analysis.opposition as string}</p>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }
