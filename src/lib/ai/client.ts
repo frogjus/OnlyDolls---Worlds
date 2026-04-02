@@ -18,22 +18,22 @@ export class AIClient {
     this.model = options?.model ?? process.env.AI_MODEL ?? DEFAULT_MODEL
   }
 
-  async analyze(text: string, systemPrompt: string): Promise<string> {
-    return this.invoke(systemPrompt, text)
+  async analyze(text: string, systemPrompt: string, options?: { maxTokens?: number }): Promise<string> {
+    return this.invoke(systemPrompt, text, options?.maxTokens)
   }
 
-  async generate(context: string, systemPrompt: string): Promise<string> {
-    return this.invoke(systemPrompt, context)
+  async generate(context: string, systemPrompt: string, options?: { maxTokens?: number }): Promise<string> {
+    return this.invoke(systemPrompt, context, options?.maxTokens)
   }
 
-  private async invoke(system: string, userMessage: string): Promise<string> {
+  private async invoke(system: string, userMessage: string, maxTokens?: number): Promise<string> {
     let lastError: Error | null = null
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         const response = await this.anthropic.messages.create({
           model: this.model,
-          max_tokens: 4096,
+          max_tokens: maxTokens ?? 4096,
           system,
           messages: [{ role: 'user', content: userMessage }],
         })
