@@ -8,6 +8,8 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 
 import type { Relationship, Character, CreateRelationshipPayload, UpdateRelationshipPayload } from '@/types'
@@ -265,6 +267,17 @@ function EditRelationshipDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Analysis helper
+// ---------------------------------------------------------------------------
+
+function getAnalysis(entity: { metadata?: unknown }): Record<string, unknown> | null {
+  const meta = entity.metadata as Record<string, unknown> | null
+  if (!meta || typeof meta !== 'object') return null
+  const analysis = meta.analysis as Record<string, unknown> | null
+  return analysis && typeof analysis === 'object' ? analysis : null
+}
+
+// ---------------------------------------------------------------------------
 // Relationship Card
 // ---------------------------------------------------------------------------
 
@@ -279,13 +292,15 @@ function RelationshipCard({
 }) {
   const { setEditingRelationshipId } = useRelationshipStore()
   const deleteRel = useDeleteRelationship(worldId)
+  const [expanded, setExpanded] = useState(false)
 
+  const analysis = getAnalysis(relationship)
   const strengthDisplay = Math.round((relationship.intensity ?? 0.5) * 10)
   const char1Name = characters.find((c) => c.id === relationship.character1Id)?.name ?? 'Unknown'
   const char2Name = characters.find((c) => c.id === relationship.character2Id)?.name ?? 'Unknown'
 
   return (
-    <Card className="group card-interactive cursor-pointer bg-card border-border">
+    <Card className="group bg-card border-border">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
           <Heart className="h-5 w-5 text-rose-400" />
@@ -305,39 +320,53 @@ function RelationshipCard({
             </span>
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                setEditingRelationshipId(relationship.id)
-              }}
+        <div className="flex items-center gap-1">
+          {analysis && (
+            <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={() => setExpanded(!expanded)}
             >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!window.confirm('Delete this relationship? This cannot be undone.')) return
-                deleteRel.mutate(relationship.id, {
-                  onSuccess: () => showSuccess('Relationship deleted'),
-                  onError: () => showError('Failed to delete relationship'),
-                })
-              }}
+              {expanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditingRelationshipId(relationship.id)
+                }}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!window.confirm('Delete this relationship? This cannot be undone.')) return
+                  deleteRel.mutate(relationship.id, {
+                    onSuccess: () => showSuccess('Relationship deleted'),
+                    onError: () => showError('Failed to delete relationship'),
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
         {relationship.description ? (
@@ -348,6 +377,51 @@ function RelationshipCard({
           <p className="text-sm text-muted-foreground/60 italic">No description</p>
         )}
       </CardContent>
+
+      {expanded && analysis && (
+        <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
+          {analysis.dynamic && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Dynamic</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.dynamic as string}</p>
+            </div>
+          )}
+          {analysis.evolution && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Evolution</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.evolution as string}</p>
+            </div>
+          )}
+          {analysis.subtext && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Subtext</h4>
+              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.subtext as string}</p>
+            </div>
+          )}
+          {Array.isArray(analysis.keyMoments) && (analysis.keyMoments as string[]).length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Key Moments</h4>
+              <ul className="list-disc list-inside space-y-1">
+                {(analysis.keyMoments as string[]).map((m, i) => (
+                  <li key={i} className="text-sm text-muted-foreground">{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {analysis.powerDynamics && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Power Dynamics</h4>
+              <p className="text-sm text-muted-foreground">{analysis.powerDynamics as string}</p>
+            </div>
+          )}
+          {analysis.thematicFunction && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Thematic Function</h4>
+              <p className="text-sm text-muted-foreground">{analysis.thematicFunction as string}</p>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }

@@ -24,7 +24,6 @@ import {
 import { useRelationships } from '@/lib/hooks/use-relationships'
 import { useFactions } from '@/lib/hooks/use-factions'
 import { useCharacterStore } from '@/stores/character-store'
-import { useLayoutStore } from '@/stores/layout-store'
 import { showSuccess, showError } from '@/lib/toast'
 import {
   CharacterGraph,
@@ -294,6 +293,17 @@ function EditCharacterSheet({
 }
 
 // ---------------------------------------------------------------------------
+// Analysis helper
+// ---------------------------------------------------------------------------
+
+function getAnalysis(entity: { metadata?: unknown }): Record<string, unknown> | null {
+  const meta = entity.metadata as Record<string, unknown> | null
+  if (!meta || typeof meta !== 'object') return null
+  const analysis = meta.analysis as Record<string, unknown> | null
+  return analysis && typeof analysis === 'object' ? analysis : null
+}
+
+// ---------------------------------------------------------------------------
 // Character Card
 // ---------------------------------------------------------------------------
 
@@ -304,9 +314,11 @@ function CharacterCard({
   character: Character
   worldId: string
 }) {
-  const { setEditingCharacterId, setSelectedCharacterId } = useCharacterStore()
-  const { setInspectorOpen } = useLayoutStore()
+  const { setEditingCharacterId } = useCharacterStore()
   const deleteChar = useDeleteCharacter(worldId)
+  const [expanded, setExpanded] = useState(false)
+
+  const analysis = getAnalysis(character)
 
   const initials = character.name
     .split(/\s+/)
@@ -316,13 +328,7 @@ function CharacterCard({
     .toUpperCase()
 
   return (
-    <Card
-      className="group card-interactive cursor-pointer bg-card border-border"
-      onClick={() => {
-        setSelectedCharacterId(character.id)
-        setInspectorOpen(true)
-      }}
-    >
+    <Card className="group bg-card border-border">
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
         <Avatar className="h-10 w-10 shrink-0 ring-2 ring-primary/30">
           <AvatarFallback className="bg-muted text-teal-300 text-xs">{initials}</AvatarFallback>
@@ -335,39 +341,53 @@ function CharacterCard({
             </Badge>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                setEditingCharacterId(character.id)
-              }}
+        <div className="flex items-center gap-1">
+          {analysis && (
+            <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={() => setExpanded(!expanded)}
             >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!window.confirm('Delete this character? This cannot be undone.')) return
-                deleteChar.mutate(character.id, {
-                  onSuccess: () => showSuccess('Character deleted'),
-                  onError: () => showError('Failed to delete character'),
-                })
-              }}
+              {expanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditingCharacterId(character.id)
+                }}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!window.confirm('Delete this character? This cannot be undone.')) return
+                  deleteChar.mutate(character.id, {
+                    onSuccess: () => showSuccess('Character deleted'),
+                    onError: () => showError('Failed to delete character'),
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
         {character.description ? (
@@ -387,6 +407,70 @@ function CharacterCard({
           </div>
         )}
       </CardContent>
+
+      {expanded && analysis && (
+        <div className="border-t border-border px-6 pb-4 pt-3 space-y-4">
+          {analysis.psychologicalProfile && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Psychological Profile</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.psychologicalProfile as string}</p>
+            </div>
+          )}
+          {analysis.motivation && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Motivation</h4>
+              <div className="space-y-2">
+                <div className="border-l-2 border-primary/30 pl-3">
+                  <span className="text-xs font-medium text-muted-foreground">Surface</span>
+                  <p className="text-sm text-muted-foreground">{(analysis.motivation as { surface?: string }).surface}</p>
+                </div>
+                <div className="border-l-2 border-primary/30 pl-3">
+                  <span className="text-xs font-medium text-muted-foreground">Deep</span>
+                  <p className="text-sm text-muted-foreground">{(analysis.motivation as { deep?: string }).deep}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {analysis.arcTrajectory && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Arc Trajectory</h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis.arcTrajectory as string}</p>
+            </div>
+          )}
+          {Array.isArray(analysis.contradictions) && (analysis.contradictions as string[]).length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Contradictions</h4>
+              <ul className="list-disc list-inside space-y-1">
+                {(analysis.contradictions as string[]).map((c, i) => (
+                  <li key={i} className="text-sm text-muted-foreground">{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {analysis.voicePattern && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Voice Pattern</h4>
+              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">{analysis.voicePattern as string}</p>
+            </div>
+          )}
+          {Array.isArray(analysis.keyScenes) && (analysis.keyScenes as string[]).length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Key Scenes</h4>
+              <ul className="list-disc list-inside space-y-1">
+                {(analysis.keyScenes as string[]).map((s, i) => (
+                  <li key={i} className="text-sm text-muted-foreground">{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {analysis.thematicRole && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Thematic Role</h4>
+              <p className="text-sm text-muted-foreground">{analysis.thematicRole as string}</p>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }
